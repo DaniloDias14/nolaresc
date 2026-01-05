@@ -2368,9 +2368,8 @@ app.post("/api/admin/adicionar-admin", async (req, res) => {
 // </CHANGE>
 
 // =========================
-// MIDDLEWARE DE TRATAMENTO DE ERROS DO MULTER
+// MIDDLEWARE DE ERROS DO MULTER
 // =========================
-
 app.use((err, req, res, next) => {
   if (err instanceof multer.MulterError) {
     if (err.code === "LIMIT_FILE_SIZE") {
@@ -2389,18 +2388,17 @@ app.use((err, req, res, next) => {
 // FRONTEND (VITE BUILD)
 // =========================
 
-// Serve os arquivos estáticos do React/Vite
+// arquivos estáticos
 app.use(express.static(path.resolve("dist")));
 
-// Fallback para SPA (React Router)
-app.get("/*", (req, res) => {
+// fallback SPA — NÃO use app.get aqui
+app.use((req, res) => {
   res.sendFile(path.resolve("dist", "index.html"));
 });
 
 // =========================
 // INICIA O SERVIDOR
 // =========================
-
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
 });
