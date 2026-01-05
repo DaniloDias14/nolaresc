@@ -2378,9 +2378,12 @@ app.use((err, req, res, next) => {
         .json({ error: "Arquivo muito grande. O tamanho máximo é 10MB." });
     }
     return res.status(400).json({ error: `Erro no upload: ${err.message}` });
-  } else if (err) {
+  }
+
+  if (err) {
     return res.status(400).json({ error: err.message });
   }
+
   next();
 });
 
@@ -2389,11 +2392,11 @@ app.use((err, req, res, next) => {
 // =========================
 
 // arquivos estáticos do Vite
-app.use(express.static(path.resolve("dist")));
+app.use(express.static(path.join(process.cwd(), "dist")));
 
-// fallback SPA — Express 5 SAFE (não intercepta /api)
-app.get(/^(?!\/api).*/, (req, res) => {
-  res.sendFile(path.resolve("dist", "index.html"));
+// fallback SPA — Express 5 SAFE
+app.use((req, res) => {
+  res.sendFile(path.join(process.cwd(), "dist", "index.html"));
 });
 
 // =========================
