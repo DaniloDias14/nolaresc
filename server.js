@@ -2388,11 +2388,11 @@ app.use((err, req, res, next) => {
 // FRONTEND (VITE BUILD)
 // =========================
 
-// arquivos estáticos
+// arquivos estáticos do Vite
 app.use(express.static(path.resolve("dist")));
 
-// fallback SPA — NÃO use app.get aqui
-app.use((req, res) => {
+// fallback SPA — Express 5 SAFE (não intercepta /api)
+app.get(/^(?!\/api).*/, (req, res) => {
   res.sendFile(path.resolve("dist", "index.html"));
 });
 
