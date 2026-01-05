@@ -1,0 +1,450 @@
+.header {
+  background: var(--background-cream);
+  color: var(--primary-blue);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  /* Sombra mais visível mas ainda discreta */
+  box-shadow: 0 2px 8px rgba(25, 25, 112, 0.15);
+  border-bottom: 1px solid rgba(25, 25, 112, 0.08);
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.2rem 3rem;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.logo {
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  transition: opacity 0.3s ease;
+}
+
+.logo-img {
+  height: 50px;
+  width: auto;
+}
+
+.logo:hover {
+  opacity: 0.85;
+}
+
+.menu-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: none;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+  z-index: 1001;
+  /* Set color to blue for menu-toggle icon */
+  color: var(--primary-blue);
+}
+
+.hamburger-line {
+  width: 22px;
+  height: 2.5px;
+  background-color: var(--primary-blue);
+  transition: all 0.3s ease;
+  border-radius: 2px;
+}
+
+.menu {
+  list-style: none;
+  display: flex;
+  gap: 3rem;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+}
+
+.menu li a {
+  text-decoration: none;
+  color: var(--primary-blue);
+  font-weight: 700;
+  font-size: 1.1rem;
+  padding: 0.5rem 0;
+  transition: all 0.3s ease;
+  position: relative;
+  font-family: "Sanchez", serif;
+}
+
+.menu li a::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--primary-blue);
+  transition: width 0.3s ease;
+}
+
+.menu li a:hover::after {
+  width: 75%;
+}
+
+/* Added active state for persistent underline */
+.menu li a.active::after {
+  width: 75%;
+}
+
+/* Esconder itens mobile-only no desktop */
+.menu li.mobile-only {
+  display: none;
+}
+
+/* Animação discreta no botão Conectar-se */
+.perfil-icon {
+  background: var(--primary-blue);
+  color: var(--white);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.2rem;
+  border-radius: 50px;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.9rem;
+  font-family: "Sanchez", serif;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(25, 25, 112, 0.2);
+  /* Tamanho fixo para o botão */
+  width: 165px;
+  height: 44px;
+  justify-content: center;
+}
+
+.perfil-icon:hover {
+  box-shadow: 0 4px 12px rgba(25, 25, 112, 0.25);
+  background: #2a2a8f;
+}
+
+.perfil-icon:active {
+  transform: translateY(0);
+}
+
+/* Texto "Conectar-se" visível no desktop */
+.connect-text {
+  display: inline;
+}
+
+/* Estilos para o menu de usuário logado */
+.user-menu {
+  position: relative;
+}
+
+/* Botão de usuário com tamanho fixo e ícone à direita */
+.user-button {
+  background: var(--primary-blue);
+  color: var(--white);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.2rem;
+  border-radius: 50px;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.9rem;
+  font-family: "Sanchez", serif;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(25, 25, 112, 0.2);
+  width: 165px;
+  height: 44px;
+  justify-content: center;
+}
+
+.user-button:hover {
+  box-shadow: 0 4px 12px rgba(25, 25, 112, 0.25);
+  background: #2a2a8f;
+}
+
+/* Nome do usuário truncado, sempre visível no desktop */
+.user-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: inline;
+}
+
+/* Dropdown com animação de deslizar */
+.user-dropdown {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  background: var(--white);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 140px;
+  overflow: hidden;
+  z-index: 1002;
+  animation: slideDown 0.2s ease-out;
+}
+
+/* Animação de dropdown caindo */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Adicionar animação de subida para fechar */
+@keyframes slideUp {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+/* Estados do dropdown com animações */
+.user-dropdown.dropdown-open {
+  display: block;
+  animation: slideDown 0.2s ease-out;
+}
+
+.user-dropdown.dropdown-closed {
+  display: none;
+}
+
+/* Botão de logout com ícone à direita */
+.logout-button {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: none;
+  background: transparent;
+  color: var(--primary-blue);
+  font-family: "Sanchez", serif;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.logout-button:hover {
+  background: var(--background-cream);
+  color: #2a2a8f;
+}
+
+/* Esconder logo do menu mobile no desktop */
+.menu-logo-container {
+  display: none;
+}
+
+/* Estilos para o header do menu mobile */
+.menu-header {
+  display: none;
+}
+
+/* Botão de logout no menu mobile */
+.menu-logout-button {
+  display: block;
+  width: 100%;
+  padding: 1rem 1.5rem;
+  text-align: left;
+  background: transparent;
+  border: none;
+  color: var(--primary-blue);
+  font-weight: 700;
+  font-size: 1.1rem;
+  font-family: "Sanchez", serif;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.menu-logout-button:hover {
+  background: rgba(25, 25, 112, 0.05);
+}
+
+/* Added styles for menu action buttons (Adicionar Adm/Imóvel) */
+.menu-action-button {
+  display: block;
+  width: 100%;
+  padding: 1rem 1.5rem;
+  text-align: left;
+  background: transparent;
+  border: none;
+  color: var(--primary-blue);
+  font-weight: 700;
+  font-size: 1.1rem;
+  font-family: "Sanchez", serif;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.menu-action-button:hover {
+  background: rgba(25, 25, 112, 0.05);
+}
+
+/* Estilos para botões de usuário no header do menu mobile */
+.menu-user-button,
+.menu-connect-button {
+  background: var(--primary-blue);
+  color: var(--white);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1rem;
+  border-radius: 50px;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.85rem;
+  font-family: "Sanchez", serif;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(25, 25, 112, 0.2);
+}
+
+.menu-user-button:hover,
+.menu-connect-button:hover {
+  box-shadow: 0 4px 12px rgba(25, 25, 112, 0.25);
+  background: #2a2a8f;
+}
+
+.menu-user-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 120px;
+}
+
+@media (max-width: 968px) {
+  .nav {
+    padding: 1rem 1.5rem;
+    position: relative;
+  }
+
+  /* Mostrar itens mobile-only no mobile */
+  .menu li.mobile-only {
+    display: block;
+  }
+
+  /* Hamburger agora à direita */
+  .menu-toggle {
+    display: flex;
+    order: 2;
+    /* Aumentar z-index do menu-toggle para que fique atrás do menu quando expandido */
+    z-index: 999;
+    position: relative;
+  }
+
+  /* Logo agora à esquerda */
+  .logo {
+    position: static;
+    transform: none;
+    order: 1;
+  }
+
+  /* Esconder botões de usuário/conectar-se na nav principal do mobile */
+  .perfil-icon,
+  .user-menu {
+    display: none;
+  }
+
+  /* Menu mobile full height do topo até o final da tela */
+  .menu {
+    position: fixed;
+    top: 0;
+    right: -100%;
+    width: 280px;
+    height: 100vh;
+    background: var(--background-cream);
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0;
+    gap: 0;
+    box-shadow: -4px 0 20px rgba(25, 25, 112, 0.2);
+    transition: right 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    overflow-y: auto;
+    border-left: 1px solid rgba(25, 25, 112, 0.1);
+    left: auto;
+    /* Aumentar z-index do menu para que fique sobre o menu-toggle quando expandido */
+    z-index: 1000;
+  }
+
+  .menu.menu-open {
+    right: 0;
+  }
+
+  /* Header do menu com botão de usuário/conectar à esquerda e hamburger à direita */
+  .menu-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 1.5rem 1.5rem 1rem 1.5rem;
+    border-bottom: 1px solid rgba(25, 25, 112, 0.1);
+    margin-bottom: 1rem;
+    /* Garantir que o menu-header fique sobre o menu-toggle de trás */
+    position: relative;
+    z-index: 1001;
+    background: var(--background-cream);
+  }
+
+  .menu-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem;
+    color: var(--primary-blue);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.3s ease;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .menu-close:hover {
+    opacity: 0.7;
+  }
+
+  /* Hamburger no menu (3 risquinhos) */
+  .menu-close .hamburger-line {
+    width: 22px;
+    height: 2.5px;
+    background-color: var(--primary-blue);
+    border-radius: 2px;
+  }
+
+  .menu li {
+    width: 100%;
+    margin: 0;
+  }
+
+  .menu li a {
+    display: block;
+    padding: 1rem 1.5rem;
+    width: 100%;
+  }
+
+  .perfil-icon::before {
+    display: none;
+  }
+
+  /* Remover logo antiga do menu */
+  .menu-logo-container {
+    display: none;
+  }
+}

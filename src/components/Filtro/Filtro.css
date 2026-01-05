@@ -1,0 +1,490 @@
+.filtro-section {
+  max-width: 1600px;
+  margin: 0 auto 3rem;
+  padding: 0 2rem;
+}
+
+.filtro-container {
+  background: var(--white);
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 8px 24px rgba(25, 25, 112, 0.25);
+  font-family: "Sanchez", serif;
+}
+
+.filtro-principal {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr auto;
+  gap: 1rem;
+  align-items: center;
+  width: 100%;
+}
+
+.filtro-select,
+.filtro-input {
+  padding: 0.9rem 1.2rem;
+  border: 2px solid var(--primary-blue);
+  border-radius: 50px;
+  font-size: 1rem;
+  font-family: "Sanchez", serif;
+  color: var(--primary-blue);
+  background: var(--white);
+  transition: all 0.3s ease;
+  outline: none;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.filtro-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23191970' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  padding-right: 2.5rem;
+  cursor: pointer;
+}
+
+.filtro-input {
+  padding-right: 1.2rem;
+}
+
+.filtro-select:focus,
+.filtro-input:focus {
+  box-shadow: 0 0 0 3px rgba(25, 25, 112, 0.1);
+  border-color: #2a2a8f;
+}
+
+.filtro-select-small {
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--primary-blue);
+  border-radius: 50px;
+  font-size: 0.95rem;
+  font-family: "Sanchez", serif;
+  color: var(--primary-blue);
+  background: var(--white);
+  transition: all 0.3s ease;
+  outline: none;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.filtro-select-small:focus {
+  box-shadow: 0 0 0 3px rgba(25, 25, 112, 0.1);
+  border-color: #2a2a8f;
+}
+
+.filtro-input-small {
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--primary-blue);
+  border-radius: 50px;
+  font-size: 0.95rem;
+  font-family: "Sanchez", serif;
+  color: var(--primary-blue);
+  background: var(--white);
+  transition: all 0.3s ease;
+  outline: none;
+  flex: 1;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.filtro-input-small:focus {
+  box-shadow: 0 0 0 3px rgba(25, 25, 112, 0.1);
+  border-color: #2a2a8f;
+}
+
+.filtro-localizacao-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+}
+
+.sugestoes-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: var(--white);
+  border: 2px solid var(--primary-blue);
+  border-radius: 20px;
+  max-height: 250px;
+  overflow-y: auto;
+  z-index: 100;
+  box-shadow: 0 8px 24px rgba(25, 25, 112, 0.25);
+  margin-top: 0.25rem;
+  animation: dropdownSlide 0.2s ease;
+}
+
+@keyframes dropdownSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.sugestao-item {
+  padding: 1rem 1.2rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--primary-blue);
+  font-family: "Sanchez", serif;
+  font-size: 1rem;
+  border-bottom: 1px solid rgba(25, 25, 112, 0.1);
+}
+
+.sugestao-item:first-child {
+  border-radius: 18px 18px 0 0;
+}
+
+.sugestao-item:last-child {
+  border-bottom: none;
+  border-radius: 0 0 18px 18px;
+}
+
+.sugestao-item:hover {
+  background: rgba(25, 25, 112, 0.08);
+  padding-left: 1.5rem;
+}
+
+.sugestao-item.selected {
+  background: rgba(25, 25, 112, 0.12);
+  padding-left: 1.5rem;
+}
+
+.filtro-buscar-btn {
+  background: var(--primary-blue);
+  color: var(--white);
+  border: none;
+  padding: 0.9rem 2rem;
+  border-radius: 50px;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(25, 25, 112, 0.2);
+  font-family: "Sanchez", serif;
+  white-space: nowrap;
+}
+
+.filtro-buscar-btn:hover {
+  background: #2a2a8f;
+  box-shadow: 0 2px 12px rgba(25, 25, 112, 0.35);
+}
+
+.filtro-avancada-toggle {
+  background: transparent;
+  color: var(--primary-blue);
+  border: none;
+  padding: 0.75rem 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: "Sanchez", serif;
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.filtro-avancada-toggle:hover {
+  color: #2a2a8f;
+}
+
+.filtro-avancada {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 2px solid var(--background-cream);
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Reorganizar grid desktop com 5 colunas mantendo linhas sempre completas, responsivo com breakpoints para evitar espaços em branco */
+.filtro-avancada-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.filtro-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.filtro-group label {
+  font-weight: 600;
+  color: var(--primary-blue);
+  font-size: 0.95rem;
+}
+
+.filtro-range {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.filtro-range span {
+  color: var(--primary-blue);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.filtro-amenidades {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e8e8e8;
+}
+
+.filtro-amenidades h4 {
+  color: var(--primary-blue);
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  font-family: "Sanchez", serif;
+}
+
+.filtro-checkbox-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.filtro-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  color: var(--primary-blue);
+  font-family: "Sanchez", serif;
+  font-size: 0.95rem;
+  min-height: 48px;
+  padding: 0.5rem;
+  box-sizing: border-box;
+}
+
+.filtro-checkbox input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: var(--primary-blue);
+  flex-shrink: 0;
+}
+
+.filtro-checkbox span {
+  user-select: none;
+  line-height: 1.3;
+  flex: 1;
+}
+
+.filtro-limpar-btn {
+  background: transparent;
+  color: var(--primary-blue);
+  border: 2px solid var(--primary-blue);
+  padding: 0.75rem 1.5rem;
+  border-radius: 50px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: "Sanchez", serif;
+  margin-top: 1.5rem;
+}
+
+.filtro-limpar-btn:hover {
+  background: var(--primary-blue);
+  color: var(--white);
+  box-shadow: 0 2px 12px rgba(25, 25, 112, 0.35);
+}
+
+/* Campos compactos reduzidos para ID, Construtora e Previsão de Entrega */
+.filtro-input-compact,
+.filtro-select-compact {
+  padding: 0.65rem 0.9rem;
+  border: 2px solid var(--primary-blue);
+  border-radius: 50px;
+  font-size: 0.9rem;
+  font-family: "Sanchez", serif;
+  color: var(--primary-blue);
+  background: var(--white);
+  transition: all 0.3s ease;
+  outline: none;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.filtro-select-compact {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23191970' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  padding-right: 2.5rem;
+  cursor: pointer;
+}
+
+.filtro-input-compact:focus,
+.filtro-select-compact:focus {
+  box-shadow: 0 0 0 3px rgba(25, 25, 112, 0.1);
+  border-color: #2a2a8f;
+}
+
+.filtro-input-compact[type="date"] {
+  cursor: pointer;
+}
+
+.filtro-input-compact[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  color: var(--primary-blue);
+}
+
+/* Wrapper para Construtora e Previsão de Entrega lado a lado */
+.filtro-group-half {
+  display: contents;
+}
+
+.filtro-group-full {
+  grid-column: span 1;
+}
+
+@media (max-width: 1024px) {
+  .filtro-principal {
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  .filtro-buscar-btn {
+    grid-column: 1 / -1;
+  }
+
+  /* Tablet: 4 colunas para Linha 1 (5 campos com ID, Construtor, Previsão, Preço, Vagas) se encaixa bem, Linha 2 (4 campos) completa, Linha 3 (4 campos) completa */
+  .filtro-avancada-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .filtro-checkbox-grid {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  /* Em telas menores (900px), ajustar para 4 colunas garantindo que todas as linhas fiquem completas sem espaços em branco */
+  .filtro-avancada-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .filtro-section {
+    padding: 0 1rem;
+  }
+
+  .filtro-container {
+    padding: 1.5rem;
+  }
+
+  .filtro-principal {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  /* Mobile: 2 colunas, mas Construtora e Previsão de Entrega ocupam linha completa individualmente */
+  .filtro-avancada-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  /* Construtora e Previsão de Entrega cada um ocupa linha completa */
+  .filtro-group-half {
+    display: contents;
+  }
+
+  .filtro-group-half .filtro-group {
+    grid-column: span 2; /* Ocupa ambas as colunas = linha completa */
+  }
+
+  /* Ajustar tamanho visual dos campos para consistência */
+  .filtro-group-half .filtro-group .filtro-select-compact,
+  .filtro-group-half .filtro-group .filtro-input-compact[type="month"] {
+    padding: 0.65rem 0.85rem;
+    font-size: 0.88rem;
+    height: 42px;
+    display: flex;
+    align-items: center;
+  }
+
+  .filtro-checkbox-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.8rem;
+  }
+
+  .filtro-checkbox {
+    min-height: 44px;
+    font-size: 0.9rem;
+  }
+
+  .filtro-range {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .filtro-range span {
+    text-align: center;
+    font-size: 0.85rem;
+  }
+
+  .filtro-input-small {
+    padding: 0.65rem 0.85rem;
+    font-size: 0.9rem;
+  }
+
+  .filtro-select-small {
+    padding: 0.65rem 0.85rem;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Manter 2 colunas em telas muito pequenas para garantir linhas sempre completas */
+  .filtro-avancada-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .filtro-group:has(.filtro-range) {
+    grid-column: span 2;
+  }
+
+  /* Construtora e Previsão de Entrega ocupam linha completa em telas pequenas */
+  .filtro-group-half {
+    display: contents;
+  }
+
+  .filtro-group-half .filtro-group {
+    grid-column: span 2; /* Linha completa */
+  }
+}
+
+.filtro-group-full {
+  display: none;
+}

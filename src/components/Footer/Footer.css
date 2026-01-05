@@ -1,0 +1,224 @@
+/* Complete footer restructure with 5 sections and improved styling */
+.footer {
+  background: #2a2a2a;
+  color: #e0e0e0;
+  padding: 3rem 2rem 1.5rem;
+  font-family: "Sanchez", serif;
+  /* Replaced blue border with top shadow */
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.footer-content {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 2fr 1.5fr 1.5fr 1.5fr;
+  gap: 3rem;
+  margin-bottom: 2rem;
+}
+
+/* Logo section with name and slogan */
+.footer-logo-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Changed to horizontal layout on desktop, logo on left of text */
+.footer-logo-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Added link wrapper for logo */
+.footer-logo-link {
+  display: flex;
+  align-items: center;
+  transition: opacity 0.3s ease;
+  text-decoration: none;
+}
+
+.footer-logo-link:hover {
+  opacity: 0.8;
+}
+
+.footer-logo-img {
+  height: 50px;
+  width: auto;
+}
+
+/* Added wrapper for text content */
+.footer-logo-text-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.footer-logo-text h3 {
+  color: #f0efe2;
+  font-size: 1.8rem;
+  margin: 0;
+  font-weight: 700;
+}
+
+.footer-slogan {
+  color: #b0b0b0;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  font-style: italic;
+  margin: 0;
+}
+
+/* Section headings with better color */
+.footer-section h4 {
+  color: #f0efe2;
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+/* Contact section */
+.footer-contact {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.contact-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #b0b0b0;
+  font-size: 0.95rem;
+  transition: color 0.3s ease;
+  text-decoration: none;
+}
+
+.contact-item:hover {
+  color: #f0efe2;
+}
+
+/* Social media section */
+.footer-social {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.footer-social a {
+  color: #b0b0b0;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  background: rgba(240, 239, 226, 0.1);
+  text-decoration: none;
+}
+
+/* Alterada animação dos botões sociais: expandem ao invés de subir */
+.footer-social a:hover {
+  color: #f0efe2;
+  background: rgba(240, 239, 226, 0.2);
+  transform: scale(1.15);
+}
+
+.social-separator {
+  color: #666;
+  display: flex;
+  align-items: center;
+}
+
+/* Legal info section */
+.footer-legal {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.footer-legal a {
+  color: #b0b0b0;
+  font-size: 0.95rem;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.footer-legal a:hover {
+  color: #f0efe2;
+}
+
+/* Copyright section */
+.footer-bottom {
+  text-align: center;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(240, 239, 226, 0.1);
+}
+
+.footer-bottom p {
+  color: #888;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+@media (max-width: 1024px) {
+  .footer-content {
+    grid-template-columns: 1fr 1fr;
+    gap: 2.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .footer-content {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  .footer {
+    padding: 2rem 1rem 1rem;
+  }
+
+  .footer-logo-text h3 {
+    font-size: 1.5rem;
+  }
+
+  /* On mobile, logo stays on top and centered */
+  .footer-logo-container {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .footer-logo-text-wrapper {
+    align-items: center;
+    text-align: center;
+  }
+
+  /* Centered all footer elements on mobile */
+  .footer-logo-section {
+    align-items: center;
+    text-align: center;
+  }
+
+  .footer-logo-container {
+    align-items: center;
+  }
+
+  .footer-section {
+    text-align: center;
+  }
+
+  .footer-contact {
+    align-items: center;
+  }
+
+  .footer-social {
+    justify-content: center;
+  }
+
+  .footer-legal {
+    align-items: center;
+  }
+}

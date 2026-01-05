@@ -1,0 +1,370 @@
+/* New outer wrapper with standard padding like Filtro */
+.anunciar-wrapper {
+  background: var(--background_cream);
+  min-height: 100vh;
+  padding: 2.5rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.anunciar-container {
+  max-width: 1400px;
+  width: 100%;
+  background: var(--white);
+  border: 1px solid #f0f0f0;
+  border-radius: 20px;
+  box-shadow: 0 4px 12px rgba(25, 25, 112, 0.08);
+  overflow: hidden;
+}
+
+/* ==================== HERO SECTION ==================== */
+.anunciar-hero {
+  background: var(--white);
+  padding: 3rem 2rem;
+  text-align: center;
+}
+
+.anunciar-hero-content {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.anunciar-hero-title {
+  font-size: 2.6rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  font-family: "Sanchez", serif;
+  line-height: 1.2;
+  color: var(--primary-blue);
+}
+
+.anunciar-hero-text {
+  font-size: 1.05rem;
+  margin-bottom: 2rem;
+  font-family: "Sanchez", serif;
+  line-height: 1.6;
+  font-weight: 400;
+  color: var(--text-gray);
+}
+
+/* Reduced scale effect for subtle hover animation */
+.anunciar-btn-primary {
+  background: var(--primary-blue);
+  color: var(--white);
+  border: none;
+  padding: 1rem 2.5rem;
+  border-radius: 50px;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  font-family: "Sanchez", serif;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(25, 25, 112, 0.2);
+}
+
+.anunciar-btn-primary:hover {
+  transform: scale(1.04);
+  box-shadow: 0 8px 20px rgba(25, 25, 112, 0.3);
+}
+
+.anunciar-btn-primary:active {
+  transform: scale(1.02);
+}
+
+/* ==================== PROCESS SECTION ==================== */
+.anunciar-process {
+  padding: 3rem 2rem;
+  background: var(--white);
+  border-top: 1px solid #f0f0f0;
+}
+
+.anunciar-process-title {
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: var(--primary-blue);
+  text-align: center;
+  margin-bottom: 2.5rem;
+  font-family: "Sanchez", serif;
+}
+
+/* Updated grid to handle 3 cards with center alignment on single row */
+.anunciar-process-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Cards now have same scale animation as buttons + improved styling */
+.anunciar-process-card {
+  background: var(--white);
+  padding: 2rem;
+  border-radius: 16px;
+  text-align: center;
+  border: 1px solid #f0f0f0;
+  box-shadow: 0 4px 12px rgba(25, 25, 112, 0.08);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.anunciar-process-card:hover {
+  border-color: #e0e0e0;
+  box-shadow: 0 8px 20px rgba(25, 25, 112, 0.12);
+  transform: scale(1.04);
+}
+
+/* Icon wrapper with background circle */
+.anunciar-process-icon-wrapper {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #191970, #2a2a8f);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.anunciar-process-icon {
+  font-size: 2.2rem;
+  color: var(--white);
+}
+
+.anunciar-process-card-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--primary-blue);
+  margin-bottom: 0.75rem;
+  font-family: "Sanchez", serif;
+}
+
+.anunciar-process-card-text {
+  font-size: 0.95rem;
+  color: var(--text-gray);
+  line-height: 1.6;
+  font-family: "Sanchez", serif;
+  margin: 0;
+}
+
+/* ==================== CONTACT SECTION ==================== */
+.anunciar-contact {
+  background: var(--white);
+  padding: 3rem 2rem;
+  text-align: center;
+  border-top: 1px solid #f0f0f0;
+}
+
+.anunciar-contact-content {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.anunciar-contact-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--primary-blue);
+  margin-bottom: 0.75rem;
+  font-family: "Sanchez", serif;
+}
+
+/* Added descriptive text below title */
+.anunciar-contact-text {
+  font-size: 1rem;
+  color: var(--text-gray);
+  margin-bottom: 2rem;
+  font-family: "Sanchez", serif;
+  line-height: 1.6;
+}
+
+/* Reduced scale effect for WhatsApp button */
+.anunciar-btn-whatsapp {
+  background: #25d366;
+  color: var(--white);
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 50px;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  font-family: "Sanchez", serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(37, 211, 102, 0.25);
+  margin: 0 auto; /* Added for centering */
+}
+
+.anunciar-btn-whatsapp:hover {
+  transform: scale(1.04);
+  box-shadow: 0 8px 20px rgba(37, 211, 102, 0.35);
+}
+
+.anunciar-btn-whatsapp:active {
+  transform: scale(1.02);
+}
+
+.anunciar-whatsapp-icon {
+  font-size: 1.3rem;
+}
+
+/* ==================== RESPONSIVIDADE ==================== */
+@media (max-width: 1024px) {
+  /* Center last card when it wraps to single row */
+  .anunciar-process-grid {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
+
+  /* Center the third card when it wraps alone */
+  .anunciar-process-card:last-child:nth-child(3n + 1) {
+    grid-column: 1 / -1;
+    max-width: 300px;
+    margin: 0 auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .anunciar-wrapper {
+    padding: 2.5rem 1rem;
+  }
+
+  .anunciar-container {
+    border-radius: 16px;
+  }
+
+  .anunciar-hero {
+    padding: 2.5rem 1.5rem;
+  }
+
+  .anunciar-hero-title {
+    font-size: 2rem;
+    margin-bottom: 0.8rem;
+  }
+
+  .anunciar-hero-text {
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .anunciar-process {
+    padding: 2.5rem 1.5rem;
+  }
+
+  .anunciar-process-title {
+    font-size: 1.8rem;
+    margin-bottom: 2rem;
+  }
+
+  .anunciar-process-grid {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .anunciar-process-card {
+    padding: 1.5rem;
+  }
+
+  .anunciar-process-icon-wrapper {
+    width: 70px;
+    height: 70px;
+    margin-bottom: 1rem;
+  }
+
+  .anunciar-process-icon {
+    font-size: 1.8rem;
+  }
+
+  .anunciar-process-card-title {
+    font-size: 1.1rem;
+  }
+
+  .anunciar-contact {
+    padding: 2.5rem 1.5rem;
+  }
+
+  .anunciar-contact-title {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .anunciar-contact-text {
+    font-size: 0.95rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .anunciar-btn-primary,
+  .anunciar-btn-whatsapp {
+    padding: 0.8rem 1.8rem;
+    font-size: 0.95rem;
+  }
+
+  /* Mobile: ensure button text is centered with icon on left */
+  .anunciar-btn-whatsapp {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .anunciar-wrapper {
+    padding: 2.5rem 0.75rem;
+  }
+
+  .anunciar-hero {
+    padding: 2rem 1rem;
+  }
+
+  .anunciar-hero-title {
+    font-size: 1.5rem;
+  }
+
+  .anunciar-hero-text {
+    font-size: 0.95rem;
+  }
+
+  .anunciar-process {
+    padding: 2rem 1rem;
+  }
+
+  .anunciar-process-title {
+    font-size: 1.5rem;
+  }
+
+  .anunciar-process-grid {
+    grid-template-columns: 1fr;
+    gap: 1.2rem;
+  }
+
+  .anunciar-process-card {
+    padding: 1.5rem;
+  }
+
+  .anunciar-contact {
+    padding: 2rem 1rem;
+  }
+
+  .anunciar-contact-title {
+    font-size: 1.2rem;
+  }
+
+  .anunciar-btn-primary,
+  .anunciar-btn-whatsapp {
+    width: 100%;
+    padding: 0.75rem 1.5rem;
+  }
+
+  /* Mobile: ensure button displays properly with icon and centered text */
+  .anunciar-btn-whatsapp {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+}

@@ -1,0 +1,60 @@
+/* Ícone de casa mais moderno (não preenchido) e botão "Em breve" reposicionado */
+.alugar-container {
+  min-height: calc(100vh - 80px);
+  background-color: #f0efe2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+}
+
+.alugar-content {
+  text-align: center;
+  max-width: 600px;
+}
+
+.alugar-illustration {
+  position: relative;
+  margin-bottom: 40px;
+  display: inline-block;
+  height: 280px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Animação flutuante para o ícone da casa */
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-30px);
+  }
+}
+
+/* Animação de expansão e diminuição para o texto "Em Breve" */
+@keyframes pulse-scale {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.15);
+    opacity: 0.8;
+  }
+}
+
+/* Estilo do ícone da casa com animação flutuante */
+.floating-home {
+  animation: float 3s ease-in-out infinite;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Removido .coming-soon-badge e suas animações */
+
+/* remover estilos da casa em CSS já que agora usa ícone IoHomeOutline */

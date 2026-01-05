@@ -1,0 +1,352 @@
+/* Estilos padronizados para corresponder ao design de Curtidas */
+.ocultar-imovel-page {
+  min-height: calc(100vh - 80px);
+  background-color: var(--background-cream);
+  padding: 3rem 0;
+}
+
+.ocultar-imovel-page h2 {
+  font-family: "Sanchez", serif;
+  color: var(--primary-blue);
+  text-align: center;
+  font-size: 2.5rem;
+  margin-bottom: 3rem;
+  font-weight: 600;
+  position: relative;
+  display: inline-block;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.ocultar-imovel-page h2::after {
+  content: "";
+  position: absolute;
+  bottom: -10px;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background-color: var(--primary-blue);
+  border-radius: 2px;
+}
+
+.ocultar-imovel-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 2.5rem;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 0 2rem;
+  justify-items: center;
+}
+
+.ocultar-imovel-page > p {
+  text-align: center;
+  font-family: "Sanchez", serif;
+  color: var(--primary-blue);
+  font-size: 1.2rem;
+  margin-top: 3rem;
+}
+
+/* Card de propriedade */
+.property-card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--white);
+  border-radius: 20px;
+  overflow: hidden;
+  border: none;
+  transition: box-shadow 0.3s ease;
+  cursor: pointer;
+  box-shadow: 0 10px 28px rgba(25, 25, 112, 0.3);
+  display: flex;
+  flex-direction: column;
+}
+
+.property-card:hover {
+  box-shadow: 0 14px 36px rgba(25, 25, 112, 0.4);
+}
+
+.image-container {
+  position: relative;
+  height: 260px;
+  overflow: hidden;
+  background: #f5f5f5;
+}
+
+.carousel {
+  position: relative;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.property-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.property-image:hover {
+  transform: scale(1.1);
+}
+
+.no-image {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #e8e8e8;
+  color: var(--text-gray);
+  font-weight: 500;
+  font-family: "Sanchez", serif;
+}
+
+/* Corrigindo setas para ficarem idênticas ao ImovelModal - brancas com sombra azul */
+.carousel-btn {
+  position: absolute;
+  background: transparent;
+  color: var(--white);
+  border: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 0;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  font-weight: 700;
+  opacity: 0.5;
+}
+
+.carousel-btn:hover {
+  opacity: 1;
+  text-shadow: 0 0 4px rgba(25, 25, 112, 0.2),
+    1px 1px 6px rgba(25, 25, 112, 0.2), -1px -1px 6px rgba(25, 25, 112, 0.2),
+    1px -1px 6px rgba(25, 25, 112, 0.2), -1px 1px 6px rgba(25, 25, 112, 0.2),
+    2px 0 6px rgba(25, 25, 112, 0.2), -2px 0 6px rgba(25, 25, 112, 0.2),
+    0 2px 6px rgba(25, 25, 112, 0.2), 0 -2px 6px rgba(25, 25, 112, 0.2),
+    0 0 12px rgba(25, 25, 112, 0.15);
+  transform: scale(1.15);
+}
+
+.carousel-btn.prev {
+  left: 15px;
+}
+
+.carousel-btn.next {
+  right: 15px;
+}
+
+.property-content {
+  padding: 1.5rem;
+  font-family: "Sanchez", serif;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.property-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  gap: 1rem;
+}
+
+.property-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--primary-blue);
+  margin: 0;
+  flex: 1;
+  font-family: "Sanchez", serif;
+}
+
+.property-price-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.2rem;
+}
+
+.property-price {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--primary-blue);
+  font-family: "Sanchez", serif;
+}
+
+.property-price-original {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: #666;
+  text-decoration: line-through;
+  font-family: "Sanchez", serif;
+}
+
+.property-price-discount {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #dc3545;
+  font-family: "Sanchez", serif;
+}
+
+.property-details {
+  margin-bottom: 1rem;
+  color: var(--primary-blue);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.property-details > div {
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.property-lancamento {
+  color: var(--primary-blue);
+  font-weight: 700;
+  order: -1;
+}
+
+.property-entrega {
+  color: var(--primary-blue);
+  font-weight: 500;
+}
+
+.property-features {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e8e8e8;
+}
+
+.feature {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--primary-blue);
+  font-family: "Sanchez", serif;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 0.75rem;
+  align-items: stretch;
+  margin-top: auto;
+}
+
+.contact-button {
+  flex: 1;
+  background: var(--primary-blue);
+  color: var(--white);
+  border: none;
+  padding: 0.8rem 1.3rem;
+  border-radius: 50px;
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(25, 25, 112, 0.2);
+  font-family: "Sanchez", serif;
+}
+
+.contact-button:hover {
+  background: #2a2a8f;
+  box-shadow: 0 2px 12px rgba(25, 25, 112, 0.35);
+}
+
+.contact-button:active {
+  background: #1f1f6e;
+}
+
+/* Botão de visibilidade */
+.visibility-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 50px;
+}
+
+.visibility-btn:hover {
+  transform: scale(1.2);
+  background: rgba(25, 25, 112, 0.05);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.empty-illustration {
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.4;
+}
+
+.empty-state h3 {
+  font-family: "Sanchez", serif;
+  color: var(--primary-blue);
+  font-size: 1.8rem;
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.empty-state p {
+  font-family: "Sanchez", serif;
+  color: var(--primary-blue);
+  font-size: 1.1rem;
+  opacity: 0.8;
+}
+
+@media (max-width: 1200px) {
+  .ocultar-imovel-grid {
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 2rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .ocultar-imovel-page {
+    padding: 2rem 0;
+  }
+
+  .ocultar-imovel-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    padding: 0 1rem;
+  }
+
+  .ocultar-imovel-page h2 {
+    font-size: 2rem;
+  }
+
+  .property-card {
+    max-width: 100%;
+  }
+
+  .property-features {
+    grid-template-columns: 1fr;
+  }
+}

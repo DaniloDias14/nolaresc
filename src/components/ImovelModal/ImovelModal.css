@@ -1,0 +1,810 @@
+/* Complete redesign with professional structure and modern aesthetics */
+
+/* Overlay */
+.imovel-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65); /* Overlay com fundo mais claro no desktop */
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Main Container */
+.imovel-modal-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  max-width: 1400px;
+  max-height: 90vh;
+  background: #ffffff;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
+.imovel-modal-header {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 100;
+  display: flex;
+  gap: 8px;
+  padding: 16px;
+}
+
+/* Botões Compartilhar e X com cor azul, sem fundo, e animação igual ao curtir */
+.imovel-modal-close-btn,
+.imovel-modal-share-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: #191970;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.imovel-modal-close-btn:hover,
+.imovel-modal-share-btn:hover {
+  transform: scale(1.15);
+  background: rgba(128, 128, 128, 0.15);
+}
+
+/* Botão de editar com mesmo estilo dos outros botões do header */
+.imovel-modal-edit-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: #191970;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.imovel-modal-edit-btn:hover {
+  transform: scale(1.15);
+  background: rgba(128, 128, 128, 0.15);
+}
+
+/* Mensagem "Link copiado!" com cantos mais arredondados (50px) */
+.imovel-copy-notification {
+  position: absolute;
+  top: 72px;
+  right: 16px;
+  z-index: 101;
+  background: #191970;
+  color: #ffffff;
+  padding: 10px 18px;
+  border-radius: 50px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(25, 25, 112, 0.3);
+  animation: slideInDown 0.3s ease;
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Content Layout */
+.imovel-modal-content {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Gallery Section */
+.imovel-gallery-section {
+  display: flex;
+  flex-direction: column;
+  background: #f8f9fa;
+  overflow: hidden;
+}
+
+.imovel-gallery-main {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000000;
+  touch-action: pan-y pinch-zoom;
+  user-select: none;
+}
+
+.imovel-gallery-track {
+  display: flex;
+  height: 100%;
+  width: 100%;
+}
+
+.imovel-gallery-slide {
+  min-width: 100%;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.imovel-gallery-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
+}
+
+.imovel-image-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: #ffffff;
+  font-size: 0.875rem;
+}
+
+.imovel-no-photos {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  color: #6c757d;
+  padding: 40px;
+}
+
+.imovel-no-photos p {
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+/* Setas sem contorno no estado normal, apenas transparência */
+.imovel-gallery-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 38px;
+  height: 38px;
+  border-radius: 0;
+  border: none;
+  background: transparent;
+  color: #ffffff;
+  font-size: 1.4rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 10;
+  opacity: 0.5;
+}
+
+/* Diminuir bastante a intensidade da sombra das setas */
+.imovel-gallery-arrow:hover:not(.disabled) {
+  opacity: 1;
+  text-shadow: 0 0 4px rgba(25, 25, 112, 0.2),
+    1px 1px 6px rgba(25, 25, 112, 0.2), -1px -1px 6px rgba(25, 25, 112, 0.2),
+    1px -1px 6px rgba(25, 25, 112, 0.2), -1px 1px 6px rgba(25, 25, 112, 0.2),
+    2px 0 6px rgba(25, 25, 112, 0.2), -2px 0 6px rgba(25, 25, 112, 0.2),
+    0 2px 6px rgba(25, 25, 112, 0.2), 0 -2px 6px rgba(25, 25, 112, 0.2),
+    0 0 12px rgba(25, 25, 112, 0.15);
+  transform: translateY(-50%) scale(1.15);
+}
+
+.imovel-gallery-arrow.disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.imovel-gallery-arrow-prev {
+  left: 20px;
+}
+
+.imovel-gallery-arrow-next {
+  right: 20px;
+}
+
+/* Photo Counter */
+.imovel-photo-counter {
+  display: none;
+}
+
+/* Gallery Dots - Mobile - Estilo mais simples com sombra azul fraca */
+.imovel-gallery-dots {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  z-index: 10;
+  padding: 8px 12px;
+  border-radius: 20px;
+}
+
+.imovel-gallery-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  transition: all 0.3s ease;
+  pointer-events: none;
+}
+
+.imovel-gallery-dot.active {
+  background: #ffffff;
+  box-shadow: 0 0 8px rgba(25, 25, 112, 0.4);
+}
+
+/* Miniaturas com altura fixa, linha cinza no topo e separador à direita */
+.imovel-gallery-thumbnails {
+  display: flex;
+  gap: 8px;
+  padding: 16px;
+  background: #ffffff;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e0 #f8f9fa;
+  scroll-behavior: smooth;
+  border-top: 2px solid #e9ecef;
+  height: 98px;
+  align-items: center;
+}
+
+.imovel-thumbnail {
+  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: none; /* Removida borda branca da miniatura */
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+  background: #f8f9fa;
+}
+
+.imovel-thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.imovel-thumbnail:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Miniatura ativa com sombra mais suave */
+.imovel-thumbnail.active {
+  border: none;
+  box-shadow: 0 0 8px rgba(25, 25, 112, 0.7), 0 0 16px rgba(25, 25, 112, 0.6);
+}
+
+/* Info Section */
+.imovel-info-section {
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  overflow: hidden;
+}
+
+.imovel-info-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 32px 28px;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e0 #f8f9fa;
+}
+
+.imovel-info-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.imovel-info-scroll::-webkit-scrollbar-track {
+  background: #f8f9fa;
+}
+
+.imovel-info-scroll::-webkit-scrollbar-thumb {
+  background: #cbd5e0;
+  border-radius: 3px;
+}
+
+/* Header Card */
+.imovel-header-card {
+  margin-bottom: 24px;
+  padding-bottom: 24px;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.imovel-title-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.imovel-title {
+  flex: 1;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #191970;
+  margin: 0;
+  line-height: 1.3;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.imovel-id-inline {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #6c757d;
+  background: #f8f9fa;
+  padding: 4px 12px;
+  border-radius: 20px;
+}
+
+/* Adicionados estilos para container de preço com desconto */
+.imovel-price-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.imovel-price {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #191970;
+  margin-bottom: 12px;
+}
+
+.imovel-price-original {
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: #6c757d;
+  text-decoration: line-through;
+}
+
+.imovel-price-discount {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #dc3545;
+}
+
+/* ID ao lado do título */
+.imovel-meta-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.imovel-meta-tag {
+  padding: 6px 14px;
+  background: #e7f3ff;
+  color: #191970;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  border-radius: 20px;
+}
+
+/* Mudando cor da tag de lançamento de verde para azul */
+.imovel-meta-lancamento {
+  background: #e7f3ff;
+  color: #191970;
+}
+
+/* Adicionado estilo especial para tag de lançamento */
+.imovel-meta-lancamento {
+  background: #e7f3ff;
+  color: #191970;
+}
+
+/* Adicionado estilo para informação de entrega */
+.imovel-entrega-info {
+  margin-top: 8px;
+  padding: 10px 14px;
+  background: #e7f3ff;
+  color: #191970;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border-radius: 12px;
+  display: inline-block;
+}
+
+/* Info Cards */
+.imovel-info-card {
+  margin-bottom: 24px;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  border: 1px solid #e9ecef;
+}
+
+.imovel-card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #191970;
+  margin: 0 0 16px 0;
+}
+
+.imovel-description {
+  color: #495057;
+  line-height: 1.6;
+  font-size: 0.9375rem;
+  margin: 0;
+}
+
+/* Info Grid */
+.imovel-info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.imovel-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.imovel-info-label {
+  font-size: 0.8125rem;
+  color: #6c757d;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.imovel-info-value {
+  font-size: 0.9375rem;
+  color: #212529;
+  font-weight: 600;
+}
+
+/* Features Grid */
+.imovel-features-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Características com border-radius mais arredondado (50px) */
+.imovel-feature-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 14px;
+  background: #ffffff;
+  color: #191970;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  border-radius: 50px;
+  border: 1px solid #dee2e6;
+}
+
+/* Location Grid */
+.imovel-location-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.imovel-location-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Map */
+.imovel-map-container {
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.imovel-map-iframe {
+  width: 100%;
+  height: 280px;
+  border: none;
+}
+
+/* Action Buttons */
+.imovel-actions {
+  display: flex;
+  gap: 12px;
+  padding: 16px 28px;
+  background: #ffffff;
+  border-top: 2px solid #e9ecef;
+  flex-shrink: 0;
+  height: 98px; /* Altura fixa ao invés de min-height */
+  align-items: center;
+}
+
+/* Botão de contato com flex: 1 para ocupar espaço até ficar perto do botão curtir */
+.imovel-contact-btn {
+  flex: 1;
+  padding: 14px 24px;
+  background: #191970;
+  color: #ffffff;
+  border: none;
+  border-radius: 50px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(25, 25, 112, 0.2);
+}
+
+.imovel-contact-btn:hover {
+  background: #2a2a8f;
+  box-shadow: 0 2px 12px rgba(25, 25, 112, 0.35);
+}
+
+/* Botão de curtir com estrutura igual ao Destaque - altura e largura ajustadas */
+.imovel-like-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0.4rem;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 46px;
+  width: 46px;
+  height: 46px;
+}
+
+.imovel-like-btn:hover {
+  transform: scale(1.15);
+  background: rgba(128, 128, 128, 0.15);
+}
+
+.imovel-like-btn.liked {
+  background: transparent;
+}
+
+.imovel-like-btn.liked:hover {
+  background: rgba(128, 128, 128, 0.15);
+}
+
+.imovel-like-btn.heart-burst {
+  animation: heartBurst 0.6s ease;
+}
+
+@keyframes heartBurst {
+  0% {
+    transform: scale(1);
+  }
+  25% {
+    transform: scale(1.4) rotate(-15deg);
+  }
+  50% {
+    transform: scale(1.2) rotate(15deg);
+  }
+  75% {
+    transform: scale(1.3) rotate(-10deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+/* Mobile Responsive */
+@media (max-width: 968px) {
+  .imovel-modal-overlay {
+    padding: 0;
+    align-items: flex-start;
+  }
+
+  .imovel-modal-container {
+    max-width: 100%;
+    max-height: 100%;
+    height: 100%;
+    border-radius: 0;
+  }
+
+  .imovel-modal-content {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr;
+  }
+
+  /* Gallery com z-index maior para ficar sobre info-section */
+  .imovel-gallery-section {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+
+  .imovel-gallery-main {
+    height: 100vw;
+    min-height: 100vw;
+  }
+
+  .imovel-gallery-slide {
+    aspect-ratio: 1 / 1;
+  }
+
+  .imovel-gallery-arrow {
+    display: none;
+  }
+
+  .imovel-gallery-thumbnails {
+    display: none;
+  }
+
+  .imovel-gallery-dots {
+    display: flex;
+  }
+
+  .imovel-photo-counter {
+    display: none;
+  }
+
+  .imovel-modal-header {
+    position: fixed;
+    top: 0;
+    right: 0;
+    z-index: 101;
+  }
+
+  /* Botões no mobile sem fundo branco, mantendo transparente */
+  .imovel-modal-close-btn,
+  .imovel-modal-share-btn,
+  .imovel-modal-edit-btn /* Added edit button to mobile styles */ {
+    background: transparent; /* Botões no mobile sem fundo branco, mantendo transparente */
+    color: #191970;
+    backdrop-filter: none;
+  }
+
+  .imovel-info-scroll {
+    padding: 24px 20px 100px 20px;
+  }
+
+  .imovel-title {
+    font-size: 1.5rem;
+  }
+
+  .imovel-price {
+    font-size: 1.75rem;
+  }
+
+  .imovel-card-title {
+    font-size: 1rem;
+  }
+
+  .imovel-info-grid,
+  .imovel-location-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .imovel-map-iframe {
+    height: 220px;
+  }
+
+  .imovel-actions {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background: #ffffff;
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
+    padding: 16px 20px;
+  }
+
+  .imovel-contact-btn {
+    max-width: none;
+  }
+
+  .imovel-id-inline {
+    font-size: 0.75rem;
+  }
+
+  /* Ajustes de tamanho para preços no mobile */
+  .imovel-price-original {
+    font-size: 1rem;
+  }
+
+  .imovel-price-discount {
+    font-size: 1.75rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .imovel-title {
+    font-size: 1.25rem;
+  }
+
+  .imovel-price {
+    font-size: 1.5rem;
+  }
+
+  .imovel-card-title {
+    font-size: 1rem;
+  }
+
+  .imovel-info-scroll {
+    padding: 20px 16px 100px 16px;
+  }
+
+  .imovel-actions {
+    padding: 12px 16px;
+  }
+
+  .imovel-contact-btn {
+    padding: 12px 20px;
+    font-size: 0.9375rem;
+  }
+
+  .imovel-like-btn {
+    width: 46px;
+    height: 46px;
+  }
+
+  /* Ajustes adicionais para telas pequenas */
+  .imovel-price-original {
+    font-size: 0.9375rem;
+  }
+
+  .imovel-price-discount {
+    font-size: 1.5rem;
+  }
+}
+
+/* Desktop - Hide dots, show thumbnails and counter */
+@media (min-width: 969px) {
+  .imovel-gallery-dots {
+    display: none;
+  }
+
+  .imovel-gallery-thumbnails {
+    display: flex;
+  }
+
+  .imovel-photo-counter {
+    display: none;
+  }
+}

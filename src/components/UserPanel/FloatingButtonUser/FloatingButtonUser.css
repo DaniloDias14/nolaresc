@@ -1,0 +1,38 @@
+/* Updated to match FloatingButtonAdmin animations - only color and shadow, no scale */
+.user-floating-button {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  background-color: #191970;
+  color: #fff;
+  padding: 0;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(25, 25, 112, 0.4);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+}
+
+.user-floating-button svg {
+  stroke: #fff;
+  stroke-width: 2;
+  filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.5));
+}
+
+.user-floating-button:hover {
+  background-color: #2a2a8f;
+  box-shadow: 0 6px 25px rgba(25, 25, 112, 0.6);
+}
+
+/* Ocultar FloatingButton user no mobile */
+@media (max-width: 968px) {
+  .user-floating-button {
+    display: none;
+  }
+}

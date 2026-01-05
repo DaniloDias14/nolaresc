@@ -1,0 +1,39 @@
+@import url("https://fonts.googleapis.com/css2?family=Sanchez:ital@0;1&display=swap");
+
+:root {
+  --primary-blue: #191970;
+  --background-cream: #f0efe2;
+  --white: #ffffff;
+  --text-dark: #1a1a1a;
+  --text-gray: #666666;
+  --red-accent: #dc3545;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: "Sanchez", serif;
+  margin: 0;
+  background: var(--background-cream);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: var(--text-dark);
+}
+
+main {
+  min-height: calc(100vh - 200px);
+}
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}

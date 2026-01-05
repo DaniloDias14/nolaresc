@@ -1,0 +1,340 @@
+/* Overlay */
+.adicionar-admin-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(8px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  padding: 20px;
+}
+
+/* Main Modal Container */
+.adicionar-admin-modal {
+  position: relative;
+  background: #ffffff;
+  padding: 2.5rem;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 440px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  font-family: "Sanchez", serif;
+  animation: slideUp 0.25s ease-out;
+  will-change: transform, opacity;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Logo container */
+.adicionar-admin-logo-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.adicionar-admin-logo {
+  height: 50px;
+  width: auto;
+  object-fit: contain;
+}
+
+/* Close button */
+.adicionar-admin-close-btn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: #191970;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 10;
+  padding: 0;
+}
+
+.adicionar-admin-close-btn:hover {
+  transform: scale(1.15);
+  background: rgba(128, 128, 128, 0.15);
+}
+
+.adicionar-admin-close-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Title */
+.adicionar-admin-title {
+  font-size: 1.4rem;
+  color: #191970;
+  margin: 0 0 1.5rem 0;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* Form */
+.adicionar-admin-form {
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.adicionar-admin-form-group {
+  margin-bottom: 1.5rem;
+}
+
+.adicionar-admin-form-group label {
+  display: block;
+  font-weight: 700;
+  color: #191970;
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+}
+
+/* Input Fields */
+.adicionar-admin-input {
+  width: 100%;
+  padding: 0.9rem 1rem;
+  border-radius: 12px;
+  border: 2px solid #e9ecef;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  background: #ffffff;
+  font-family: "Sanchez", serif;
+  color: #191970;
+}
+
+.adicionar-admin-input::placeholder {
+  color: #adb5bd;
+}
+
+.adicionar-admin-input:focus {
+  outline: none;
+  border-color: #191970;
+  box-shadow: 0 0 0 3px rgba(25, 25, 112, 0.08);
+}
+
+.adicionar-admin-input.input-error {
+  border-color: #e74c3c;
+  background-color: #fff5f5;
+}
+
+.adicionar-admin-input.input-error:focus {
+  border-color: #c0392b;
+  box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1);
+}
+
+/* Password input container with toggle button */
+.adicionar-admin-password-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.adicionar-admin-password-toggle {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  color: #191970;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: all 0.3s ease;
+}
+
+.adicionar-admin-password-toggle:hover {
+  transform: scale(1.1);
+  color: #2a2a8f;
+}
+
+.adicionar-admin-password-toggle:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Field Error */
+.adicionar-admin-field-error {
+  color: #e74c3c;
+  font-size: 0.8125rem;
+  margin-top: 0.35rem;
+  padding-left: 0.25rem;
+}
+
+/* Error Message */
+.adicionar-admin-error-msg {
+  color: #e74c3c;
+  background-color: #fadbd8;
+  padding: 1rem;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+  border-left: 4px solid #e74c3c;
+  animation: shake 0.4s ease;
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-5px);
+  }
+  75% {
+    transform: translateX(5px);
+  }
+}
+
+/* Success Message */
+.adicionar-admin-success-msg {
+  color: #27ae60;
+  background-color: #d5f4e6;
+  padding: 1rem;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+  border-left: 4px solid #27ae60;
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Button */
+.adicionar-admin-btn {
+  width: 100%;
+  padding: 0.95rem;
+  background: #191970;
+  color: #ffffff;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 1rem;
+  margin-top: 1.5rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(25, 25, 112, 0.15);
+  font-family: "Sanchez", serif;
+}
+
+.adicionar-admin-btn:hover {
+  background: #2a2a8f;
+  box-shadow: 0 2px 12px rgba(25, 25, 112, 0.25);
+}
+
+.adicionar-admin-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .adicionar-admin-overlay {
+    padding: 10px;
+  }
+
+  .adicionar-admin-logo-container {
+    margin-bottom: 1rem;
+  }
+
+  .adicionar-admin-logo {
+    height: 40px;
+  }
+
+  .adicionar-admin-modal {
+    width: 100%;
+    max-width: 100%;
+    max-height: 90vh;
+    padding: 2rem 1.5rem;
+  }
+
+  .adicionar-admin-close-btn {
+    width: 40px;
+    height: 40px;
+  }
+
+  .adicionar-admin-title {
+    font-size: 1.25rem;
+    margin-bottom: 1.2rem;
+  }
+
+  .adicionar-admin-input {
+    padding: 0.85rem 0.9rem;
+  }
+
+  .adicionar-admin-btn {
+    padding: 0.9rem;
+    margin-top: 1.2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .adicionar-admin-modal {
+    padding: 1.5rem 1.25rem;
+  }
+
+  .adicionar-admin-close-btn {
+    width: 36px;
+    height: 36px;
+    top: 12px;
+    right: 12px;
+  }
+
+  .adicionar-admin-title {
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+  }
+
+  .adicionar-admin-form-group label {
+    font-size: 0.9rem;
+  }
+
+  .adicionar-admin-input {
+    padding: 0.8rem 0.85rem;
+    font-size: 1rem;
+  }
+
+  .adicionar-admin-btn {
+    padding: 0.85rem;
+    font-size: 0.95rem;
+    margin-top: 1rem;
+  }
+}
