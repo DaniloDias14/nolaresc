@@ -10,6 +10,11 @@ import { v4 as uuidv4 } from "uuid";
 import { enviarEmail } from "./src/emails/email.js";
 import jwt from "jsonwebtoken"; // Import jwt
 
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 dotenv.config();
 const app = express();
 const PORT = process.env.BACKEND_PORT || 5000;
@@ -18,7 +23,7 @@ const JWT_SECRET = process.env.JWT_SECRET; // Ensure JWT_SECRET is defined in yo
 app.use(cors());
 app.use(express.json());
 
-app.use(express.static("public"));
+app.use(express.static(path.join(__dirname, "dist")));
 
 // =========================
 // FUNÇÕES AUXILIARES
@@ -2386,4 +2391,8 @@ app.use((err, req, res, next) => {
 // Inicia o servidor
 app.listen(PORT, () => {
   console.log(`Servidor rodando na porta ${PORT}`);
+});
+
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "dist", "index.html"));
 });
