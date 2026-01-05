@@ -2394,8 +2394,8 @@ app.use((err, req, res, next) => {
 // arquivos estáticos do Vite
 app.use(express.static(path.join(process.cwd(), "dist")));
 
-// fallback SPA — Express 5 SAFE
-app.use((req, res) => {
+// fallback SPA — Express 5 SAFE (não usar "*")
+app.get(/^(?!\/api).*/, (req, res) => {
   res.sendFile(path.join(process.cwd(), "dist", "index.html"));
 });
 
