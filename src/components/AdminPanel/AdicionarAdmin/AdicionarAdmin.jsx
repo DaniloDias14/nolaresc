@@ -100,7 +100,7 @@ const AdicionarAdmin = ({ showPopup, setShowPopup }) => {
     }
 
     try {
-      await axios.post("http://localhost:5000/api/admin/adicionar-admin", {
+      await axios.post("/api/admin/adicionar-admin", {
         nome,
         email,
         senha,

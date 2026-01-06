@@ -32,7 +32,7 @@ const Curtidas = ({ usuario }) => {
   useEffect(() => {
     if (!usuario || usuario.tipo_usuario === "adm") return;
 
-    fetch(`http://localhost:5000/api/curtidas/${usuario.id}`)
+    fetch(`/api/curtidas/${usuario.id}`)
       .then((res) => res.json())
       .then(async (data) => {
         const sortedData = data.sort(
@@ -45,9 +45,9 @@ const Curtidas = ({ usuario }) => {
         for (const c of sortedData) {
           curtidasMap[c.imovel_id] = true;
 
-          const imovel = await fetch(
-            `http://localhost:5000/api/imoveis/${c.imovel_id}`
-          ).then((res) => res.json());
+          const imovel = await fetch(`/api/imoveis/${c.imovel_id}`).then(
+            (res) => res.json()
+          );
           imoveisCompletos.push({ ...imovel, fotos: imovel.fotos || [] });
         }
 
@@ -68,9 +68,9 @@ const Curtidas = ({ usuario }) => {
     });
 
     try {
-      const novoImovel = await fetch(
-        `http://localhost:5000/api/imoveis/${imovelId}`
-      ).then((res) => res.json());
+      const novoImovel = await fetch(`/api/imoveis/${imovelId}`).then((res) =>
+        res.json()
+      );
 
       setImoveis((prev) =>
         prev.map((i) =>
@@ -91,10 +91,9 @@ const Curtidas = ({ usuario }) => {
     if (!usuario) return;
 
     try {
-      const res = await fetch(
-        `http://localhost:5000/api/curtidas/${usuario.id}/${imovelId}`,
-        { method: "POST" }
-      );
+      const res = await fetch(`/api/curtidas/${usuario.id}/${imovelId}`, {
+        method: "POST",
+      });
 
       if (!res.ok) throw new Error("Erro ao alternar curtida");
 
@@ -189,7 +188,7 @@ const Curtidas = ({ usuario }) => {
                       🡰
                     </button>
                     <img
-                      src={`http://localhost:5000${
+                      src={`${
                         imovel.fotos[imagemAtual[imovel.imovel_id] || 0]
                           ?.caminho_foto
                       }`}

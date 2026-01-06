@@ -709,7 +709,7 @@ const LoginModal = ({ onClose, setAdmLogged, setUser }) => {
     }
 
     try {
-      const response = await axios.post("http://localhost:5000/api/login", {
+      const response = await axios.post("/api/login", {
         email: loginEmail,
         senha: loginSenha,
       });
@@ -795,7 +795,7 @@ const LoginModal = ({ onClose, setAdmLogged, setUser }) => {
     }
 
     try {
-      await axios.post("http://localhost:5000/api/register", {
+      await axios.post("/api/register", {
         nome: registerNome,
         email: registerEmail,
         senha: registerSenha,
@@ -844,7 +844,7 @@ const LoginModal = ({ onClose, setAdmLogged, setUser }) => {
     }
 
     try {
-      await axios.post("http://localhost:5000/api/email/verificacao/validar", {
+      await axios.post("/api/email/verificacao/validar", {
         email: emailCadastroVerificacao,
         codigo: codigoCompleto,
       });
@@ -898,18 +898,15 @@ const LoginModal = ({ onClose, setAdmLogged, setUser }) => {
       const codigoCompleto = codigoCadastroVerificacao.join("");
 
       // MODIFICADO: Enviando aceitouTermos e aceitouPrivacidade para o backend
-      await axios.post(
-        "http://localhost:5000/api/email/verificacao/confirmar-cadastro",
-        {
-          email: emailCadastroVerificacao,
-          codigo: codigoCompleto,
-          aceitouTermos,
-          aceitouPrivacidade,
-          nome: dadosCadastroTemp.nome, // Mantido para compatibilidade com o backend
-          senha: dadosCadastroTemp.senha, // Mantido para compatibilidade com o backend
-          tipo_usuario: dadosCadastroTemp.tipo_usuario, // Mantido para compatibilidade com o backend
-        }
-      );
+      await axios.post("/api/email/verificacao/confirmar-cadastro", {
+        email: emailCadastroVerificacao,
+        codigo: codigoCompleto,
+        aceitouTermos,
+        aceitouPrivacidade,
+        nome: dadosCadastroTemp.nome, // Mantido para compatibilidade com o backend
+        senha: dadosCadastroTemp.senha, // Mantido para compatibilidade com o backend
+        tipo_usuario: dadosCadastroTemp.tipo_usuario, // Mantido para compatibilidade com o backend
+      });
 
       setTab("login");
       setEtapaCadastro("form");
@@ -945,12 +942,9 @@ const LoginModal = ({ onClose, setAdmLogged, setUser }) => {
     setCarregando(true);
 
     try {
-      const response = await axios.post(
-        "http://localhost:5000/api/email/verificacao/solicitar",
-        {
-          email: emailCadastroVerificacao,
-        }
-      );
+      const response = await axios.post("/api/email/verificacao/solicitar", {
+        email: emailCadastroVerificacao,
+      });
 
       if (response.data.success) {
         setCodigoCadastroVerificacao(["", "", "", "", ""]);
@@ -998,12 +992,9 @@ const LoginModal = ({ onClose, setAdmLogged, setUser }) => {
     }
 
     try {
-      await axios.post(
-        "http://localhost:5000/api/email/recuperacao/solicitar",
-        {
-          email: recuperacaoEmail,
-        }
-      );
+      await axios.post("/api/email/recuperacao/solicitar", {
+        email: recuperacaoEmail,
+      });
 
       setEtapaRecuperacao("codigo");
       setError("");
@@ -1042,13 +1033,10 @@ const LoginModal = ({ onClose, setAdmLogged, setUser }) => {
     }
 
     try {
-      const response = await axios.post(
-        "http://localhost:5000/api/email/recuperacao/validar",
-        {
-          email: recuperacaoEmail,
-          codigo: codigoCompleto,
-        }
-      );
+      const response = await axios.post("/api/email/recuperacao/validar", {
+        email: recuperacaoEmail,
+        codigo: codigoCompleto,
+      });
 
       if (response.data.success) {
         setTokenRecuperacao(response.data.token);
@@ -1110,7 +1098,7 @@ const LoginModal = ({ onClose, setAdmLogged, setUser }) => {
 
     try {
       await axios.post(
-        "http://localhost:5000/api/email/recuperacao/redefinir",
+        "/api/email/recuperacao/redefinir",
         {
           email: recuperacaoEmail,
           novaSenha,

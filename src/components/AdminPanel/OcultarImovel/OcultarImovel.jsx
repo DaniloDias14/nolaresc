@@ -33,7 +33,7 @@ const OcultarImovel = ({ usuario }) => {
   useEffect(() => {
     if (!usuario || usuario.tipo_usuario !== "adm") return;
 
-    fetch("http://localhost:5000/api/imoveis/ocultos")
+    fetch("/api/imoveis/ocultos")
       .then((res) => res.json())
       .then((data) => {
         const imoveisCompletos = data.map((imovel) => ({
@@ -56,9 +56,9 @@ const OcultarImovel = ({ usuario }) => {
     });
 
     try {
-      const novoImovel = await fetch(
-        `http://localhost:5000/api/imoveis/${imovelId}`
-      ).then((res) => res.json());
+      const novoImovel = await fetch(`/api/imoveis/${imovelId}`).then((res) =>
+        res.json()
+      );
 
       setImoveis((prev) =>
         prev.map((i) =>
@@ -80,13 +80,11 @@ const OcultarImovel = ({ usuario }) => {
 
     try {
       // Busca o imóvel atual
-      const imovelRes = await fetch(
-        `http://localhost:5000/api/imoveis/${imovelId}`
-      );
+      const imovelRes = await fetch(`/api/imoveis/${imovelId}`);
       const imovel = await imovelRes.json();
 
       // Atualiza visibilidade
-      const res = await fetch(`http://localhost:5000/api/imoveis/${imovelId}`, {
+      const res = await fetch(`/api/imoveis/${imovelId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -178,7 +176,7 @@ const OcultarImovel = ({ usuario }) => {
                       🡰
                     </button>
                     <img
-                      src={`http://localhost:5000${
+                      src={`${
                         imovel.fotos[imagemAtual[imovel.imovel_id] || 0]
                           ?.caminho_foto
                       }`}

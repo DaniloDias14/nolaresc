@@ -150,9 +150,7 @@ const EditarImovel = ({
 
     const carregarImovel = async () => {
       try {
-        const res = await axios.get(
-          `http://localhost:5000/api/imoveis/${imovelId}`
-        );
+        const res = await axios.get(`/api/imoveis/${imovelId}`);
         const imovel = res.data;
         const caracteristicas = imovel.caracteristicas || {};
 
@@ -562,10 +560,7 @@ const EditarImovel = ({
       };
 
       try {
-        await axios.put(
-          `http://localhost:5000/api/imoveis/${imovelId}`,
-          imovelPayload
-        );
+        await axios.put(`/api/imoveis/${imovelId}`, imovelPayload);
         imovelUpdated = true;
       } catch (err) {
         console.error("[v0] Erro ao atualizar imóvel principal:", err);
@@ -596,7 +591,7 @@ const EditarImovel = ({
 
       try {
         await axios.put(
-          `http://localhost:5000/api/imoveis_caracteristicas/${imovelId}`,
+          `/api/imoveis_caracteristicas/${imovelId}`,
           caracteristicasPayload
         );
         caracteristicasUpdated = true;
@@ -610,7 +605,7 @@ const EditarImovel = ({
 
       for (const fotoId of fotosToRemove) {
         try {
-          await axios.delete(`http://localhost:5000/api/fotos/${fotoId}`);
+          await axios.delete(`/api/fotos/${fotoId}`);
         } catch (err) {
           console.error("[v0] Erro ao deletar foto (continuando):", err);
           // Continua mesmo se falhar
@@ -624,13 +619,9 @@ const EditarImovel = ({
 
       if (formDataFotos.has("fotos")) {
         try {
-          await axios.post(
-            `http://localhost:5000/api/imoveis/${imovelId}/upload`,
-            formDataFotos,
-            {
-              headers: { "Content-Type": "multipart/form-data" },
-            }
-          );
+          await axios.post(`/api/imoveis/${imovelId}/upload`, formDataFotos, {
+            headers: { "Content-Type": "multipart/form-data" },
+          });
           fotosUpdated = true;
         } catch (uploadErr) {
           console.error(
@@ -1146,7 +1137,7 @@ const EditarImovel = ({
                               <img
                                 src={
                                   isExisting
-                                    ? `http://localhost:5000${foto.caminho_foto}`
+                                    ? `${foto.caminho_foto}`
                                     : URL.createObjectURL(foto) ||
                                       "/placeholder.svg"
                                 }

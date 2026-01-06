@@ -56,7 +56,7 @@ const ImovelModal = ({
 
     const imovelId = imovel.id ?? imovel.imovel_id;
 
-    fetch(`http://localhost:5000/api/imoveis/${imovelId}`)
+    fetch(`/api/imoveis/${imovelId}`)
       .then((res) => res.json())
       .then((data) => {
         setCaracteristicas(data.caracteristicas || {});
@@ -76,7 +76,7 @@ const ImovelModal = ({
     // Pré-carregar todas as imagens
     fotos.forEach((foto) => {
       const img = new Image();
-      img.src = `http://localhost:5000${foto.caminho_foto}`;
+      img.src = `${foto.caminho_foto}`;
     });
   }, [imovel]);
 
@@ -87,17 +87,17 @@ const ImovelModal = ({
 
     // Pré-carregar imagem atual
     const currentImg = new Image();
-    currentImg.src = `http://localhost:5000${fotos[fotoIndex]?.caminho_foto}`;
+    currentImg.src = `${fotos[fotoIndex]?.caminho_foto}`;
 
     // Pré-carregar imagem anterior
     const prevIndex = fotoIndex - 1 >= 0 ? fotoIndex - 1 : fotos.length - 1;
     const prevImg = new Image();
-    prevImg.src = `http://localhost:5000${fotos[prevIndex]?.caminho_foto}`;
+    prevImg.src = `${fotos[prevIndex]?.caminho_foto}`;
 
     // Pré-carregar próxima imagem
     const nextIndex = fotoIndex + 1 < fotos.length ? fotoIndex + 1 : 0;
     const nextImg = new Image();
-    nextImg.src = `http://localhost:5000${fotos[nextIndex]?.caminho_foto}`;
+    nextImg.src = `${fotos[nextIndex]?.caminho_foto}`;
 
     // Pré-carregar também a segunda próxima imagem para scroll mais rápido
     const nextNextIndex =
@@ -105,7 +105,7 @@ const ImovelModal = ({
         ? fotoIndex + 2
         : (fotoIndex + 2) % fotos.length;
     const nextNextImg = new Image();
-    nextNextImg.src = `http://localhost:5000${fotos[nextNextIndex]?.caminho_foto}`;
+    nextNextImg.src = `${fotos[nextNextIndex]?.caminho_foto}`;
   }, [fotoIndex, imovel]);
 
   useEffect(() => {
@@ -281,9 +281,7 @@ const ImovelModal = ({
       const estaCurtido = curtidas[imovel.id ?? imovel.imovel_id];
 
       const res = await fetch(
-        `http://localhost:5000/api/curtidas/${usuario.id}/${
-          imovel.id ?? imovel.imovel_id
-        }`,
+        `/api/curtidas/${usuario.id}/${imovel.id ?? imovel.imovel_id}`,
         {
           method: "POST",
         }
@@ -526,7 +524,7 @@ const ImovelModal = ({
                     {fotos.map((foto, index) => (
                       <div key={index} className="imovel-gallery-slide">
                         <img
-                          src={`http://localhost:5000${foto.caminho_foto}`}
+                          src={`${foto.caminho_foto}`}
                           alt={`Foto ${index + 1}`}
                           className="imovel-gallery-image"
                           onError={() =>
@@ -614,7 +612,7 @@ const ImovelModal = ({
                     aria-label={`Ver foto ${index + 1}`}
                   >
                     <img
-                      src={`http://localhost:5000${foto.caminho_foto}`}
+                      src={`${foto.caminho_foto}`}
                       alt={`Miniatura ${index + 1}`}
                     />
                   </button>

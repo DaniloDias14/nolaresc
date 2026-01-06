@@ -53,25 +53,19 @@ const Dashboard = () => {
     setLoading(true);
     try {
       // Fetch user statistics
-      const usuariosRes = await axios.get(
-        "http://localhost:5000/api/estatisticas/usuarios"
-      );
+      const usuariosRes = await axios.get("/api/estatisticas/usuarios");
       setUsuariosStats(usuariosRes.data);
 
       // Fetch property statistics
-      const imoveisRes = await axios.get(
-        "http://localhost:5000/api/estatisticas/imoveis"
-      );
+      const imoveisRes = await axios.get("/api/estatisticas/imoveis");
       setImoveisStats(imoveisRes.data);
 
       // Fetch active users
-      const ativosRes = await axios.get(
-        "http://localhost:5000/api/sessoes/ativos"
-      );
+      const ativosRes = await axios.get("/api/sessoes/ativos");
       setUsuariosAtivos(ativosRes.data.count);
 
       const maisCurtidoRes = await axios.get(
-        "http://localhost:5000/api/estatisticas/imovel-mais-curtido"
+        "/api/estatisticas/imovel-mais-curtido"
       );
       setImovelMaisCurtido(maisCurtidoRes.data);
 
@@ -86,9 +80,7 @@ const Dashboard = () => {
 
   const fetchPicoUsuarios = async () => {
     try {
-      const picoRes = await axios.get(
-        `http://localhost:5000/api/sessoes/pico/${dataSelecionada}`
-      );
+      const picoRes = await axios.get(`/api/sessoes/pico/${dataSelecionada}`);
       setPicoUsuarios(picoRes.data.pico);
     } catch (error) {
       console.error("Erro ao buscar pico de usuários:", error);

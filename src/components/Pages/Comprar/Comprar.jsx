@@ -25,7 +25,7 @@ const Comprar = ({ usuario }) => {
 
   // Fetch all properties
   useEffect(() => {
-    fetch("http://localhost:5000/api/imoveis")
+    fetch("/api/imoveis")
       .then((res) => res.json())
       .then((data) => {
         setImoveis(data);
@@ -36,7 +36,7 @@ const Comprar = ({ usuario }) => {
 
   useEffect(() => {
     const handleImovelUpdated = () => {
-      fetch("http://localhost:5000/api/imoveis")
+      fetch("/api/imoveis")
         .then((res) => res.json())
         .then((data) => {
           setImoveis(data);
@@ -64,7 +64,7 @@ const Comprar = ({ usuario }) => {
   // Fetch user likes
   useEffect(() => {
     if (usuario) {
-      fetch(`http://localhost:5000/api/curtidas/${usuario.id}`)
+      fetch(`/api/curtidas/${usuario.id}`)
         .then((res) => res.json())
         .then((data) => {
           const curtidasMap = {};
@@ -412,10 +412,9 @@ const Comprar = ({ usuario }) => {
     }
 
     try {
-      const res = await fetch(
-        `http://localhost:5000/api/curtidas/${usuario.id}/${imovelId}`,
-        { method: "POST" }
-      );
+      const res = await fetch(`/api/curtidas/${usuario.id}/${imovelId}`, {
+        method: "POST",
+      });
       if (!res.ok) throw new Error("Erro ao alternar curtida");
 
       const likeBtn = document.querySelector(`[data-imovel-id="${imovelId}"]`);

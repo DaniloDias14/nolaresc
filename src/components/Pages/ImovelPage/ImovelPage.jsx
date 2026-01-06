@@ -29,7 +29,7 @@ const ImovelPage = ({ usuario }) => {
       headers.Authorization = `Bearer ${token}`;
     }
 
-    fetch(`http://localhost:5000/api/imoveis/${id}`, { headers })
+    fetch(`/api/imoveis/${id}`, { headers })
       .then((res) => {
         if (res.status === 403) {
           // Property is hidden and user is not admin
@@ -52,7 +52,7 @@ const ImovelPage = ({ usuario }) => {
   // Fetch user likes if logged in
   useEffect(() => {
     if (usuario) {
-      fetch(`http://localhost:5000/api/curtidas/${usuario.id}`)
+      fetch(`/api/curtidas/${usuario.id}`)
         .then((res) => res.json())
         .then((data) => {
           const curtidasMap = {};

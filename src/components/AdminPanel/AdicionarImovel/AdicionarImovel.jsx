@@ -482,10 +482,7 @@ const AdicionarImovel = ({ showPopup, setShowPopup }) => {
         coordenadas: formData.coordenadas || null,
       };
 
-      const createRes = await axios.post(
-        "http://localhost:5000/api/imoveis",
-        imovelPayload
-      );
+      const createRes = await axios.post("/api/imoveis", imovelPayload);
       const imovelId = createRes.data?.id;
       if (!imovelId)
         throw new Error("ID do imóvel não retornado pelo servidor");
@@ -512,10 +509,7 @@ const AdicionarImovel = ({ showPopup, setShowPopup }) => {
         }, {}),
       };
 
-      await axios.post(
-        "http://localhost:5000/api/imoveis_caracteristicas",
-        caracteristicasPayload
-      );
+      await axios.post("/api/imoveis_caracteristicas", caracteristicasPayload);
 
       const formDataFotos = new FormData();
       formData.fotos.forEach((foto) => {
@@ -524,13 +518,9 @@ const AdicionarImovel = ({ showPopup, setShowPopup }) => {
 
       if (formDataFotos.has("fotos")) {
         try {
-          await axios.post(
-            `http://localhost:5000/api/imoveis/${imovelId}/upload`,
-            formDataFotos,
-            {
-              headers: { "Content-Type": "multipart/form-data" },
-            }
-          );
+          await axios.post(`/api/imoveis/${imovelId}/upload`, formDataFotos, {
+            headers: { "Content-Type": "multipart/form-data" },
+          });
         } catch (uploadErr) {
           console.error("Erro ao fazer upload das fotos:", uploadErr);
           throw new Error(

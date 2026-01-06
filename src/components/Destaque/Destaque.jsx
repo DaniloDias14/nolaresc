@@ -25,7 +25,7 @@ const Destaque = ({ usuario, curtidas, setCurtidas, onImovelClick }) => {
 
   // Fetch featured properties
   useEffect(() => {
-    fetch("http://localhost:5000/api/imoveis")
+    fetch("/api/imoveis")
       .then((res) => res.json())
       .then((data) => {
         const destaques = data.filter((imovel) => imovel.destaque === true);
@@ -56,10 +56,9 @@ const Destaque = ({ usuario, curtidas, setCurtidas, onImovelClick }) => {
     }
 
     try {
-      const res = await fetch(
-        `http://localhost:5000/api/curtidas/${usuario.id}/${imovelId}`,
-        { method: "POST" }
-      );
+      const res = await fetch(`/api/curtidas/${usuario.id}/${imovelId}`, {
+        method: "POST",
+      });
       if (!res.ok) throw new Error("Erro ao alternar curtida");
 
       const likeBtn = document.querySelector(
