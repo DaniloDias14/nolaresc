@@ -1,5 +1,8 @@
 "use client";
 import "./SobreNos.css";
+import logo_azul from "../../../assets/img/logo/logo_azul.png";
+import danilo_dias from "../../../assets/img/equipe/danilo_dias.jpg";
+import marco_dias from "../../../assets/img/equipe/marco_dias.jpg";
 import {
   FaFacebook,
   FaInstagram,
@@ -68,13 +71,13 @@ const SobreNos = ({ usuario }) => {
       id: 1,
       nome: "Danilo Dias",
       cargo: "Fundador",
-      foto: "/src/assets/img/equipe/danilo_dias.jpg",
+      foto: danilo_dias,
     },
     {
       id: 2,
       nome: "Marco Dias",
       cargo: "Corretor de Imóveis - CRECI: 53498",
-      foto: "/src/assets/img/equipe/marco_dias.jpg",
+      foto: marco_dias,
     },
   ];
 
@@ -111,7 +114,7 @@ const SobreNos = ({ usuario }) => {
           <div className="sobrenos-introducao-content">
             <div className="sobrenos-logo-container">
               <img
-                src="/src/assets/img/logo/logo_azul.png"
+                src={logo_azul || "/placeholder.svg"}
                 alt="Nolare Logo"
                 className="sobrenos-logo"
               />
