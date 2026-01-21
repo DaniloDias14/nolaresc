@@ -23,7 +23,21 @@ const JWT_SECRET = process.env.JWT_SECRET; // Ensure JWT_SECRET is defined in yo
 app.use(cors());
 app.use(express.json());
 
+// Serve arquivos estáticos do build do Vite
 app.use(express.static(path.join(__dirname, "dist")));
+
+// Serve arquivos estáticos da pasta public (fotos dos imóveis)
+// Rota principal para novos uploads: /fotos_imoveis/arquivo.jpg
+app.use(
+  "/fotos_imoveis",
+  express.static(path.join(__dirname, "public", "fotos_imoveis")),
+);
+
+// Rota de compatibilidade para registros antigos no banco: /public/fotos_imoveis/arquivo.jpg
+app.use(
+  "/public/fotos_imoveis",
+  express.static(path.join(__dirname, "public", "fotos_imoveis")),
+);
 
 // =========================
 // FUNÇÕES AUXILIARES
@@ -78,7 +92,7 @@ const verificarBloqueioTentativasEmail = async (email, tipo) => {
     const result = await pool.query(
       `SELECT bloqueado_ate, tentativas_restantes FROM tentativas_verificacao_email
        WHERE email = $1 AND tipo = $2`,
-      [email, tipo]
+      [email, tipo],
     );
 
     if (result.rows.length === 0) {
@@ -90,7 +104,7 @@ const verificarBloqueioTentativasEmail = async (email, tipo) => {
 
     if (dados.bloqueado_ate && agora < new Date(dados.bloqueado_ate)) {
       const tempoRestante = Math.ceil(
-        (new Date(dados.bloqueado_ate) - agora) / 1000
+        (new Date(dados.bloqueado_ate) - agora) / 1000,
       );
       return {
         bloqueado: true,
@@ -115,14 +129,14 @@ const registrarTentativaErradaEmail = async (email, tipo) => {
     const result = await pool.query(
       `SELECT id, tentativas_restantes FROM tentativas_verificacao_email
        WHERE email = $1 AND tipo = $2`,
-      [email, tipo]
+      [email, tipo],
     );
 
     if (result.rows.length === 0) {
       await pool.query(
         `INSERT INTO tentativas_verificacao_email (email, tipo, tentativas_restantes, ultima_tentativa)
          VALUES ($1, $2, $3, NOW())`,
-        [email, tipo, 4] // 5 - 1 = 4 tentativas restantes
+        [email, tipo, 4], // 5 - 1 = 4 tentativas restantes
       );
       return;
     }
@@ -130,7 +144,7 @@ const registrarTentativaErradaEmail = async (email, tipo) => {
     const record = result.rows[0];
     const tentativasRestantes = Math.max(
       0,
-      (record.tentativas_restantes || 5) - 1
+      (record.tentativas_restantes || 5) - 1,
     );
 
     if (tentativasRestantes === 0) {
@@ -139,14 +153,14 @@ const registrarTentativaErradaEmail = async (email, tipo) => {
         `UPDATE tentativas_verificacao_email
          SET tentativas_restantes = $1, bloqueado_ate = $2, ultima_tentativa = NOW()
          WHERE id = $3`,
-        [tentativasRestantes, bloqueadoAte, record.id]
+        [tentativasRestantes, bloqueadoAte, record.id],
       );
     } else {
       await pool.query(
         `UPDATE tentativas_verificacao_email
          SET tentativas_restantes = $1, ultima_tentativa = NOW()
          WHERE id = $2`,
-        [tentativasRestantes, record.id]
+        [tentativasRestantes, record.id],
       );
     }
   } catch (err) {
@@ -191,7 +205,7 @@ app.post("/api/login", async (req, res) => {
     // DB QUERY: Registra sessão de login
     await pool.query(
       "INSERT INTO usuario_sessoes (usuario_id, data_login, ativo) VALUES ($1, CURRENT_TIMESTAMP, TRUE)",
-      [user.id]
+      [user.id],
     );
 
     const dataHora = new Date().toLocaleString("pt-BR", {
@@ -232,7 +246,7 @@ app.post("/api/logout", async (req, res) => {
       `UPDATE usuario_sessoes
        SET data_logout = CURRENT_TIMESTAMP, ativo = FALSE
        WHERE usuario_id = $1 AND ativo = TRUE`,
-      [usuario_id]
+      [usuario_id],
     );
 
     res.json({ message: "Logout realizado com sucesso" });
@@ -267,7 +281,7 @@ app.post("/api/register", async (req, res) => {
     // DB QUERY: Verifica se email já existe
     const emailExiste = await pool.query(
       "SELECT id FROM usuarios WHERE email = $1",
-      [email]
+      [email],
     );
     const emailJaExiste = emailExiste.rows.length > 0;
 
@@ -289,7 +303,7 @@ app.post("/api/register", async (req, res) => {
         expiracao,
         aceitouTermosValue,
         aceitouPrivacidadeValue,
-      ]
+      ],
     );
 
     if (!emailJaExiste) {
@@ -301,7 +315,7 @@ app.post("/api/register", async (req, res) => {
         {
           nome: nome,
           codigo: codigo,
-        }
+        },
       );
     }
 
@@ -329,7 +343,7 @@ const verificarLimiteSolicitacao = async (usuarioId, tipo) => {
       `SELECT criado_em FROM email_conta
        WHERE usuario_id = $1 AND tipo = $2 AND usado = FALSE
        ORDER BY criado_em DESC LIMIT 1`,
-      [usuarioId, tipo]
+      [usuarioId, tipo],
     );
 
     if (result.rows.length === 0) {
@@ -366,7 +380,7 @@ const criarRegistroFalsoVerificacao = async (email) => {
       `INSERT INTO email_conta (usuario_id, tipo, token, expiracao, tentativas_restantes, usado)
        VALUES ($1, $2, $3, $4, $5, $6)
        ON CONFLICT DO NOTHING`,
-      [-1, "verificacao_falsa_" + email, codigoFalso, expiracao, 5, false]
+      [-1, "verificacao_falsa_" + email, codigoFalso, expiracao, 5, false],
     );
   } catch (err) {
     console.error("Erro ao criar registro falso de verificação:", err);
@@ -379,7 +393,7 @@ const verificarBloqueioTentativas = async (usuarioId, tipo) => {
     // BUSCA O USUÁRIO PELO ID PARA OBTER O EMAIL
     const usuarioResult = await pool.query(
       "SELECT email FROM usuarios WHERE id = $1",
-      [usuarioId]
+      [usuarioId],
     );
     if (usuarioResult.rows.length === 0) {
       return { bloqueado: false, tentativasRestantes: 5 }; // Usuário não encontrado
@@ -397,7 +411,7 @@ const registrarTentativaErrada = async (usuarioId, tipo) => {
     // BUSCA O USUÁRIO PELO ID PARA OBTER O EMAIL
     const usuarioResult = await pool.query(
       "SELECT email FROM usuarios WHERE id = $1",
-      [usuarioId]
+      [usuarioId],
     );
     if (usuarioResult.rows.length === 0) {
       return; // Usuário não encontrado
@@ -420,7 +434,7 @@ app.post("/api/email/verificacao/solicitar", async (req, res) => {
     // DB QUERY: Busca usuário
     const userResult = await pool.query(
       "SELECT id, nome, email FROM usuarios WHERE email = $1",
-      [email]
+      [email],
     );
 
     if (userResult.rows.length === 0) {
@@ -436,7 +450,7 @@ app.post("/api/email/verificacao/solicitar", async (req, res) => {
 
     const limiteSolicitacao = await verificarLimiteSolicitacao(
       user.id,
-      "verificacao"
+      "verificacao",
     );
     if (!limiteSolicitacao.permitido) {
       return res.status(429).json({
@@ -454,13 +468,13 @@ app.post("/api/email/verificacao/solicitar", async (req, res) => {
     // DB QUERY: Marca tokens anteriores como usados
     await pool.query(
       "UPDATE email_conta SET usado = TRUE WHERE usuario_id = $1 AND tipo = $2",
-      [user.id, "verificacao"]
+      [user.id, "verificacao"],
     );
 
     // DB QUERY: Cria novo token com campos de controle de tentativas
     await pool.query(
       "INSERT INTO email_conta (usuario_id, tipo, token, expiracao, tentativas_restantes) VALUES ($1, $2, $3, $4, $5)",
-      [user.id, "verificacao", token, expiracao, 5]
+      [user.id, "verificacao", token, expiracao, 5],
     );
 
     // Não enviamos email se o usuário já existe - isso é uma medida de segurança
@@ -487,7 +501,7 @@ app.post("/api/email/verificacao/validar", async (req, res) => {
   try {
     const pendente = await pool.query(
       "SELECT * FROM email_verificacao_pendente WHERE email = $1",
-      [email]
+      [email],
     );
 
     if (pendente.rows.length > 0) {
@@ -495,7 +509,7 @@ app.post("/api/email/verificacao/validar", async (req, res) => {
 
       const verificacao = await verificarBloqueioTentativasEmail(
         email,
-        "cadastro"
+        "cadastro",
       );
       if (verificacao.bloqueado) {
         return res.status(429).json({
@@ -519,7 +533,7 @@ app.post("/api/email/verificacao/validar", async (req, res) => {
 
         const verificacaoAtualizada = await verificarBloqueioTentativasEmail(
           email,
-          "cadastro"
+          "cadastro",
         );
 
         if (verificacaoAtualizada.bloqueado) {
@@ -547,14 +561,14 @@ app.post("/api/email/verificacao/validar", async (req, res) => {
     // DB QUERY: Busca usuário (para recuperação de senha)
     const userResult = await pool.query(
       "SELECT id FROM usuarios WHERE email = $1",
-      [email]
+      [email],
     );
 
     if (userResult.rows.length === 0) {
       // Email não existe - aplicar sistema de tentativas para emails inexistentes
       const verificacao = await verificarBloqueioTentativasEmail(
         email,
-        "recuperacao"
+        "recuperacao",
       );
       if (verificacao.bloqueado) {
         return res.status(429).json({
@@ -569,7 +583,7 @@ app.post("/api/email/verificacao/validar", async (req, res) => {
 
       const verificacaoAtualizada = await verificarBloqueioTentativasEmail(
         email,
-        "recuperacao"
+        "recuperacao",
       );
 
       if (verificacaoAtualizada.bloqueado) {
@@ -591,7 +605,7 @@ app.post("/api/email/verificacao/validar", async (req, res) => {
 
     const verificacao = await verificarBloqueioTentativas(
       user.id,
-      "verificacao"
+      "verificacao",
     );
     if (verificacao.bloqueado) {
       return res.status(429).json({
@@ -604,7 +618,7 @@ app.post("/api/email/verificacao/validar", async (req, res) => {
     // DB QUERY: Busca token mais recente
     const tokenResult = await pool.query(
       "SELECT * FROM email_conta WHERE usuario_id = $1 AND tipo = $2 AND usado = FALSE ORDER BY criado_em DESC LIMIT 1",
-      [user.id, "verificacao"]
+      [user.id, "verificacao"],
     );
 
     if (tokenResult.rows.length === 0) {
@@ -629,7 +643,7 @@ app.post("/api/email/verificacao/validar", async (req, res) => {
 
       const verificacaoAtualizada = await verificarBloqueioTentativas(
         user.id,
-        "verificacao"
+        "verificacao",
       );
 
       if (verificacaoAtualizada.bloqueado) {
@@ -681,7 +695,7 @@ app.post("/api/email/verificacao/confirmar-cadastro", async (req, res) => {
     // DB QUERY: Busca registro pendente
     const pendente = await pool.query(
       "SELECT * FROM email_verificacao_pendente WHERE email = $1",
-      [email]
+      [email],
     );
 
     if (pendente.rows.length === 0) {
@@ -694,7 +708,7 @@ app.post("/api/email/verificacao/confirmar-cadastro", async (req, res) => {
 
     const emailExisteUsers = await pool.query(
       "SELECT id FROM usuarios WHERE email = $1",
-      [email]
+      [email],
     );
     const emailJaExistia = emailExisteUsers.rows.length > 0;
 
@@ -702,7 +716,7 @@ app.post("/api/email/verificacao/confirmar-cadastro", async (req, res) => {
       // É um email que já existe - aplicar sistema de tentativas
       const verificacao = await verificarBloqueioTentativas(
         emailExisteUsers.rows[0].id,
-        "verificacao"
+        "verificacao",
       );
       if (verificacao.bloqueado) {
         return res.status(429).json({
@@ -715,12 +729,12 @@ app.post("/api/email/verificacao/confirmar-cadastro", async (req, res) => {
       // Registrar tentativa errada
       await registrarTentativaErrada(
         emailExisteUsers.rows[0].id,
-        "verificacao"
+        "verificacao",
       );
 
       const verificacaoAtualizada = await verificarBloqueioTentativas(
         emailExisteUsers.rows[0].id,
-        "verificacao"
+        "verificacao",
       );
 
       if (verificacaoAtualizada.bloqueado) {
@@ -759,19 +773,19 @@ app.post("/api/email/verificacao/confirmar-cadastro", async (req, res) => {
         registroPendente.email,
         registroPendente.senha,
         registroPendente.tipo_usuario,
-      ]
+      ],
     );
 
     // Marcar como verificado
     await pool.query(
       "UPDATE email_verificacao_pendente SET verificado = TRUE WHERE email = $1",
-      [email]
+      [email],
     );
 
     // Deletar o registro pendente após confirmação
     await pool.query(
       "DELETE FROM email_verificacao_pendente WHERE email = $1",
-      [email]
+      [email],
     );
 
     res.status(201).json({
@@ -796,7 +810,7 @@ app.post("/api/email/recuperacao/solicitar", async (req, res) => {
     // DB QUERY: Busca usuário
     const userResult = await pool.query(
       "SELECT id, nome, email FROM usuarios WHERE email = $1",
-      [email]
+      [email],
     );
 
     // Criar registro pendente com código inválido para bloquear qualquer tentativa
@@ -818,7 +832,7 @@ app.post("/api/email/recuperacao/solicitar", async (req, res) => {
 
     const limiteSolicitacao = await verificarLimiteSolicitacao(
       user.id,
-      "recuperacao"
+      "recuperacao",
     );
     if (!limiteSolicitacao.permitido) {
       return res.status(429).json({
@@ -834,13 +848,13 @@ app.post("/api/email/recuperacao/solicitar", async (req, res) => {
     // DB QUERY: Marca tokens anteriores como usados
     await pool.query(
       "UPDATE email_conta SET usado = TRUE WHERE usuario_id = $1 AND tipo = $2",
-      [user.id, "recuperacao"]
+      [user.id, "recuperacao"],
     );
 
     // DB QUERY: Cria novo token com o código de 5 dígitos
     await pool.query(
       "INSERT INTO email_conta (usuario_id, tipo, token, expiracao, tentativas_restantes) VALUES ($1, $2, $3, $4, $5)",
-      [user.id, "recuperacao", codigo, expiracao, 5]
+      [user.id, "recuperacao", codigo, expiracao, 5],
     );
 
     // Envia e-mail
@@ -851,7 +865,7 @@ app.post("/api/email/recuperacao/solicitar", async (req, res) => {
       {
         nome: user.nome,
         codigo: codigo,
-      }
+      },
     );
 
     res.json({
@@ -875,14 +889,14 @@ app.post("/api/email/recuperacao/validar", async (req, res) => {
     // DB QUERY: Busca usuário
     const userResult = await pool.query(
       "SELECT id FROM usuarios WHERE email = $1",
-      [email]
+      [email],
     );
 
     if (userResult.rows.length === 0) {
       // Email não existe - aplicar sistema de tentativas para emails inexistentes
       const verificacao = await verificarBloqueioTentativasEmail(
         email,
-        "recuperacao"
+        "recuperacao",
       );
       if (verificacao.bloqueado) {
         return res.status(429).json({
@@ -897,7 +911,7 @@ app.post("/api/email/recuperacao/validar", async (req, res) => {
 
       const verificacaoAtualizada = await verificarBloqueioTentativasEmail(
         email,
-        "recuperacao"
+        "recuperacao",
       );
 
       if (verificacaoAtualizada.bloqueado) {
@@ -919,7 +933,7 @@ app.post("/api/email/recuperacao/validar", async (req, res) => {
 
     const verificacao = await verificarBloqueioTentativas(
       user.id,
-      "recuperacao"
+      "recuperacao",
     );
     if (verificacao.bloqueado) {
       return res.status(429).json({
@@ -932,7 +946,7 @@ app.post("/api/email/recuperacao/validar", async (req, res) => {
     // DB QUERY: Busca token mais recente
     const tokenResult = await pool.query(
       "SELECT * FROM email_conta WHERE usuario_id = $1 AND tipo = $2 AND usado = FALSE ORDER BY criado_em DESC LIMIT 1",
-      [user.id, "recuperacao"]
+      [user.id, "recuperacao"],
     );
 
     if (tokenResult.rows.length === 0) {
@@ -958,7 +972,7 @@ app.post("/api/email/recuperacao/validar", async (req, res) => {
 
       const verificacaoAtualizada = await verificarBloqueioTentativas(
         user.id,
-        "recuperacao"
+        "recuperacao",
       );
 
       if (verificacaoAtualizada.bloqueado) {
@@ -1002,7 +1016,7 @@ app.post("/api/email/recuperacao/redefinir", async (req, res) => {
     // DB QUERY: Busca usuário
     const userResult = await pool.query(
       "SELECT id FROM usuarios WHERE email = $1",
-      [email]
+      [email],
     );
 
     if (userResult.rows.length === 0) {
@@ -1013,7 +1027,7 @@ app.post("/api/email/recuperacao/redefinir", async (req, res) => {
 
     const tokenResult = await pool.query(
       "SELECT * FROM email_conta WHERE id = $1 AND usuario_id = $2 AND tipo = $3 AND usado = FALSE",
-      [token, user.id, "recuperacao"]
+      [token, user.id, "recuperacao"],
     );
 
     if (tokenResult.rows.length === 0) {
@@ -1062,7 +1076,7 @@ app.get("/api/sessoes/ativos", async (req, res) => {
   try {
     // DB QUERY: Conta sessões ativas únicas
     const result = await pool.query(
-      "SELECT COUNT(DISTINCT usuario_id) as count FROM usuario_sessoes WHERE ativo = TRUE"
+      "SELECT COUNT(DISTINCT usuario_id) as count FROM usuario_sessoes WHERE ativo = TRUE",
     );
     res.json({ count: Number.parseInt(result.rows[0].count) });
   } catch (err) {
@@ -1102,7 +1116,7 @@ app.get("/api/sessoes/pico/:data", async (req, res) => {
       )
       SELECT COALESCE(MAX(usuarios_ativos), 0) as pico
       FROM contagem`,
-      [data]
+      [data],
     );
 
     res.json({ pico: Number.parseInt(result.rows[0].pico) });
@@ -1121,17 +1135,17 @@ app.get("/api/estatisticas/usuarios", async (req, res) => {
   try {
     // DB QUERY: Total de usuários
     const totalResult = await pool.query(
-      "SELECT COUNT(*) as total FROM usuarios"
+      "SELECT COUNT(*) as total FROM usuarios",
     );
 
     // DB QUERY: Usuários por tipo
     const tiposResult = await pool.query(
-      "SELECT tipo_usuario, COUNT(*) as count FROM usuarios GROUP BY tipo_usuario"
+      "SELECT tipo_usuario, COUNT(*) as count FROM usuarios GROUP BY tipo_usuario",
     );
 
     // DB QUERY: Data do últimocadastro
     const ultimoResult = await pool.query(
-      "SELECT data_criacao FROM usuarios ORDER BY data_criacao DESC LIMIT 1"
+      "SELECT data_criacao FROM usuarios ORDER BY data_criacao DESC LIMIT 1",
     );
 
     const tipos = {};
@@ -1155,37 +1169,37 @@ app.get("/api/estatisticas/imoveis", async (req, res) => {
   try {
     // DB QUERY: Total de imóveis visíveis
     const totalResult = await pool.query(
-      "SELECT COUNT(*) as total FROM imoveis WHERE visivel = TRUE"
+      "SELECT COUNT(*) as total FROM imoveis WHERE visivel = TRUE",
     );
 
     // DB QUERY: Preço médio dos imóveis
     const mediaPrecoResult = await pool.query(
-      "SELECT AVG(preco) as media FROM imoveis WHERE visivel = TRUE"
+      "SELECT AVG(preco) as media FROM imoveis WHERE visivel = TRUE",
     );
 
     // DB QUERY: Data do último cadastro
     const ultimoResult = await pool.query(
-      "SELECT data_criacao FROM imoveis WHERE visivel = TRUE ORDER BY data_criacao DESC LIMIT 1"
+      "SELECT data_criacao FROM imoveis WHERE visivel = TRUE ORDER BY data_criacao DESC LIMIT 1",
     );
 
     // DB QUERY: Total de imóveis em destaque
     const destaqueResult = await pool.query(
-      "SELECT COUNT(*) as count FROM imoveis WHERE destaque = TRUE AND visivel = TRUE"
+      "SELECT COUNT(*) as count FROM imoveis WHERE destaque = TRUE AND visivel = TRUE",
     );
 
     // DB QUERY: Imóveis por status
     const statusResult = await pool.query(
-      "SELECT status, COUNT(*) as count FROM imoveis WHERE visivel = TRUE GROUP BY status"
+      "SELECT status, COUNT(*) as count FROM imoveis WHERE visivel = TRUE GROUP BY status",
     );
 
     // DB QUERY: Imóveis por finalidade
     const finalidadeResult = await pool.query(
-      "SELECT finalidade, COUNT(*) as count FROM imoveis WHERE visivel = TRUE GROUP BY finalidade"
+      "SELECT finalidade, COUNT(*) as count FROM imoveis WHERE visivel = TRUE GROUP BY finalidade",
     );
 
     // DB QUERY: Imóveis por tipo
     const tipoResult = await pool.query(
-      "SELECT tipo, COUNT(*) as count FROM imoveis WHERE visivel = TRUE GROUP BY tipo"
+      "SELECT tipo, COUNT(*) as count FROM imoveis WHERE visivel = TRUE GROUP BY tipo",
     );
 
     // DB QUERY: Imóveis por construtora
@@ -1194,7 +1208,7 @@ app.get("/api/estatisticas/imoveis", async (req, res) => {
        FROM imoveis_caracteristicas ic
        JOIN imoveis i ON i.id = ic.imovel_id
        WHERE i.visivel = TRUE AND ic.construtora IS NOT NULL
-       GROUP BY ic.construtora`
+       GROUP BY ic.construtora`,
     );
 
     const status = {};
@@ -1248,7 +1262,7 @@ app.get("/api/estatisticas/imovel-mais-curtido", async (req, res) => {
        WHERE i.visivel = TRUE
        GROUP BY c.imovel_id, i.titulo
        ORDER BY total_curtidas DESC
-       LIMIT 1`
+       LIMIT 1`,
     );
 
     if (result.rows.length > 0) {
@@ -1291,7 +1305,7 @@ app.get("/api/curtidas/:usuarioId", async (req, res) => {
        LEFT JOIN imoveis i ON i.id = c.imovel_id
        WHERE c.usuario_id = $1 AND i.visivel = true
        ORDER BY c.data_curtida DESC`,
-      [usuarioId]
+      [usuarioId],
     );
 
     res.json(result.rows);
@@ -1316,21 +1330,21 @@ app.post("/api/curtidas/:usuarioId/:imovelId", async (req, res) => {
     // DB QUERY: Verifica se curtida já existe
     const curtidaExiste = await pool.query(
       "SELECT * FROM curtidas WHERE usuario_id = $1 AND imovel_id = $2",
-      [usuarioId, imovelId]
+      [usuarioId, imovelId],
     );
 
     if (curtidaExiste.rows.length > 0) {
       // Remove curtida
       await pool.query(
         "DELETE FROM curtidas WHERE usuario_id = $1 AND imovel_id = $2",
-        [usuarioId, imovelId]
+        [usuarioId, imovelId],
       );
       res.json({ message: "Curtida removida com sucesso", curtido: false });
     } else {
       // Adiciona curtida
       await pool.query(
         "INSERT INTO curtidas (usuario_id, imovel_id, data_curtida) VALUES ($1, $2, NOW())",
-        [usuarioId, imovelId]
+        [usuarioId, imovelId],
       );
       res.json({ message: "Curtida adicionada com sucesso", curtido: true });
     }
@@ -1427,7 +1441,7 @@ app.get("/api/imoveis/ocultos", async (req, res) => {
       LEFT JOIN imoveis_caracteristicas ic ON ic.imovel_id = i.id
       WHERE i.visivel = false
       GROUP BY i.id, ic.id
-      ORDER BY i.data_criacao DESC`
+      ORDER BY i.data_criacao DESC`,
     );
     res.json(result.rows);
   } catch (err) {
@@ -1518,7 +1532,7 @@ app.get("/api/imoveis", async (req, res) => {
       LEFT JOIN imoveis_caracteristicas ic ON ic.imovel_id = i.id
       WHERE i.visivel = true
       GROUP BY i.id, ic.id
-      ORDER BY i.data_criacao DESC`
+      ORDER BY i.data_criacao DESC`,
     );
     res.json(result.rows);
   } catch (err) {
@@ -1611,7 +1625,7 @@ app.get("/api/imoveis/:id", async (req, res) => {
       LEFT JOIN imoveis_caracteristicas ic ON ic.imovel_id = i.id
       WHERE i.id = $1
       GROUP BY i.id, ic.id`,
-      [id]
+      [id],
     );
 
     if (result.rows.length === 0) {
@@ -1632,7 +1646,7 @@ app.get("/api/imoveis/:id", async (req, res) => {
         const decoded = jwt.verify(token, JWT_SECRET);
         const userResult = await pool.query(
           "SELECT tipo_usuario FROM usuarios WHERE id = $1", // Assuming 'tipo_usuario' is 'adm' for admins
-          [decoded.userId]
+          [decoded.userId],
         );
 
         if (
@@ -1686,7 +1700,7 @@ app.post("/api/imoveis", async (req, res) => {
   try {
     const usuarioExiste = await pool.query(
       "SELECT id FROM usuarios WHERE id = $1",
-      [criado_por]
+      [criado_por],
     );
     if (usuarioExiste.rows.length === 0) {
       return res.status(404).json({ error: "Usuário criador não encontrado" });
@@ -1738,7 +1752,7 @@ app.post("/api/imoveis", async (req, res) => {
         bairro || null,
         tipo || null,
         coordenadas || null,
-      ]
+      ],
     );
 
     const imovelId = imovelResult.rows[0].id;
@@ -1781,7 +1795,7 @@ app.put("/api/imoveis/:id", async (req, res) => {
   try {
     const imovelExiste = await pool.query(
       "SELECT * FROM imoveis WHERE id = $1",
-      [id]
+      [id],
     );
     if (imovelExiste.rows.length === 0) {
       return res.status(404).json({ error: "Imóvel não encontrado" });
@@ -1829,7 +1843,7 @@ app.put("/api/imoveis/:id", async (req, res) => {
         tipo || null,
         coordenadas || null,
         id,
-      ]
+      ],
     );
 
     if (deveEnviarEmail) {
@@ -1838,7 +1852,7 @@ app.put("/api/imoveis/:id", async (req, res) => {
          FROM curtidas c
          JOIN usuarios u ON u.id = c.usuario_id
          WHERE c.imovel_id = $1`,
-        [id]
+        [id],
       );
 
       const imovelAtualizado = {
@@ -1858,19 +1872,19 @@ app.put("/api/imoveis/:id", async (req, res) => {
           {
             nome: curtida.nome,
             imovel: imovelAtualizado,
-          }
+          },
         )
           .then(() => {
             // Registra o envio no banco
             return pool.query(
               "INSERT INTO email_comercial (usuario_id, imovel_id) SELECT id, $2 FROM usuarios WHERE email = $1",
-              [curtida.email, id]
+              [curtida.email, id],
             );
           })
           .catch((err) => {
             console.error(
               `Erro ao enviar e-mail de promoção para ${curtida.email}:`,
-              err
+              err,
             );
           });
       }
@@ -1940,7 +1954,7 @@ app.post("/api/imoveis_caracteristicas", async (req, res) => {
   try {
     const imovelExiste = await pool.query(
       "SELECT id FROM imoveis WHERE id = $1",
-      [req.body.imovel_id]
+      [req.body.imovel_id],
     );
     if (imovelExiste.rows.length === 0) {
       return res.status(404).json({ error: "Imóvel não encontrado" });
@@ -2004,8 +2018,8 @@ app.post("/api/imoveis_caracteristicas", async (req, res) => {
     return req.body[c] !== undefined
       ? req.body[c]
       : camposBooleanos.includes(c)
-      ? false
-      : null;
+        ? false
+        : null;
   });
 
   try {
@@ -2013,9 +2027,9 @@ app.post("/api/imoveis_caracteristicas", async (req, res) => {
     const placeholders = campos.map((_, idx) => `$${idx + 1}`).join(",");
     await pool.query(
       `INSERT INTO imoveis_caracteristicas (${campos.join(
-        ","
+        ",",
       )}) VALUES (${placeholders})`,
-      values
+      values,
     );
     res
       .status(201)
@@ -2083,7 +2097,7 @@ app.put("/api/imoveis_caracteristicas/:imovel_id", async (req, res) => {
   try {
     const imovelExiste = await pool.query(
       "SELECT id FROM imoveis WHERE id = $1",
-      [imovel_id]
+      [imovel_id],
     );
     if (imovelExiste.rows.length === 0) {
       return res.status(404).json({ error: "Imóvel não encontrado" });
@@ -2209,19 +2223,22 @@ app.put("/api/imoveis_caracteristicas/:imovel_id", async (req, res) => {
 
 // =========================
 
-// ROTA: Upload de fotos do imóvel
+// Caminho absoluto e estável para uploads
+const uploadDir = path.join(process.cwd(), "public", "fotos_imoveis");
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const dir = "public/fotos_imoveis";
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    cb(null, dir);
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
     cb(
       null,
-      `${Date.now()}-${Math.random().toString(36).substring(7)}${path.extname(
-        file.originalname
-      )}`
+      `${Date.now()}-${Math.random().toString(36).slice(2)}${path.extname(
+        file.originalname,
+      )}`,
     );
   },
 });
@@ -2232,7 +2249,6 @@ const upload = multer({
     fileSize: 10 * 1024 * 1024, // 10MB
   },
   fileFilter: (req, file, cb) => {
-    // Aceita apenas imagens
     if (file.mimetype.startsWith("image/")) {
       cb(null, true);
     } else {
@@ -2246,42 +2262,30 @@ const uploadFotos = upload.array("fotos", 10);
 app.post("/api/imoveis/:id/upload", uploadFotos, async (req, res) => {
   const { id } = req.params;
 
-  // VALIDAÇÃO: Verifica se arquivos foram enviados
-  if (!req.files || req.files.length === 0) {
-    return res.status(400).json({ error: "Arquivos não enviados" });
-  }
-
-  // VALIDAÇÃO: Verifica se imóvel existe
   try {
-    const imovelExiste = await pool.query(
-      "SELECT id FROM imoveis WHERE id = $1",
-      [id]
-    );
-    if (imovelExiste.rows.length === 0) {
-      return res.status(404).json({ error: "Imóvel não encontrado" });
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ error: "Nenhuma imagem enviada" });
     }
-  } catch (err) {
-    console.error("Erro ao validar imóvel:", err);
-    return res.status(500).json({ error: "Erro ao validar imóvel" });
-  }
 
-  try {
     const fotosInseridas = [];
 
-    // Processa fotos
+    // Processa cada foto e salva no banco de dados
     for (const file of req.files) {
+      // Caminho relativo que será acessado pelo frontend via rota estática /fotos_imoveis
       const caminho = `/fotos_imoveis/${file.filename}`;
+
       const result = await pool.query(
         "INSERT INTO fotos_imoveis (imovel_id, caminho_foto) VALUES ($1, $2) RETURNING *",
-        [id, caminho]
+        [id, caminho],
       );
+
       fotosInseridas.push(result.rows[0]);
     }
 
     res.status(201).json(fotosInseridas);
   } catch (err) {
-    console.error("Erro ao salvar fotos no banco:", err);
-    res.status(500).json({ error: "Erro ao salvar fotos no banco" });
+    console.error("Erro ao salvar fotos do imóvel:", err);
+    res.status(500).json({ error: "Erro ao salvar fotos do imóvel" });
   }
 });
 
@@ -2298,7 +2302,7 @@ app.delete("/api/fotos/:id", async (req, res) => {
     // DB QUERY: Busca foto para obter o caminho
     const fotoResult = await pool.query(
       "SELECT * FROM fotos_imoveis WHERE id = $1",
-      [id]
+      [id],
     );
 
     if (fotoResult.rows.length === 0) {
@@ -2311,7 +2315,8 @@ app.delete("/api/fotos/:id", async (req, res) => {
     await pool.query("DELETE FROM fotos_imoveis WHERE id = $1", [id]);
 
     // Deleta arquivo físico se existir
-    const filePath = `public${foto.caminho_foto}`;
+    // O caminho no banco é /fotos_imoveis/arquivo.jpg, o arquivo físico está em public/fotos_imoveis/arquivo.jpg
+    const filePath = path.join(process.cwd(), "public", foto.caminho_foto);
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);
     }
@@ -2339,7 +2344,7 @@ app.post("/api/admin/adicionar-admin", async (req, res) => {
     // DB QUERY: Verifica se email já existe
     const emailExiste = await pool.query(
       "SELECT id FROM usuarios WHERE email = $1",
-      [email]
+      [email],
     );
 
     if (emailExiste.rows.length > 0) {
@@ -2352,7 +2357,7 @@ app.post("/api/admin/adicionar-admin", async (req, res) => {
     // Insere diretamente na tabela usuarios com tipo_usuario = 'adm'
     const result = await pool.query(
       "INSERT INTO usuarios (nome, email, senha, tipo_usuario) VALUES ($1, $2, $3, $4) RETURNING id, nome, email, tipo_usuario, data_criacao",
-      [nome, email, senhaHash, "adm"]
+      [nome, email, senhaHash, "adm"],
     );
 
     res.status(201).json({
@@ -2390,9 +2395,6 @@ app.use((err, req, res, next) => {
 // =========================
 // FRONTEND (VITE BUILD)
 // =========================
-
-// arquivos estáticos do Vite
-app.use(express.static(path.join(process.cwd(), "dist")));
 
 // fallback SPA — Express 5 SAFE (não usar "*")
 app.get(/^(?!\/api).*/, (req, res) => {
