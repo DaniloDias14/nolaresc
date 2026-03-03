@@ -377,18 +377,18 @@
     grid-template-columns: 1fr;
   }
 
+  /* Ocultar botões de navegação entre imóveis no mobile - correção solicitada */
   .destaque-nav-buttons {
-    justify-content: center;
-  }
-
-  .destaque-nav-btn {
-    width: 42px;
-    height: 42px;
-    font-size: 1.2rem;
+    display: none;
   }
 
   /* Removida animação de sombra hover no mobile - correção solicitada */
   .destaque-card:hover {
     box-shadow: 0 8px 24px rgba(25, 25, 112, 0.28);
+  }
+
+  /* Ocultar setas de navegação das imagens no mobile - correção solicitada */
+  .destaque-carousel-btn {
+    display: none;
   }
 }

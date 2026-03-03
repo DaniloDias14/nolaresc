@@ -394,6 +394,11 @@
     box-shadow: 0 10px 28px rgba(25, 25, 112, 0.3);
   }
 
+  /* Ocultar setas de navegação das imagens no mobile - correção solicitada */
+  .carousel-btn {
+    display: none;
+  }
+
   .property-features {
     grid-template-columns: 1fr;
   }

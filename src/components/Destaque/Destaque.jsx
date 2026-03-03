@@ -12,6 +12,8 @@ const Destaque = ({ usuario, curtidas, setCurtidas, onImovelClick }) => {
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
+  /* Estado para controlar swipe de imagens dentro dos cards no mobile - correção solicitada */
+  const [imageSwipeStart, setImageSwipeStart] = useState(null);
 
   // Detect mobile device
   useEffect(() => {
@@ -32,7 +34,7 @@ const Destaque = ({ usuario, curtidas, setCurtidas, onImovelClick }) => {
         setImoveisDestaque(destaques);
       })
       .catch((err) =>
-        console.error("Erro ao buscar imóveis em destaque:", err)
+        console.error("Erro ao buscar imóveis em destaque:", err),
       );
   }, []);
 
@@ -62,7 +64,7 @@ const Destaque = ({ usuario, curtidas, setCurtidas, onImovelClick }) => {
       if (!res.ok) throw new Error("Erro ao alternar curtida");
 
       const likeBtn = document.querySelector(
-        `[data-destaque-imovel-id="${imovelId}"]`
+        `[data-destaque-imovel-id="${imovelId}"]`,
       );
       if (likeBtn && !curtidas[imovelId]) {
         likeBtn.classList.add("heart-burst");
@@ -155,6 +157,34 @@ const Destaque = ({ usuario, curtidas, setCurtidas, onImovelClick }) => {
     setIsDragging(false);
   };
 
+  /* Swipe de imagens dentro dos cards no mobile - correção solicitada */
+  const handleImageTouchStart = (e) => {
+    if (!isMobile) return;
+    setImageSwipeStart(e.touches[0].clientX);
+  };
+
+  const handleImageTouchEnd = (e, id, total) => {
+    if (!isMobile || imageSwipeStart === null) return;
+    const diff = imageSwipeStart - e.changedTouches[0].clientX;
+    /* Swipe mínimo de 50px para trocar imagem */
+    if (Math.abs(diff) > 50) {
+      if (diff > 0) {
+        /* Swipe para esquerda - próxima imagem */
+        setImagemAtual((prev) => ({
+          ...prev,
+          [id]: ((prev[id] || 0) + 1) % total,
+        }));
+      } else {
+        /* Swipe para direita - imagem anterior */
+        setImagemAtual((prev) => ({
+          ...prev,
+          [id]: (prev[id] || 0) === 0 ? total - 1 : (prev[id] || 0) - 1,
+        }));
+      }
+    }
+    setImageSwipeStart(null);
+  };
+
   const formatPrice = (value) => {
     if (!value || value === 0) return "0,00";
 
@@ -197,15 +227,26 @@ const Destaque = ({ usuario, curtidas, setCurtidas, onImovelClick }) => {
               onClick={() => onImovelClick(imovel)}
             >
               <div className="destaque-image-container">
+                {/* Adicionado swipe de imagens no mobile - correção solicitada */}
                 {imovel.fotos?.length > 0 ? (
-                  <div className="destaque-carousel-inner">
+                  <div
+                    className="destaque-carousel-inner"
+                    onTouchStart={handleImageTouchStart}
+                    onTouchEnd={(e) =>
+                      handleImageTouchEnd(
+                        e,
+                        imovel.id ?? imovel.imovel_id,
+                        imovel.fotos.length,
+                      )
+                    }
+                  >
                     <button
                       className="destaque-carousel-btn prev"
                       onClick={(e) =>
                         imagemAnterior(
                           e,
                           imovel.id ?? imovel.imovel_id,
-                          imovel.fotos.length
+                          imovel.fotos.length,
                         )
                       }
                     >
@@ -226,7 +267,7 @@ const Destaque = ({ usuario, curtidas, setCurtidas, onImovelClick }) => {
                         proximaImagem(
                           e,
                           imovel.id ?? imovel.imovel_id,
-                          imovel.fotos.length
+                          imovel.fotos.length,
                         )
                       }
                     >
@@ -271,7 +312,7 @@ const Destaque = ({ usuario, curtidas, setCurtidas, onImovelClick }) => {
                     <div className="destaque-entrega">
                       📅 Entrega:{" "}
                       {new Date(
-                        imovel.caracteristicas.data_entrega
+                        imovel.caracteristicas.data_entrega,
                       ).toLocaleDateString("pt-BR", {
                         month: "long",
                         year: "numeric",

@@ -11,6 +11,10 @@ const Curtidas = ({ usuario }) => {
   const [imovelSelecionado, setImovelSelecionado] = useState(null);
   const [imagemAtual, setImagemAtual] = useState({});
   const [curtidas, setCurtidas] = useState({});
+  /* Estado para detectar dispositivo mobile - correção solicitada */
+  const [isMobile, setIsMobile] = useState(false);
+  /* Estado para controlar swipe de imagens dentro dos cards no mobile - correção solicitada */
+  const [imageSwipeStart, setImageSwipeStart] = useState(null);
 
   const navigate = useNavigate();
 
@@ -29,6 +33,16 @@ const Curtidas = ({ usuario }) => {
     return `${formattedInt},${decPart}`;
   };
 
+  /* Detectar dispositivo mobile - correção solicitada */
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
   useEffect(() => {
     if (!usuario || usuario.tipo_usuario === "adm") return;
 
@@ -36,7 +50,7 @@ const Curtidas = ({ usuario }) => {
       .then((res) => res.json())
       .then(async (data) => {
         const sortedData = data.sort(
-          (a, b) => new Date(b.data_curtida) - new Date(a.data_curtida)
+          (a, b) => new Date(b.data_curtida) - new Date(a.data_curtida),
         );
 
         const curtidasMap = {};
@@ -46,7 +60,7 @@ const Curtidas = ({ usuario }) => {
           curtidasMap[c.imovel_id] = true;
 
           const imovel = await fetch(`/api/imoveis/${c.imovel_id}`).then(
-            (res) => res.json()
+            (res) => res.json(),
           );
           imoveisCompletos.push({ ...imovel, fotos: imovel.fotos || [] });
         }
@@ -69,20 +83,20 @@ const Curtidas = ({ usuario }) => {
 
     try {
       const novoImovel = await fetch(`/api/imoveis/${imovelId}`).then((res) =>
-        res.json()
+        res.json(),
       );
 
       setImoveis((prev) =>
         prev.map((i) =>
           i.imovel_id === imovelId && i.carregando
             ? { ...novoImovel, fotos: novoImovel.fotos || [] }
-            : i
-        )
+            : i,
+        ),
       );
     } catch (err) {
       console.error("Erro ao adicionar imóvel curtido:", err);
       setImoveis((prev) =>
-        prev.filter((i) => i.imovel_id !== imovelId || !i.carregando)
+        prev.filter((i) => i.imovel_id !== imovelId || !i.carregando),
       );
     }
   };
@@ -119,6 +133,34 @@ const Curtidas = ({ usuario }) => {
     } catch (err) {
       console.error(err);
     }
+  };
+
+  /* Swipe de imagens dentro dos cards no mobile - correção solicitada */
+  const handleImageTouchStart = (e) => {
+    if (!isMobile) return;
+    setImageSwipeStart(e.touches[0].clientX);
+  };
+
+  const handleImageTouchEnd = (e, id, total) => {
+    if (!isMobile || imageSwipeStart === null) return;
+    const diff = imageSwipeStart - e.changedTouches[0].clientX;
+    /* Swipe mínimo de 50px para trocar imagem */
+    if (Math.abs(diff) > 50) {
+      if (diff > 0) {
+        /* Swipe para esquerda - próxima imagem */
+        setImagemAtual((prev) => ({
+          ...prev,
+          [id]: ((prev[id] || 0) + 1) % total,
+        }));
+      } else {
+        /* Swipe para direita - imagem anterior */
+        setImagemAtual((prev) => ({
+          ...prev,
+          [id]: (prev[id] || 0) === 0 ? total - 1 : (prev[id] || 0) - 1,
+        }));
+      }
+    }
+    setImageSwipeStart(null);
   };
 
   const proximaImagem = (e, id, total) => {
@@ -177,8 +219,19 @@ const Curtidas = ({ usuario }) => {
               onClick={() => handleOpenModal(imovel)}
             >
               <div className="image-container">
+                {/* Adicionado swipe de imagens no mobile - correção solicitada */}
                 {imovel.fotos && imovel.fotos.length > 0 ? (
-                  <div className="carousel">
+                  <div
+                    className="carousel"
+                    onTouchStart={handleImageTouchStart}
+                    onTouchEnd={(e) =>
+                      handleImageTouchEnd(
+                        e,
+                        imovel.imovel_id,
+                        imovel.fotos.length,
+                      )
+                    }
+                  >
                     <button
                       className="carousel-btn prev"
                       onClick={(e) =>
@@ -242,7 +295,7 @@ const Curtidas = ({ usuario }) => {
                     <div className="property-entrega">
                       📅 Entrega:{" "}
                       {new Date(
-                        imovel.caracteristicas.data_entrega
+                        imovel.caracteristicas.data_entrega,
                       ).toLocaleDateString("pt-BR", {
                         month: "long",
                         year: "numeric",

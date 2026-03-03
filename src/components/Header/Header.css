@@ -387,11 +387,12 @@
     right: 0;
   }
 
-  /* Header do menu com botão de usuário/conectar à esquerda e hamburger à direita */
+  /* Header do menu com botão de conectar à esquerda e hamburger à direita - correção solicitada */
   .menu-header {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    /* Botão de fechar sempre posicionado à direita com margin-left auto */
+    justify-content: flex-end;
     width: 100%;
     padding: 1.5rem 1.5rem 1rem 1.5rem;
     border-bottom: 1px solid rgba(25, 25, 112, 0.1);
@@ -400,6 +401,11 @@
     position: relative;
     z-index: 1001;
     background: var(--background-cream);
+  }
+
+  /* Botão conectar-se no menu vai para a esquerda, empurrando o close para a direita */
+  .menu-header .menu-connect-button {
+    margin-right: auto;
   }
 
   .menu-close {
@@ -463,6 +469,20 @@
   /* Esconder botão de logout desktop no mobile - correção solicitada */
   .logout-icon-button {
     display: none;
+  }
+
+  /* Remover efeito azul de seleção em todos os elementos interativos no mobile - correção solicitada */
+  .logo,
+  .menu-toggle,
+  .menu li a,
+  .menu li button,
+  .menu-close,
+  .menu-connect-button,
+  .menu-logout-button,
+  .menu-action-button,
+  .logout-confirm-btn {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
   }
 }
 
