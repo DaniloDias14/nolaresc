@@ -218,58 +218,98 @@ const ImovelModal = ({
     setFotoIndex((prev) => prev + 1);
   };
 
+  /* Ref para armazenar o estado do gesto sem causar re-renders - correção swipe vs scroll */
+  const gestureRef = useRef({
+    startX: 0,
+    startY: 0,
+    directionLocked: false /* true quando a direção do gesto já foi determinada */,
+    isHorizontal: false /* true se o gesto foi identificado como swipe horizontal */,
+  });
+
+  /* Início do toque: registra posição inicial X e Y para distinguir swipe de scroll */
   const handleStart = (e) => {
     if (!isMobile || !galleryRef.current) return;
+    const touch = e.touches[0];
+    gestureRef.current = {
+      startX: touch.clientX,
+      startY: touch.clientY,
+      directionLocked: false,
+      isHorizontal: false,
+    };
+    /* Marca como arrastando para preparar o acompanhamento do gesto */
     setIsDragging(true);
-    const x = e.touches ? e.touches[0].clientX : e.clientX;
-    setStartX(x);
+    setStartX(touch.clientX);
     setPrevTranslate(currentTranslate);
   };
 
+  /* Movimento do toque: diferencia swipe horizontal (troca de imagem) de scroll vertical */
   const handleMove = (e) => {
     if (!isMobile || !isDragging || !galleryRef.current) return;
-    const x = e.touches ? e.touches[0].clientX : e.clientX;
+    const touch = e.touches[0];
+    const diffX = touch.clientX - gestureRef.current.startX;
+    const diffY = touch.clientY - gestureRef.current.startY;
+
+    /* Se a direção ainda não foi determinada, usar threshold de 8px para decidir */
+    if (!gestureRef.current.directionLocked) {
+      const absDiffX = Math.abs(diffX);
+      const absDiffY = Math.abs(diffY);
+      /* Aguarda até que o gesto tenha movido pelo menos 8px para determinar a direção */
+      if (absDiffX < 8 && absDiffY < 8) return;
+      if (absDiffX >= absDiffY) {
+        /* Gesto predominantemente horizontal: ativar swipe de imagem */
+        gestureRef.current.directionLocked = true;
+        gestureRef.current.isHorizontal = true;
+      } else {
+        /* Gesto predominantemente vertical: liberar para scroll da página */
+        gestureRef.current.directionLocked = true;
+        gestureRef.current.isHorizontal = false;
+        setIsDragging(false);
+        return;
+      }
+    }
+
+    /* Se o gesto é vertical, não processar (scroll da página já está liberado) */
+    if (!gestureRef.current.isHorizontal) return;
+
+    /* Bloquear scroll vertical enquanto o swipe horizontal estiver ativo */
+    e.preventDefault();
+
+    const x = touch.clientX;
     const diff = x - startX;
     const width = galleryRef.current.clientWidth;
 
-    // Calcular a nova posição
+    /* Calcular a nova posição com translate */
     let newTranslate = prevTranslate + diff;
 
-    // Aplicar resistência nas bordas
-    const maxTranslate = 0; // Primeira imagem
-    const minTranslate = -(fotos.length - 1) * width; // Última imagem
-
-    // Se tentar arrastar além da primeira imagem (para a direita)
+    /* Aplicar resistência nas bordas: primeira imagem (direita) */
     if (fotoIndex === 0 && diff > 0) {
-      // Aplicar resistência: quanto mais arrasta, menor o movimento
       newTranslate = prevTranslate + diff * 0.3;
-    }
-    // Se tentar arrastar além da última imagem (para a esquerda)
-    else if (fotoIndex === fotos.length - 1 && diff < 0) {
-      // Aplicar resistência: quanto mais arrasta, menor o movimento
+    } else if (fotoIndex === fotos.length - 1 && diff < 0) {
+    /* Aplicar resistência nas bordas: última imagem (esquerda) */
       newTranslate = prevTranslate + diff * 0.3;
     }
 
     setCurrentTranslate(newTranslate);
   };
 
+  /* Fim do toque: decide se troca de imagem ou retorna à posição atual */
   const handleEnd = () => {
     if (!isMobile || !isDragging || !galleryRef.current) return;
     setIsDragging(false);
 
+    /* Se o gesto não foi identificado como horizontal, não processar troca de imagem */
+    if (!gestureRef.current.isHorizontal) return;
+
     const width = galleryRef.current.clientWidth;
     const movedBy = currentTranslate - -fotoIndex * width;
 
-    // Threshold of 50px to trigger slide change
-    // Block swipe right if at last image
+    /* Threshold de 50px para acionar a troca de imagem */
     if (movedBy < -50 && fotoIndex < fotos.length - 1) {
       setFotoIndex(fotoIndex + 1);
-    }
-    // Block swipe left if at first image
-    else if (movedBy > 50 && fotoIndex > 0) {
+    } else if (movedBy > 50 && fotoIndex > 0) {
       setFotoIndex(fotoIndex - 1);
     } else {
-      // Snap back to current position
+      /* Retorna à posição atual com animação suave */
       setCurrentTranslate(-fotoIndex * width);
       setPrevTranslate(-fotoIndex * width);
     }

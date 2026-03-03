@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import "./Comprar.css";
 import ImovelModal from "../../ImovelModal/ImovelModal";
@@ -17,10 +17,12 @@ const Comprar = ({ usuario }) => {
   const [curtidas, setCurtidas] = useState({});
   const [mensagemSemResultados, setMensagemSemResultados] = useState("");
   const [buscaAvancadaAtiva, setBuscaAvancadaAtiva] = useState(false);
-  /* Estado de swipe de imagem por imóvel - animação suave igual ao ImovelModal - tarefa 1 */
+  /* Estado de swipe de imagem por imóvel - animação suave igual ao ImovelModal */
   const [imageSwipeStates, setImageSwipeStates] = useState({});
-  /* Detectar dispositivo mobile para habilitar swipe - tarefa 1 */
+  /* Detectar dispositivo mobile para habilitar swipe */
   const [isMobile, setIsMobile] = useState(false);
+  /* Ref para armazenar estado do gesto por imóvel, sem causar re-renders - correção swipe vs scroll */
+  const gestureRefs = useRef({});
 
   const { id } = useParams();
   const navigate = useNavigate();
@@ -468,24 +470,31 @@ const Comprar = ({ usuario }) => {
     return paginas;
   };
 
-  /* Retorna translateX em % para o track de imagens do card - tarefa 1 */
+  /* Retorna translateX em % para o track de imagens do card */
   const getImageTranslate = (id) => {
     const state = imageSwipeStates[id];
     if (!state) return -(imagemAtual[id] || 0) * 100;
     return state.currentTranslate;
   };
 
-  /* Início do swipe de imagem - bloqueia o scroll da página e evita conflito - tarefa 1 */
+  /* Início do swipe de imagem: registra posição X e Y para diferenciar swipe de scroll */
   const handleImageTouchStart = (e, id, total) => {
     if (!isMobile) return;
     e.stopPropagation();
-    const startX = e.touches[0].clientX;
+    const touch = e.touches[0];
     const currentIndex = imagemAtual[id] || 0;
     const prevTranslate = -currentIndex * 100;
+    /* Inicializa o estado do gesto para este card */
+    gestureRefs.current[id] = {
+      startX: touch.clientX,
+      startY: touch.clientY,
+      directionLocked: false,
+      isHorizontal: false,
+    };
     setImageSwipeStates((prev) => ({
       ...prev,
       [id]: {
-        startX,
+        startX: touch.clientX,
         currentTranslate: prevTranslate,
         prevTranslate,
         isDragging: true,
@@ -493,17 +502,51 @@ const Comprar = ({ usuario }) => {
     }));
   };
 
-  /* Movimento do swipe - aplica translate em tempo real com resistência nas bordas - tarefa 1 */
+  /* Movimento do swipe: diferencia gesto horizontal (troca de imagem) de vertical (scroll) */
   const handleImageTouchMove = (e, id, total) => {
     if (!isMobile) return;
     const state = imageSwipeStates[id];
     if (!state || !state.isDragging) return;
     e.stopPropagation();
-    const diff = e.touches[0].clientX - state.startX;
+    const touch = e.touches[0];
+    const gesture = gestureRefs.current[id];
+    if (!gesture) return;
+
+    const diffX = touch.clientX - gesture.startX;
+    const diffY = touch.clientY - gesture.startY;
+
+    /* Se a direção ainda não foi determinada, usar threshold de 8px */
+    if (!gesture.directionLocked) {
+      const absDiffX = Math.abs(diffX);
+      const absDiffY = Math.abs(diffY);
+      if (absDiffX < 8 && absDiffY < 8) return;
+      if (absDiffX >= absDiffY) {
+        /* Gesto predominantemente horizontal: ativar swipe de imagem */
+        gesture.directionLocked = true;
+        gesture.isHorizontal = true;
+      } else {
+        /* Gesto predominantemente vertical: liberar para scroll da página */
+        gesture.directionLocked = true;
+        gesture.isHorizontal = false;
+        setImageSwipeStates((prev) => ({
+          ...prev,
+          [id]: { ...prev[id], isDragging: false },
+        }));
+        return;
+      }
+    }
+
+    /* Se o gesto é vertical, não processar */
+    if (!gesture.isHorizontal) return;
+
+    /* Bloquear scroll vertical enquanto o swipe horizontal estiver ativo */
+    e.preventDefault();
+
     const width = e.currentTarget.offsetWidth || 1;
-    const diffPercent = (diff / width) * 100;
+    const diffPercent = (diffX / width) * 100;
     const currentIndex = imagemAtual[id] || 0;
     let newTranslate = state.prevTranslate + diffPercent;
+    /* Resistência nas bordas */
     if (currentIndex === 0 && diffPercent > 0) {
       newTranslate = state.prevTranslate + diffPercent * 0.3;
     } else if (currentIndex === total - 1 && diffPercent < 0) {
@@ -515,12 +558,21 @@ const Comprar = ({ usuario }) => {
     }));
   };
 
-  /* Fim do swipe - decide troca de imagem ou retorno com animação - tarefa 1 */
+  /* Fim do swipe: decide troca de imagem ou retorno com animação suave */
   const handleImageTouchEnd = (e, id, total) => {
     if (!isMobile) return;
     const state = imageSwipeStates[id];
     if (!state || !state.isDragging) return;
     e.stopPropagation();
+    const gesture = gestureRefs.current[id];
+    /* Se o gesto não foi horizontal, apenas limpar o estado */
+    if (!gesture || !gesture.isHorizontal) {
+      setImageSwipeStates((prev) => ({
+        ...prev,
+        [id]: { ...prev[id], isDragging: false },
+      }));
+      return;
+    }
     const currentIndex = imagemAtual[id] || 0;
     const movedBy = state.currentTranslate - state.prevTranslate;
     let novoIndex = currentIndex;

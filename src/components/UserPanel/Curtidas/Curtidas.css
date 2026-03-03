@@ -76,11 +76,13 @@
 .carousel {
   position: relative;
   height: 100%;
-  /* overflow hidden para o track de imagens com animação suave - tarefa 1 */
+  /* overflow hidden para o track de imagens com animação suave */
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
+  /* Permite scroll vertical por padrão; o JS bloqueia quando detecta swipe horizontal */
+  touch-action: pan-y pinch-zoom;
 }
 
 /* Track deslizante com translateX - animação suave igual ao ImovelModal - tarefa 1 */

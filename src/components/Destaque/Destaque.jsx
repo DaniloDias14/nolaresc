@@ -12,9 +12,10 @@ const Destaque = ({ usuario, curtidas, setCurtidas, onImovelClick }) => {
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
-  /* Estado para controlar swipe de imagens dentro dos cards com animação suave - tarefa 1 */
-  /* Armazena: { id, startX, currentTranslate, prevTranslate, isDragging, swiping } por imóvel */
+  /* Estado para controlar swipe de imagens dentro dos cards com animação suave */
   const [imageSwipeStates, setImageSwipeStates] = useState({});
+  /* Ref para armazenar estado do gesto por imóvel, sem causar re-renders - correção swipe vs scroll */
+  const gestureRefs = useRef({});
 
   // Detect mobile device
   useEffect(() => {
@@ -158,25 +159,32 @@ const Destaque = ({ usuario, curtidas, setCurtidas, onImovelClick }) => {
     setIsDragging(false);
   };
 
-  /* Retorna o translateX atual para a imagem do card - animação suave igual ao ImovelModal - tarefa 1 */
+  /* Retorna o translateX atual para a imagem do card - animação suave igual ao ImovelModal */
   const getImageTranslate = (id, total) => {
     const state = imageSwipeStates[id];
     if (!state) return -(imagemAtual[id] || 0) * 100;
     return state.currentTranslate;
   };
 
-  /* Início do swipe de imagem no card - bloqueia o carousel da seção - tarefa 1 */
+  /* Início do swipe de imagem: registra posição X e Y para diferenciar swipe de scroll */
   const handleImageTouchStart = (e, id, total) => {
     if (!isMobile) return;
-    /* Impede propagação para que o carousel da seção não receba o evento - tarefa 1 */
+    /* Impede propagação para que o carousel da seção não receba o evento */
     e.stopPropagation();
-    const startX = e.touches[0].clientX;
+    const touch = e.touches[0];
     const currentIndex = imagemAtual[id] || 0;
     const prevTranslate = -currentIndex * 100;
+    /* Inicializa o estado do gesto para este card */
+    gestureRefs.current[id] = {
+      startX: touch.clientX,
+      startY: touch.clientY,
+      directionLocked: false,
+      isHorizontal: false,
+    };
     setImageSwipeStates((prev) => ({
       ...prev,
       [id]: {
-        startX,
+        startX: touch.clientX,
         currentTranslate: prevTranslate,
         prevTranslate,
         isDragging: true,
@@ -185,18 +193,56 @@ const Destaque = ({ usuario, curtidas, setCurtidas, onImovelClick }) => {
     }));
   };
 
-  /* Movimento do swipe de imagem no card - aplica translate em tempo real - tarefa 1 */
+  /* Movimento do swipe: diferencia gesto horizontal (troca de imagem) de vertical (scroll) */
   const handleImageTouchMove = (e, id, total) => {
     if (!isMobile) return;
     const state = imageSwipeStates[id];
     if (!state || !state.isDragging) return;
-    /* Impede propagação para bloquear navegação do carousel e da seção - tarefa 1 */
+    /* Impede propagação para bloquear navegação do carousel da seção */
     e.stopPropagation();
-    const diff = e.touches[0].clientX - state.startX;
+    const touch = e.touches[0];
+    const gesture = gestureRefs.current[id];
+    if (!gesture) return;
+
+    const diffX = touch.clientX - gesture.startX;
+    const diffY = touch.clientY - gesture.startY;
+
+    /* Se a direção ainda não foi determinada, usar threshold de 8px */
+    if (!gesture.directionLocked) {
+      const absDiffX = Math.abs(diffX);
+      const absDiffY = Math.abs(diffY);
+      if (absDiffX < 8 && absDiffY < 8) return;
+      if (absDiffX >= absDiffY) {
+        /* Gesto predominantemente horizontal: ativar swipe de imagem */
+        gesture.directionLocked = true;
+        gesture.isHorizontal = true;
+      } else {
+        /* Gesto predominantemente vertical: liberar para scroll da página */
+        gesture.directionLocked = true;
+        gesture.isHorizontal = false;
+        /* Cancelar o estado de dragging pois é um scroll vertical */
+        setImageSwipeStates((prev) => ({
+          ...prev,
+          [id]: {
+            ...prev[id],
+            isDragging: false,
+            swiping: false,
+          },
+        }));
+        return;
+      }
+    }
+
+    /* Se o gesto é vertical, não processar */
+    if (!gesture.isHorizontal) return;
+
+    /* Bloquear scroll vertical enquanto o swipe horizontal estiver ativo */
+    e.preventDefault();
+
     /* Converte pixels em porcentagem relativa à largura do container */
     const containerEl = e.currentTarget;
     const width = containerEl.offsetWidth || 1;
-    const diffPercent = (diff / width) * 100;
+    const diffPercent = (diffX / width) * 100;
     /* Resistência nas bordas */
     const currentIndex = imagemAtual[id] || 0;
     let newTranslate = state.prevTranslate + diffPercent;
@@ -210,17 +256,26 @@ const Destaque = ({ usuario, curtidas, setCurtidas, onImovelClick }) => {
       [id]: {
         ...prev[id],
         currentTranslate: newTranslate,
-        swiping: Math.abs(diff) > 8,
+        swiping: Math.abs(diffX) > 8,
       },
     }));
   };
 
-  /* Fim do swipe de imagem no card - decide troca ou retorno - tarefa 1 */
+  /* Fim do swipe de imagem: decide troca de imagem ou retorno à posição atual */
   const handleImageTouchEnd = (e, id, total) => {
     if (!isMobile) return;
     const state = imageSwipeStates[id];
     if (!state || !state.isDragging) return;
     e.stopPropagation();
+    const gesture = gestureRefs.current[id];
+    /* Se o gesto não foi horizontal, apenas limpar o estado */
+    if (!gesture || !gesture.isHorizontal) {
+      setImageSwipeStates((prev) => ({
+        ...prev,
+        [id]: { ...prev[id], isDragging: false, swiping: false },
+      }));
+      return;
+    }
     const currentIndex = imagemAtual[id] || 0;
     /* Diferença em porcentagem para decidir troca (threshold: 20%) */
     const movedBy = state.currentTranslate - state.prevTranslate;
