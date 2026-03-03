@@ -380,17 +380,18 @@
 
   .curtidas-grid {
     grid-template-columns: 1fr;
-    gap: 1.2rem;
-    padding: 0 0.85rem;
+    gap: 1rem;
+    padding: 0 1.25rem;
   }
 
   .curtidas-page h2 {
     font-size: 2rem;
   }
 
-  /* Cards com tamanho reduzido no mobile - tarefa 3 */
+  /* Card mais estreito com margens laterais maiores */
   .property-card {
     max-width: 100%;
+    margin: 0 0.5rem;
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
@@ -409,52 +410,66 @@
     box-shadow: 0 10px 28px rgba(25, 25, 112, 0.3);
   }
 
-  /* Imagem com proporção quadrada no mobile - item 2.2 */
+  /* Imagem quadrada com tamanho reduzido no mobile */
   .image-container {
     height: auto;
     aspect-ratio: 1 / 1;
+    max-height: 260px;
   }
 
-  /* Conteúdo do card com padding reduzido - tarefa 3 */
+  /* Conteúdo do card mais compacto */
   .property-content {
-    padding: 1rem;
+    padding: 0.75rem 0.9rem;
+  }
+
+  .property-header {
+    margin-bottom: 0.6rem;
   }
 
   .property-title {
-    font-size: 1.05rem;
+    font-size: 0.95rem;
   }
 
   .property-price {
-    font-size: 1rem;
+    font-size: 0.95rem;
   }
 
   .property-price-discount {
-    font-size: 1.05rem;
+    font-size: 0.95rem;
   }
 
   .property-details {
-    font-size: 0.82rem;
-    margin-bottom: 0.75rem;
+    font-size: 0.8rem;
+    margin-bottom: 0.5rem;
+    line-height: 1.4;
   }
 
-  /* Ocultar setas de navegação das imagens no mobile - mantido */
+  .property-details > div {
+    margin-bottom: 0.3rem;
+  }
+
+  /* Ocultar setas de navegação das imagens no mobile */
   .carousel-btn {
     display: none;
   }
 
   .property-features {
-    grid-template-columns: 1fr;
-    gap: 0.5rem;
-    margin-bottom: 0.9rem;
-    padding-top: 0.75rem;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.35rem;
+    margin-bottom: 0.6rem;
+    padding-top: 0.5rem;
   }
 
   .feature {
-    font-size: 0.82rem;
+    font-size: 0.78rem;
+  }
+
+  .action-buttons {
+    gap: 0.5rem;
   }
 
   .contact-button {
-    padding: 0.7rem 1rem;
-    font-size: 0.85rem;
+    padding: 0.6rem 0.9rem;
+    font-size: 0.82rem;
   }
 }

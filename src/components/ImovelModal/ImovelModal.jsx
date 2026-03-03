@@ -51,20 +51,25 @@ const ImovelModal = ({
     };
   }, []);
 
-  /* Botão físico de voltar do celular fecha o modal - item 1.4 */
+  /* Botão físico de voltar do celular fecha o modal sem piscar e sem duplo clique */
   useEffect(() => {
-    if (!isMobile) return;
-    /* Empurra um estado no histórico para interceptar o back nativo */
+    /* Empurra um estado no histórico ao montar o modal, independente de isMobile,
+       para interceptar o botão físico de voltar no celular */
     window.history.pushState({ imovelModalOpen: true }, "");
-    const handlePopState = (e) => {
-      /* Se o estado não veio de outra navegação real, fecha o modal */
+
+    const handlePopState = () => {
+      /* O usuário pressionou o botão físico de voltar: o browser já consumiu
+         o estado que empurramos, então apenas fecha o modal sem chamar history.back() */
       onClose();
     };
+
     window.addEventListener("popstate", handlePopState);
     return () => {
       window.removeEventListener("popstate", handlePopState);
     };
-  }, [isMobile, onClose]);
+    /* Intencionalmente vazio: deve rodar apenas uma vez ao montar */
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (!imovel) return;
@@ -317,7 +322,10 @@ const ImovelModal = ({
 
   const handleOverlayClick = (e) => {
     if (e.target.className === "imovel-modal-overlay") {
-      onClose();
+      /* Usa history.back() para consumir o estado empurrado ao abrir o modal.
+         O listener de popstate vai chamar onClose(), evitando estado fantasma
+         no histórico e eliminando o duplo clique / piscar na tela */
+      window.history.back();
     }
   };
 
@@ -547,7 +555,7 @@ const ImovelModal = ({
           </button>
           <button
             className="imovel-modal-close-btn"
-            onClick={onClose}
+            onClick={() => window.history.back()}
             title="Fechar"
           >
             <IoClose size={28} />
