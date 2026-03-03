@@ -5,6 +5,7 @@ import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { TiUserOutline } from "react-icons/ti";
 import { IoLogOutOutline } from "react-icons/io5";
+import { LuLogOut } from "react-icons/lu";
 import { RxHamburgerMenu } from "react-icons/rx";
 import LoginModal from "./LoginModal";
 import "./Header.css";
@@ -22,6 +23,8 @@ const Header = ({
   const [menuOpen, setMenuOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  /* Estado para popup de confirmação de logout - correção solicitada */
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const location = useLocation();
   const dropdownRef = useRef(null);
   const userButtonRef = useRef(null);
@@ -40,11 +43,23 @@ const Header = ({
     return location.pathname === path;
   };
 
+  /* Exibir popup de confirmação antes de sair - correção solicitada */
   const handleLogout = () => {
-    onLogout();
+    setShowLogoutConfirm(true);
     setUserDropdownOpen(false);
-    setMenuOpen(false); // Fechar menu mobile ao fazer logout
+  };
+
+  /* Confirmar logout e efetuar saída do sistema - correção solicitada */
+  const confirmLogout = () => {
+    onLogout();
+    setShowLogoutConfirm(false);
+    setMenuOpen(false);
     setModalOpen(true);
+  };
+
+  /* Cancelar logout e fechar popup de confirmação */
+  const cancelLogout = () => {
+    setShowLogoutConfirm(false);
   };
 
   const getTruncatedName = (name) => {
@@ -120,19 +135,9 @@ const Header = ({
         </button>
 
         <ul className={`menu ${menuOpen ? "menu-open" : ""}`}>
+          {/* Mobile: removido nome do usuário no header do menu - correção solicitada */}
           <div className="menu-header">
-            {isLoggedIn && user ? (
-              <button
-                className="menu-user-button"
-                onClick={() => {
-                  setMenuOpen(false);
-                }}
-              >
-                <span className="menu-user-name">
-                  {getTruncatedName(user.nome)}
-                </span>
-              </button>
-            ) : (
+            {!isLoggedIn && (
               <button
                 className="menu-connect-button"
                 onClick={() => {
@@ -229,36 +234,26 @@ const Header = ({
               </li>
             </>
           )}
+          {/* Mobile: adicionado ícone de sair ao lado da opção "Sair" - correção solicitada */}
           {isLoggedIn && user && (
             <li className="mobile-only">
               <button className="menu-logout-button" onClick={handleLogout}>
-                Sair
+                <span>Sair</span>
+                <LuLogOut size={18} />
               </button>
             </li>
           )}
         </ul>
 
+        {/* Desktop: removido nome do usuário, exibido apenas ícone de sair - correção solicitada */}
         {isLoggedIn && user ? (
-          <div className="user-menu">
-            <button
-              ref={userButtonRef}
-              className="user-button"
-              onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-            >
-              <span className="user-name">{getTruncatedName(user.nome)}</span>
-            </button>
-            <div
-              ref={dropdownRef}
-              className={`user-dropdown ${
-                userDropdownOpen ? "dropdown-open" : "dropdown-closed"
-              }`}
-            >
-              <button className="logout-button" onClick={handleLogout}>
-                <span>Sair</span>
-                <IoLogOutOutline size={18} />
-              </button>
-            </div>
-          </div>
+          <button
+            className="logout-icon-button"
+            onClick={handleLogout}
+            title="Sair"
+          >
+            <LuLogOut size={24} />
+          </button>
         ) : (
           <button className="perfil-icon" onClick={() => setModalOpen(true)}>
             <span className="connect-text">Conectar-se</span>
@@ -273,6 +268,32 @@ const Header = ({
           setAdmLogged={setAdmLogged}
           setUser={setUser}
         />
+      )}
+
+      {/* Popup de confirmação de logout - correção solicitada */}
+      {showLogoutConfirm && (
+        <div className="logout-confirm-overlay" onClick={cancelLogout}>
+          <div
+            className="logout-confirm-popup"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p>Deseja realmente sair?</p>
+            <div className="logout-confirm-buttons">
+              <button
+                className="logout-confirm-btn confirm"
+                onClick={confirmLogout}
+              >
+                Sim
+              </button>
+              <button
+                className="logout-confirm-btn cancel"
+                onClick={cancelLogout}
+              >
+                Não
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </header>
   );

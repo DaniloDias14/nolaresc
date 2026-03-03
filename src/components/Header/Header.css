@@ -437,6 +437,18 @@
     display: block;
     padding: 1rem 1.5rem;
     width: 100%;
+    /* Remover sublinhado temporário ao tocar/pressionar no mobile - correção solicitada */
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* No mobile, não exibir sublinhado ao tocar, apenas na página ativa - correção solicitada */
+  .menu li a::after {
+    display: none;
+  }
+
+  .menu li a.active::after {
+    display: block;
+    width: 75%;
   }
 
   .perfil-icon::before {
@@ -447,4 +459,132 @@
   .menu-logo-container {
     display: none;
   }
+
+  /* Esconder botão de logout desktop no mobile - correção solicitada */
+  .logout-icon-button {
+    display: none;
+  }
+}
+
+/* Botão de sair (apenas ícone) no desktop - correção solicitada */
+.logout-icon-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--primary-blue);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.logout-icon-button:hover {
+  background: rgba(25, 25, 112, 0.08);
+  color: #2a2a8f;
+}
+
+/* Botão de sair no menu mobile com ícone ao lado - correção solicitada */
+.menu-logout-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 1rem 1.5rem;
+  text-align: left;
+  background: transparent;
+  border: none;
+  color: var(--primary-blue);
+  font-weight: 700;
+  font-size: 1.1rem;
+  font-family: "Sanchez", serif;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.menu-logout-button:hover {
+  background: rgba(25, 25, 112, 0.05);
+}
+
+/* Popup de confirmação de logout - correção solicitada */
+.logout-confirm-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.logout-confirm-popup {
+  background: var(--white);
+  border-radius: 16px;
+  padding: 2rem 2.5rem;
+  box-shadow: 0 8px 32px rgba(25, 25, 112, 0.25);
+  text-align: center;
+  max-width: 360px;
+  width: 90%;
+  animation: slideDown 0.3s ease;
+}
+
+.logout-confirm-popup p {
+  font-family: "Sanchez", serif;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--primary-blue);
+  margin-bottom: 1.5rem;
+}
+
+.logout-confirm-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.logout-confirm-btn {
+  padding: 0.6rem 2rem;
+  border-radius: 50px;
+  font-family: "Sanchez", serif;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.logout-confirm-btn.confirm {
+  background: var(--primary-blue);
+  color: var(--white);
+  box-shadow: 0 2px 8px rgba(25, 25, 112, 0.2);
+}
+
+.logout-confirm-btn.confirm:hover {
+  background: #2a2a8f;
+  box-shadow: 0 4px 12px rgba(25, 25, 112, 0.35);
+}
+
+.logout-confirm-btn.cancel {
+  background: transparent;
+  color: var(--primary-blue);
+  border: 2px solid var(--primary-blue);
+}
+
+.logout-confirm-btn.cancel:hover {
+  background: rgba(25, 25, 112, 0.05);
 }

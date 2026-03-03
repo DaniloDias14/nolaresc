@@ -17,6 +17,7 @@ const __dirname = path.dirname(__filename);
 
 dotenv.config();
 const app = express();
+app.set("trust proxy", 1);
 const PORT = process.env.BACKEND_PORT || 5000;
 const JWT_SECRET = process.env.JWT_SECRET; // Ensure JWT_SECRET is defined in your .env file
 
