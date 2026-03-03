@@ -135,9 +135,24 @@ const Header = ({
         </button>
 
         <ul className={`menu ${menuOpen ? "menu-open" : ""}`}>
-          {/* Mobile: removido nome do usuário no header do menu - correção solicitada */}
           <div className="menu-header">
-            {!isLoggedIn && (
+            {isLoggedIn ? (
+              <a
+                href="/"
+                className="menu-header-logo"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setMenuOpen(false);
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+              >
+                <img
+                  src={logo_azul || "/placeholder.svg"}
+                  alt="Nolare"
+                  className="menu-header-logo-img"
+                />
+              </a>
+            ) : (
               <button
                 className="menu-connect-button"
                 onClick={() => {

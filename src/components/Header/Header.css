@@ -403,9 +403,22 @@
     background: var(--background-cream);
   }
 
-  /* Botão conectar-se no menu vai para a esquerda, empurrando o close para a direita */
-  .menu-header .menu-connect-button {
+  /* Botão conectar-se ou logo no menu vai para a esquerda, empurrando o close para a direita */
+  .menu-header .menu-connect-button,
+  .menu-header .menu-header-logo {
     margin-right: auto;
+  }
+
+  /* Logo exibida no header do menu mobile quando logado - correção solicitada */
+  .menu-header-logo {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+  }
+
+  .menu-header-logo-img {
+    height: 36px;
+    width: auto;
   }
 
   .menu-close {
@@ -520,12 +533,20 @@
   font-size: 1.1rem;
   font-family: "Sanchez", serif;
   cursor: pointer;
-  transition: all 0.3s ease;
+  /* Removida transição e sombra ao pressionar - correção solicitada */
+  transition: none;
   -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  outline: none;
 }
 
-.menu-logout-button:hover {
-  background: rgba(25, 25, 112, 0.05);
+/* Remover qualquer destaque/sombra/fundo ao interagir com o botão Sair - correção solicitada */
+.menu-logout-button:hover,
+.menu-logout-button:active,
+.menu-logout-button:focus {
+  background: transparent;
+  box-shadow: none;
+  outline: none;
 }
 
 /* Popup de confirmação de logout - correção solicitada */
