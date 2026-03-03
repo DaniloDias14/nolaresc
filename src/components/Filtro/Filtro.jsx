@@ -621,9 +621,19 @@ const Filtro = ({ onFiltrar, buscaAvancadaAtiva, setBuscaAvancadaAtiva }) => {
               </div>
             </div>
 
-            <button className="filtro-limpar-btn" onClick={handleLimpar}>
-              Limpar Filtros
-            </button>
+            {/* Botões Limpar e Buscar lado a lado no mobile - item 3.2 */}
+            <div className="filtro-acoes-avancada">
+              <button className="filtro-limpar-btn" onClick={handleLimpar}>
+                Limpar Filtros
+              </button>
+              {/* Segundo botão Buscar que reutiliza a mesma ação - item 3.2 */}
+              <button
+                className="filtro-buscar-btn filtro-buscar-avancada"
+                onClick={handleBuscar}
+              >
+                Buscar
+              </button>
+            </div>
           </div>
         )}
       </div>

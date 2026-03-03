@@ -703,7 +703,7 @@
     z-index: 101;
   }
 
-  /* Botões com fundo sutil para melhorar visibilidade sobre fotos claras e escuras - tarefa 2 */
+  /* Botões com fundo sutil para melhorar visibilidade sobre fotos claras e escuras - item 1.2 */
   .imovel-modal-close-btn,
   .imovel-modal-share-btn,
   .imovel-modal-edit-btn {
@@ -711,13 +711,22 @@
     color: #ffffff;
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
+    /* Sem animação de escala no toque - item 1.2 */
+    transition: none;
+    /* Sem highlight azul ao tocar - item 1.2 */
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
   }
 
+  /* Nenhuma animação ao pressionar os botões X e compartilhar no mobile - item 1.2 */
   .imovel-modal-close-btn:hover,
   .imovel-modal-share-btn:hover,
-  .imovel-modal-edit-btn:hover {
-    background: rgba(0, 0, 0, 0.42);
-    transform: scale(1.15);
+  .imovel-modal-edit-btn:hover,
+  .imovel-modal-close-btn:active,
+  .imovel-modal-share-btn:active,
+  .imovel-modal-edit-btn:active {
+    background: rgba(0, 0, 0, 0.28);
+    transform: none;
   }
 
   /* Info section e scroll não precisam de overflow próprio - rola junto com o container - tarefa 2 */
@@ -751,11 +760,22 @@
     height: 220px;
   }
 
-  /* Botão de ação rola junto com o conteúdo no mobile - tarefa 2 */
+  /* Botões de contato e curtir fixos na parte inferior no mobile - item 1.1 */
   .imovel-actions {
-    position: static;
-    box-shadow: none;
-    padding: 16px 20px 24px 20px;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 200;
+    background: #ffffff;
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
+    padding: 12px 20px 20px 20px;
+  }
+
+  /* Espaço reservado para os botões fixos não cobrirem o conteúdo - item 1.1 */
+  .imovel-actions-spacer {
+    height: 80px;
+    flex-shrink: 0;
   }
 
   .imovel-contact-btn {

@@ -51,6 +51,21 @@ const ImovelModal = ({
     };
   }, []);
 
+  /* Botão físico de voltar do celular fecha o modal - item 1.4 */
+  useEffect(() => {
+    if (!isMobile) return;
+    /* Empurra um estado no histórico para interceptar o back nativo */
+    window.history.pushState({ imovelModalOpen: true }, "");
+    const handlePopState = (e) => {
+      /* Se o estado não veio de outra navegação real, fecha o modal */
+      onClose();
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, [isMobile, onClose]);
+
   useEffect(() => {
     if (!imovel) return;
 
@@ -284,7 +299,7 @@ const ImovelModal = ({
         `/api/curtidas/${usuario.id}/${imovel.id ?? imovel.imovel_id}`,
         {
           method: "POST",
-        }
+        },
       );
       if (!res.ok) throw new Error("Erro ao alternar curtida");
 
@@ -326,8 +341,11 @@ const ImovelModal = ({
   const handleShare = async () => {
     try {
       await navigator.clipboard.writeText(window.location.href);
-      setShowCopyMessage(true);
-      setTimeout(() => setShowCopyMessage(false), 2000);
+      /* No mobile não exibe mensagem "Link copiado!" - item 1.3 */
+      if (!isMobile) {
+        setShowCopyMessage(true);
+        setTimeout(() => setShowCopyMessage(false), 2000);
+      }
     } catch (err) {
       console.error("Erro ao copiar link:", err);
       alert("Não foi possível copiar o link");
@@ -672,7 +690,7 @@ const ImovelModal = ({
                       {
                         month: "long",
                         year: "numeric",
-                      }
+                      },
                     )}
                   </div>
                 )}
@@ -825,7 +843,10 @@ const ImovelModal = ({
               </div>
             </div>
 
-            {/* Action Buttons */}
+            {/* Espaço reservado para os botões fixos não cobrirem o conteúdo no mobile - item 1.1 */}
+            {isMobile && <div className="imovel-actions-spacer" />}
+
+            {/* Action Buttons - fixos no fundo no mobile - item 1.1 */}
             <div className="imovel-actions">
               <button
                 className="imovel-contact-btn"
