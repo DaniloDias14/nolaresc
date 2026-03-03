@@ -13,8 +13,8 @@ const Curtidas = ({ usuario }) => {
   const [curtidas, setCurtidas] = useState({});
   /* Estado para detectar dispositivo mobile - correção solicitada */
   const [isMobile, setIsMobile] = useState(false);
-  /* Estado para controlar swipe de imagens dentro dos cards no mobile - correção solicitada */
-  const [imageSwipeStart, setImageSwipeStart] = useState(null);
+  /* Estado de swipe de imagem por imóvel com animação suave - tarefa 1 */
+  const [imageSwipeStates, setImageSwipeStates] = useState({});
 
   const navigate = useNavigate();
 
@@ -135,32 +135,75 @@ const Curtidas = ({ usuario }) => {
     }
   };
 
-  /* Swipe de imagens dentro dos cards no mobile - correção solicitada */
-  const handleImageTouchStart = (e) => {
-    if (!isMobile) return;
-    setImageSwipeStart(e.touches[0].clientX);
+  /* Retorna translateX em % para o track de imagens do card - tarefa 1 */
+  const getImageTranslate = (id) => {
+    const state = imageSwipeStates[id];
+    if (!state) return -(imagemAtual[id] || 0) * 100;
+    return state.currentTranslate;
   };
 
-  const handleImageTouchEnd = (e, id, total) => {
-    if (!isMobile || imageSwipeStart === null) return;
-    const diff = imageSwipeStart - e.changedTouches[0].clientX;
-    /* Swipe mínimo de 50px para trocar imagem */
-    if (Math.abs(diff) > 50) {
-      if (diff > 0) {
-        /* Swipe para esquerda - próxima imagem */
-        setImagemAtual((prev) => ({
-          ...prev,
-          [id]: ((prev[id] || 0) + 1) % total,
-        }));
-      } else {
-        /* Swipe para direita - imagem anterior */
-        setImagemAtual((prev) => ({
-          ...prev,
-          [id]: (prev[id] || 0) === 0 ? total - 1 : (prev[id] || 0) - 1,
-        }));
-      }
+  /* Início do swipe de imagem - bloqueia propagação para evitar conflito - tarefa 1 */
+  const handleImageTouchStart = (e, id, total) => {
+    if (!isMobile) return;
+    e.stopPropagation();
+    const startX = e.touches[0].clientX;
+    const currentIndex = imagemAtual[id] || 0;
+    const prevTranslate = -currentIndex * 100;
+    setImageSwipeStates((prev) => ({
+      ...prev,
+      [id]: {
+        startX,
+        currentTranslate: prevTranslate,
+        prevTranslate,
+        isDragging: true,
+      },
+    }));
+  };
+
+  /* Movimento do swipe com resistência nas bordas - tarefa 1 */
+  const handleImageTouchMove = (e, id, total) => {
+    if (!isMobile) return;
+    const state = imageSwipeStates[id];
+    if (!state || !state.isDragging) return;
+    e.stopPropagation();
+    const diff = e.touches[0].clientX - state.startX;
+    const width = e.currentTarget.offsetWidth || 1;
+    const diffPercent = (diff / width) * 100;
+    const currentIndex = imagemAtual[id] || 0;
+    let newTranslate = state.prevTranslate + diffPercent;
+    if (currentIndex === 0 && diffPercent > 0) {
+      newTranslate = state.prevTranslate + diffPercent * 0.3;
+    } else if (currentIndex === total - 1 && diffPercent < 0) {
+      newTranslate = state.prevTranslate + diffPercent * 0.3;
     }
-    setImageSwipeStart(null);
+    setImageSwipeStates((prev) => ({
+      ...prev,
+      [id]: { ...prev[id], currentTranslate: newTranslate },
+    }));
+  };
+
+  /* Fim do swipe com transição suave até o índice correto - tarefa 1 */
+  const handleImageTouchEnd = (e, id, total) => {
+    if (!isMobile) return;
+    const state = imageSwipeStates[id];
+    if (!state || !state.isDragging) return;
+    e.stopPropagation();
+    const currentIndex = imagemAtual[id] || 0;
+    const movedBy = state.currentTranslate - state.prevTranslate;
+    let novoIndex = currentIndex;
+    if (movedBy < -20 && currentIndex < total - 1) novoIndex = currentIndex + 1;
+    else if (movedBy > 20 && currentIndex > 0) novoIndex = currentIndex - 1;
+    const snapTranslate = -novoIndex * 100;
+    setImagemAtual((prev) => ({ ...prev, [id]: novoIndex }));
+    setImageSwipeStates((prev) => ({
+      ...prev,
+      [id]: {
+        ...prev[id],
+        currentTranslate: snapTranslate,
+        prevTranslate: snapTranslate,
+        isDragging: false,
+      },
+    }));
   };
 
   const proximaImagem = (e, id, total) => {
@@ -219,11 +262,24 @@ const Curtidas = ({ usuario }) => {
               onClick={() => handleOpenModal(imovel)}
             >
               <div className="image-container">
-                {/* Adicionado swipe de imagens no mobile - correção solicitada */}
+                {/* Carousel com animação suave e bloqueio de swipe conflitante - tarefa 1 */}
                 {imovel.fotos && imovel.fotos.length > 0 ? (
                   <div
                     className="carousel"
-                    onTouchStart={handleImageTouchStart}
+                    onTouchStart={(e) =>
+                      handleImageTouchStart(
+                        e,
+                        imovel.imovel_id,
+                        imovel.fotos.length,
+                      )
+                    }
+                    onTouchMove={(e) =>
+                      handleImageTouchMove(
+                        e,
+                        imovel.imovel_id,
+                        imovel.fotos.length,
+                      )
+                    }
                     onTouchEnd={(e) =>
                       handleImageTouchEnd(
                         e,
@@ -232,6 +288,26 @@ const Curtidas = ({ usuario }) => {
                       )
                     }
                   >
+                    {/* Track com translateX e transição suave - tarefa 1 */}
+                    <div
+                      className="property-image-track"
+                      style={{
+                        transform: `translateX(${getImageTranslate(imovel.imovel_id)}%)`,
+                        transition: imageSwipeStates[imovel.imovel_id]
+                          ?.isDragging
+                          ? "none"
+                          : "transform 0.32s cubic-bezier(0.22, 0.9, 0.2, 1)",
+                      }}
+                    >
+                      {imovel.fotos.map((foto, idx) => (
+                        <img
+                          key={idx}
+                          src={foto.caminho_foto}
+                          alt={`${imovel.titulo} - foto ${idx + 1}`}
+                          className="property-image"
+                        />
+                      ))}
+                    </div>
                     <button
                       className="carousel-btn prev"
                       onClick={(e) =>
@@ -240,14 +316,6 @@ const Curtidas = ({ usuario }) => {
                     >
                       🡰
                     </button>
-                    <img
-                      src={`${
-                        imovel.fotos[imagemAtual[imovel.imovel_id] || 0]
-                          ?.caminho_foto
-                      }`}
-                      alt={imovel.titulo}
-                      className="property-image"
-                    />
                     <button
                       className="carousel-btn next"
                       onClick={(e) =>

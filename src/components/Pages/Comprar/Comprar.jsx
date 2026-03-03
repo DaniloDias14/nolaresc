@@ -17,11 +17,23 @@ const Comprar = ({ usuario }) => {
   const [curtidas, setCurtidas] = useState({});
   const [mensagemSemResultados, setMensagemSemResultados] = useState("");
   const [buscaAvancadaAtiva, setBuscaAvancadaAtiva] = useState(false);
+  /* Estado de swipe de imagem por imóvel - animação suave igual ao ImovelModal - tarefa 1 */
+  const [imageSwipeStates, setImageSwipeStates] = useState({});
+  /* Detectar dispositivo mobile para habilitar swipe - tarefa 1 */
+  const [isMobile, setIsMobile] = useState(false);
 
   const { id } = useParams();
   const navigate = useNavigate();
 
   const imoveisPorPagina = 15;
+
+  /* Detectar mobile - tarefa 1 */
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth <= 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   // Fetch all properties
   useEffect(() => {
@@ -381,11 +393,11 @@ const Comprar = ({ usuario }) => {
     if (filtrados.length === 0) {
       if (filtros.identificador) {
         setMensagemSemResultados(
-          `Nenhum imóvel encontrado com o identificador #${filtros.identificador}`
+          `Nenhum imóvel encontrado com o identificador #${filtros.identificador}`,
         );
       } else {
         setMensagemSemResultados(
-          "No momento, não encontramos imóveis com essas características, mas estamos trabalhando para trazer novas opções em breve!"
+          "No momento, não encontramos imóveis com essas características, mas estamos trabalhando para trazer novas opções em breve!",
         );
       }
     } else {
@@ -454,6 +466,77 @@ const Comprar = ({ usuario }) => {
       paginas.push(i);
     }
     return paginas;
+  };
+
+  /* Retorna translateX em % para o track de imagens do card - tarefa 1 */
+  const getImageTranslate = (id) => {
+    const state = imageSwipeStates[id];
+    if (!state) return -(imagemAtual[id] || 0) * 100;
+    return state.currentTranslate;
+  };
+
+  /* Início do swipe de imagem - bloqueia o scroll da página e evita conflito - tarefa 1 */
+  const handleImageTouchStart = (e, id, total) => {
+    if (!isMobile) return;
+    e.stopPropagation();
+    const startX = e.touches[0].clientX;
+    const currentIndex = imagemAtual[id] || 0;
+    const prevTranslate = -currentIndex * 100;
+    setImageSwipeStates((prev) => ({
+      ...prev,
+      [id]: {
+        startX,
+        currentTranslate: prevTranslate,
+        prevTranslate,
+        isDragging: true,
+      },
+    }));
+  };
+
+  /* Movimento do swipe - aplica translate em tempo real com resistência nas bordas - tarefa 1 */
+  const handleImageTouchMove = (e, id, total) => {
+    if (!isMobile) return;
+    const state = imageSwipeStates[id];
+    if (!state || !state.isDragging) return;
+    e.stopPropagation();
+    const diff = e.touches[0].clientX - state.startX;
+    const width = e.currentTarget.offsetWidth || 1;
+    const diffPercent = (diff / width) * 100;
+    const currentIndex = imagemAtual[id] || 0;
+    let newTranslate = state.prevTranslate + diffPercent;
+    if (currentIndex === 0 && diffPercent > 0) {
+      newTranslate = state.prevTranslate + diffPercent * 0.3;
+    } else if (currentIndex === total - 1 && diffPercent < 0) {
+      newTranslate = state.prevTranslate + diffPercent * 0.3;
+    }
+    setImageSwipeStates((prev) => ({
+      ...prev,
+      [id]: { ...prev[id], currentTranslate: newTranslate },
+    }));
+  };
+
+  /* Fim do swipe - decide troca de imagem ou retorno com animação - tarefa 1 */
+  const handleImageTouchEnd = (e, id, total) => {
+    if (!isMobile) return;
+    const state = imageSwipeStates[id];
+    if (!state || !state.isDragging) return;
+    e.stopPropagation();
+    const currentIndex = imagemAtual[id] || 0;
+    const movedBy = state.currentTranslate - state.prevTranslate;
+    let novoIndex = currentIndex;
+    if (movedBy < -20 && currentIndex < total - 1) novoIndex = currentIndex + 1;
+    else if (movedBy > 20 && currentIndex > 0) novoIndex = currentIndex - 1;
+    const snapTranslate = -novoIndex * 100;
+    setImagemAtual((prev) => ({ ...prev, [id]: novoIndex }));
+    setImageSwipeStates((prev) => ({
+      ...prev,
+      [id]: {
+        ...prev[id],
+        currentTranslate: snapTranslate,
+        prevTranslate: snapTranslate,
+        isDragging: false,
+      },
+    }));
   };
 
   // Image navigation
@@ -612,35 +695,71 @@ const Comprar = ({ usuario }) => {
                 <div className="image-wrapper">
                   <div className="image-container">
                     {imovel.fotos?.length > 0 ? (
-                      <div className="carousel">
+                      /* Carousel com animação suave e bloqueio de swipe conflitante - tarefa 1 */
+                      <div
+                        className="carousel"
+                        onTouchStart={(e) =>
+                          handleImageTouchStart(
+                            e,
+                            imovel.id ?? imovel.imovel_id,
+                            imovel.fotos.length,
+                          )
+                        }
+                        onTouchMove={(e) =>
+                          handleImageTouchMove(
+                            e,
+                            imovel.id ?? imovel.imovel_id,
+                            imovel.fotos.length,
+                          )
+                        }
+                        onTouchEnd={(e) =>
+                          handleImageTouchEnd(
+                            e,
+                            imovel.id ?? imovel.imovel_id,
+                            imovel.fotos.length,
+                          )
+                        }
+                      >
+                        {/* Track deslizante com transição suave - tarefa 1 */}
+                        <div
+                          className="property-image-track"
+                          style={{
+                            transform: `translateX(${getImageTranslate(imovel.id ?? imovel.imovel_id)}%)`,
+                            transition: imageSwipeStates[
+                              imovel.id ?? imovel.imovel_id
+                            ]?.isDragging
+                              ? "none"
+                              : "transform 0.32s cubic-bezier(0.22, 0.9, 0.2, 1)",
+                          }}
+                        >
+                          {imovel.fotos.map((foto, idx) => (
+                            <img
+                              key={idx}
+                              src={foto.caminho_foto}
+                              alt={`${imovel.titulo} - foto ${idx + 1}`}
+                              className="property-image"
+                            />
+                          ))}
+                        </div>
                         <button
                           className="carousel-btn prev"
                           onClick={(e) => {
                             e.stopPropagation();
                             imagemAnterior(
                               imovel.id ?? imovel.imovel_id,
-                              imovel.fotos.length
+                              imovel.fotos.length,
                             );
                           }}
                         >
                           🡰
                         </button>
-                        <img
-                          src={
-                            imovel.fotos[
-                              imagemAtual[imovel.id ?? imovel.imovel_id] || 0
-                            ]?.caminho_foto
-                          }
-                          alt={imovel.titulo}
-                          className="property-image"
-                        />
                         <button
                           className="carousel-btn next"
                           onClick={(e) => {
                             e.stopPropagation();
                             proximaImagem(
                               imovel.id ?? imovel.imovel_id,
-                              imovel.fotos.length
+                              imovel.fotos.length,
                             );
                           }}
                         >
@@ -686,7 +805,7 @@ const Comprar = ({ usuario }) => {
                       <div className="property-entrega">
                         📅 Entrega:{" "}
                         {new Date(
-                          imovel.caracteristicas.data_entrega
+                          imovel.caracteristicas.data_entrega,
                         ).toLocaleDateString("pt-BR", {
                           month: "long",
                           year: "numeric",

@@ -67,6 +67,13 @@ const Header = ({
     return name.length > 10 ? `${name.substring(0, 9)}...` : name;
   };
 
+  /* Trunca o nome do usuário para exibição no menu hambúrguer - máx 14 chars - tarefa 4 */
+  const getMenuUserName = (name) => {
+    if (!name) return "";
+    /* Se o nome tiver mais de 14 caracteres, exibe os 14 primeiros + "..." - tarefa 4 */
+    return name.length > 14 ? `${name.substring(0, 14)}...` : name;
+  };
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       // Fechar dropdown de usuário
@@ -137,21 +144,10 @@ const Header = ({
         <ul className={`menu ${menuOpen ? "menu-open" : ""}`}>
           <div className="menu-header">
             {isLoggedIn ? (
-              <a
-                href="/"
-                className="menu-header-logo"
-                onClick={(e) => {
-                  e.preventDefault();
-                  setMenuOpen(false);
-                  window.scrollTo({ top: 0, behavior: "smooth" });
-                }}
-              >
-                <img
-                  src={logo_azul || "/placeholder.svg"}
-                  alt="Nolare"
-                  className="menu-header-logo-img"
-                />
-              </a>
+              /* Exibe apenas o nome do usuário (máx 14 chars) no lugar da logo - tarefa 4 */
+              <span className="menu-user-display-name">
+                {getMenuUserName(user?.nome)}
+              </span>
             ) : (
               <button
                 className="menu-connect-button"

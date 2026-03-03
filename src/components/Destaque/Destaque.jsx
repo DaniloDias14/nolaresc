@@ -12,8 +12,9 @@ const Destaque = ({ usuario, curtidas, setCurtidas, onImovelClick }) => {
   const [startX, setStartX] = useState(0);
   const [scrollLeft, setScrollLeft] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
-  /* Estado para controlar swipe de imagens dentro dos cards no mobile - correção solicitada */
-  const [imageSwipeStart, setImageSwipeStart] = useState(null);
+  /* Estado para controlar swipe de imagens dentro dos cards com animação suave - tarefa 1 */
+  /* Armazena: { id, startX, currentTranslate, prevTranslate, isDragging, swiping } por imóvel */
+  const [imageSwipeStates, setImageSwipeStates] = useState({});
 
   // Detect mobile device
   useEffect(() => {
@@ -157,32 +158,90 @@ const Destaque = ({ usuario, curtidas, setCurtidas, onImovelClick }) => {
     setIsDragging(false);
   };
 
-  /* Swipe de imagens dentro dos cards no mobile - correção solicitada */
-  const handleImageTouchStart = (e) => {
-    if (!isMobile) return;
-    setImageSwipeStart(e.touches[0].clientX);
+  /* Retorna o translateX atual para a imagem do card - animação suave igual ao ImovelModal - tarefa 1 */
+  const getImageTranslate = (id, total) => {
+    const state = imageSwipeStates[id];
+    if (!state) return -(imagemAtual[id] || 0) * 100;
+    return state.currentTranslate;
   };
 
-  const handleImageTouchEnd = (e, id, total) => {
-    if (!isMobile || imageSwipeStart === null) return;
-    const diff = imageSwipeStart - e.changedTouches[0].clientX;
-    /* Swipe mínimo de 50px para trocar imagem */
-    if (Math.abs(diff) > 50) {
-      if (diff > 0) {
-        /* Swipe para esquerda - próxima imagem */
-        setImagemAtual((prev) => ({
-          ...prev,
-          [id]: ((prev[id] || 0) + 1) % total,
-        }));
-      } else {
-        /* Swipe para direita - imagem anterior */
-        setImagemAtual((prev) => ({
-          ...prev,
-          [id]: (prev[id] || 0) === 0 ? total - 1 : (prev[id] || 0) - 1,
-        }));
-      }
+  /* Início do swipe de imagem no card - bloqueia o carousel da seção - tarefa 1 */
+  const handleImageTouchStart = (e, id, total) => {
+    if (!isMobile) return;
+    /* Impede propagação para que o carousel da seção não receba o evento - tarefa 1 */
+    e.stopPropagation();
+    const startX = e.touches[0].clientX;
+    const currentIndex = imagemAtual[id] || 0;
+    const prevTranslate = -currentIndex * 100;
+    setImageSwipeStates((prev) => ({
+      ...prev,
+      [id]: {
+        startX,
+        currentTranslate: prevTranslate,
+        prevTranslate,
+        isDragging: true,
+        swiping: false,
+      },
+    }));
+  };
+
+  /* Movimento do swipe de imagem no card - aplica translate em tempo real - tarefa 1 */
+  const handleImageTouchMove = (e, id, total) => {
+    if (!isMobile) return;
+    const state = imageSwipeStates[id];
+    if (!state || !state.isDragging) return;
+    /* Impede propagação para bloquear navegação do carousel e da seção - tarefa 1 */
+    e.stopPropagation();
+    const diff = e.touches[0].clientX - state.startX;
+    /* Converte pixels em porcentagem relativa à largura do container */
+    const containerEl = e.currentTarget;
+    const width = containerEl.offsetWidth || 1;
+    const diffPercent = (diff / width) * 100;
+    /* Resistência nas bordas */
+    const currentIndex = imagemAtual[id] || 0;
+    let newTranslate = state.prevTranslate + diffPercent;
+    if (currentIndex === 0 && diffPercent > 0) {
+      newTranslate = state.prevTranslate + diffPercent * 0.3;
+    } else if (currentIndex === total - 1 && diffPercent < 0) {
+      newTranslate = state.prevTranslate + diffPercent * 0.3;
     }
-    setImageSwipeStart(null);
+    setImageSwipeStates((prev) => ({
+      ...prev,
+      [id]: {
+        ...prev[id],
+        currentTranslate: newTranslate,
+        swiping: Math.abs(diff) > 8,
+      },
+    }));
+  };
+
+  /* Fim do swipe de imagem no card - decide troca ou retorno - tarefa 1 */
+  const handleImageTouchEnd = (e, id, total) => {
+    if (!isMobile) return;
+    const state = imageSwipeStates[id];
+    if (!state || !state.isDragging) return;
+    e.stopPropagation();
+    const currentIndex = imagemAtual[id] || 0;
+    /* Diferença em porcentagem para decidir troca (threshold: 20%) */
+    const movedBy = state.currentTranslate - state.prevTranslate;
+    let novoIndex = currentIndex;
+    if (movedBy < -20 && currentIndex < total - 1) {
+      novoIndex = currentIndex + 1;
+    } else if (movedBy > 20 && currentIndex > 0) {
+      novoIndex = currentIndex - 1;
+    }
+    const snapTranslate = -novoIndex * 100;
+    setImagemAtual((prev) => ({ ...prev, [id]: novoIndex }));
+    setImageSwipeStates((prev) => ({
+      ...prev,
+      [id]: {
+        ...prev[id],
+        currentTranslate: snapTranslate,
+        prevTranslate: snapTranslate,
+        isDragging: false,
+        swiping: false,
+      },
+    }));
   };
 
   const formatPrice = (value) => {
@@ -216,9 +275,20 @@ const Destaque = ({ usuario, curtidas, setCurtidas, onImovelClick }) => {
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseLeave}
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
+          /* Bloqueio do carousel quando um swipe de imagem estiver ativo - tarefa 1 */
+          onTouchStart={(e) => {
+            /* Só inicia drag do carousel se não vier de dentro de um image-swipe - tarefa 1 */
+            if (e.target.closest(".destaque-carousel-inner")) return;
+            handleTouchStart(e);
+          }}
+          onTouchMove={(e) => {
+            if (e.target.closest(".destaque-carousel-inner")) return;
+            handleTouchMove(e);
+          }}
+          onTouchEnd={(e) => {
+            if (e.target.closest(".destaque-carousel-inner")) return;
+            handleTouchEnd(e);
+          }}
         >
           {imoveisDestaque.map((imovel) => (
             <div
@@ -227,11 +297,25 @@ const Destaque = ({ usuario, curtidas, setCurtidas, onImovelClick }) => {
               onClick={() => onImovelClick(imovel)}
             >
               <div className="destaque-image-container">
-                {/* Adicionado swipe de imagens no mobile - correção solicitada */}
+                {/* Carousel de imagens com animação suave igual ao ImovelModal - tarefa 1 */}
                 {imovel.fotos?.length > 0 ? (
                   <div
                     className="destaque-carousel-inner"
-                    onTouchStart={handleImageTouchStart}
+                    /* Handlers de swipe que bloqueiam propagação para o carousel da seção - tarefa 1 */
+                    onTouchStart={(e) =>
+                      handleImageTouchStart(
+                        e,
+                        imovel.id ?? imovel.imovel_id,
+                        imovel.fotos.length,
+                      )
+                    }
+                    onTouchMove={(e) =>
+                      handleImageTouchMove(
+                        e,
+                        imovel.id ?? imovel.imovel_id,
+                        imovel.fotos.length,
+                      )
+                    }
                     onTouchEnd={(e) =>
                       handleImageTouchEnd(
                         e,
@@ -240,6 +324,28 @@ const Destaque = ({ usuario, curtidas, setCurtidas, onImovelClick }) => {
                       )
                     }
                   >
+                    {/* Track com translateX e transição suave - tarefa 1 */}
+                    <div
+                      className="destaque-image-track"
+                      style={{
+                        transform: `translateX(${getImageTranslate(imovel.id ?? imovel.imovel_id, imovel.fotos.length)}%)`,
+                        transition: imageSwipeStates[
+                          imovel.id ?? imovel.imovel_id
+                        ]?.isDragging
+                          ? "none"
+                          : "transform 0.32s cubic-bezier(0.22, 0.9, 0.2, 1)",
+                      }}
+                    >
+                      {imovel.fotos.map((foto, idx) => (
+                        <img
+                          key={idx}
+                          src={foto.caminho_foto}
+                          alt={`${imovel.titulo} - foto ${idx + 1}`}
+                          className="destaque-image"
+                        />
+                      ))}
+                    </div>
+                    {/* Setas de navegação - apenas desktop - tarefa 1 */}
                     <button
                       className="destaque-carousel-btn prev"
                       onClick={(e) =>
@@ -252,15 +358,6 @@ const Destaque = ({ usuario, curtidas, setCurtidas, onImovelClick }) => {
                     >
                       🡰
                     </button>
-                    <img
-                      src={
-                        imovel.fotos[
-                          imagemAtual[imovel.id ?? imovel.imovel_id] || 0
-                        ]?.caminho_foto
-                      }
-                      alt={imovel.titulo}
-                      className="destaque-image"
-                    />
                     <button
                       className="destaque-carousel-btn next"
                       onClick={(e) =>

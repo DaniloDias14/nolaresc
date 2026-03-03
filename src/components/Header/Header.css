@@ -409,28 +409,22 @@
     margin-right: auto;
   }
 
-  /* Logo exibida no header do menu mobile quando logado - correção solicitada */
-  .menu-header-logo {
-    display: flex;
-    align-items: center;
-    text-decoration: none;
-    cursor: default;
-    /* Remover transição e efeitos ao interagir com a logo - correção solicitada */
-    transition: none;
-    outline: none;
-  }
-
-  /* Nenhum efeito visual ao passar o dedo ou clicar na logo - correção solicitada */
-  .menu-header-logo:hover,
-  .menu-header-logo:active,
-  .menu-header-logo:focus {
-    opacity: 1;
-    outline: none;
-  }
-
-  .menu-header-logo-img {
-    height: 36px;
-    width: auto;
+  /* Nome do usuário exibido no lugar da logo quando logado - tarefa 4 */
+  .menu-user-display-name {
+    font-family: "Sanchez", serif;
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--primary-blue);
+    /* Alinhado à esquerda, empurrando o botão fechar para a direita */
+    margin-right: auto;
+    /* Não permite quebra de linha */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 180px;
+    /* Sem efeito de seleção ao tocar - tarefa 4 */
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
   }
 
   .menu-close {
