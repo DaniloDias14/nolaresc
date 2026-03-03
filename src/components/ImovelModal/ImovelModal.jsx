@@ -34,6 +34,10 @@ const ImovelModal = ({
   const [showEditModal, setShowEditModal] = useState(false);
   const galleryRef = useRef(null);
   const thumbnailsRef = useRef(null);
+  /* Flag para garantir que onClose seja chamado no máximo uma vez,
+     evitando duplo clique / piscar causado por race condition entre
+     history.back() e o listener popstate */
+  const closedRef = useRef(false);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -53,13 +57,12 @@ const ImovelModal = ({
 
   /* Botão físico de voltar do celular fecha o modal sem piscar e sem duplo clique */
   useEffect(() => {
-    /* Empurra um estado no histórico ao montar o modal, independente de isMobile,
-       para interceptar o botão físico de voltar no celular */
+    closedRef.current = false;
     window.history.pushState({ imovelModalOpen: true }, "");
 
     const handlePopState = () => {
-      /* O usuário pressionou o botão físico de voltar: o browser já consumiu
-         o estado que empurramos, então apenas fecha o modal sem chamar history.back() */
+      if (closedRef.current) return;
+      closedRef.current = true;
       onClose();
     };
 
@@ -67,7 +70,6 @@ const ImovelModal = ({
     return () => {
       window.removeEventListener("popstate", handlePopState);
     };
-    /* Intencionalmente vazio: deve rodar apenas uma vez ao montar */
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

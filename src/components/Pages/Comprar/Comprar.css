@@ -428,21 +428,20 @@
   }
 }
 
-/* Mobile: cards com tamanho reduzido - tarefa 3 */
 @media (max-width: 768px) {
   .properties-section {
-    padding: 0 1.25rem;
+    padding: 0 1rem;
   }
 
   .grid-imoveis {
     grid-template-columns: 1fr;
-    gap: 1rem;
+    gap: 1.25rem;
   }
 
-  /* Card mais estreito com margens laterais maiores */
+  /* Card menor no geral: largura máxima reduzida, sem margem extra */
   .property-card {
     max-width: 100%;
-    margin: 0 0.5rem;
+    margin: 0;
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
@@ -461,16 +460,15 @@
     box-shadow: 0 10px 28px rgba(25, 25, 112, 0.3);
   }
 
-  /* Imagem quadrada com tamanho reduzido no mobile */
+  /* Imagem com altura fixa proporcional ao card menor — sem max-height conflitante */
   .image-container {
-    height: auto;
-    aspect-ratio: 1 / 1;
-    max-height: 260px;
+    height: 210px;
+    aspect-ratio: unset;
   }
 
-  /* Conteúdo do card mais compacto */
+  /* Conteúdo interno mais compacto */
   .property-content {
-    padding: 0.75rem 0.9rem;
+    padding: 0.85rem 1rem;
   }
 
   .property-header {
@@ -490,7 +488,7 @@
   }
 
   .property-details {
-    font-size: 0.8rem;
+    font-size: 0.82rem;
     margin-bottom: 0.5rem;
     line-height: 1.4;
   }
@@ -499,20 +497,19 @@
     margin-bottom: 0.3rem;
   }
 
-  /* Ocultar setas de navegação das imagens no mobile */
   .carousel-btn {
     display: none;
   }
 
   .property-features {
     grid-template-columns: 1fr 1fr;
-    gap: 0.35rem;
-    margin-bottom: 0.6rem;
-    padding-top: 0.5rem;
+    gap: 0.4rem;
+    margin-bottom: 0.65rem;
+    padding-top: 0.6rem;
   }
 
   .feature {
-    font-size: 0.78rem;
+    font-size: 0.8rem;
   }
 
   .action-buttons {
@@ -520,8 +517,8 @@
   }
 
   .contact-button {
-    padding: 0.6rem 0.9rem;
-    font-size: 0.82rem;
+    padding: 0.65rem 1rem;
+    font-size: 0.84rem;
   }
 
   .pagination {
