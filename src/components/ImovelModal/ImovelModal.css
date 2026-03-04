@@ -40,14 +40,16 @@
   padding: 16px;
 }
 
-/* Botões Compartilhar e X com cor azul, sem fundo, e animação igual ao curtir */
+/* Botões Compartilhar e X com cor azul, fundo translúcido borrado, e animação igual ao curtir */
 .imovel-modal-close-btn,
 .imovel-modal-share-btn {
   width: 44px;
   height: 44px;
   border-radius: 50%;
   border: none;
-  background: transparent;
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   color: #191970;
   display: flex;
   align-items: center;
@@ -59,7 +61,7 @@
 .imovel-modal-close-btn:hover,
 .imovel-modal-share-btn:hover {
   transform: scale(1.15);
-  background: rgba(128, 128, 128, 0.15);
+  background: rgba(255, 255, 255, 0.8);
 }
 
 /* Botão de editar com mesmo estilo dos outros botões do header */
@@ -68,7 +70,9 @@
   height: 44px;
   border-radius: 50%;
   border: none;
-  background: transparent;
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   color: #191970;
   display: flex;
   align-items: center;
@@ -79,7 +83,7 @@
 
 .imovel-modal-edit-btn:hover {
   transform: scale(1.15);
-  background: rgba(128, 128, 128, 0.15);
+  background: rgba(255, 255, 255, 0.8);
 }
 
 /* Mensagem "Link copiado!" com cantos mais arredondados (50px) */
@@ -123,18 +127,20 @@
   flex-direction: column;
   background: #f8f9fa;
   overflow: hidden;
+  min-height: 0;
 }
 
 .imovel-gallery-main {
   position: relative;
-  flex: 1;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #000000;
+  background: #f8f9fa;
   touch-action: pan-y pinch-zoom;
   user-select: none;
+  aspect-ratio: 1 / 1;
+  width: 100%;
 }
 
 .imovel-gallery-track {
@@ -156,7 +162,7 @@
 .imovel-gallery-image {
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  object-fit: cover;
   user-select: none;
   -webkit-user-drag: none;
   pointer-events: none;
@@ -331,7 +337,7 @@
 .imovel-info-scroll {
   flex: 1;
   overflow-y: auto;
-  padding: 32px 28px;
+  padding: 32px 28px 16px 28px;
   scrollbar-width: thin;
   scrollbar-color: #cbd5e0 #f8f9fa;
 }
@@ -463,6 +469,11 @@
   background: #f8f9fa;
   border-radius: 12px;
   border: 1px solid #e9ecef;
+}
+
+/* Último card (Localização) sem margin-bottom para reduzir espaço em branco após o mapa */
+.imovel-info-card:last-child {
+  margin-bottom: 0;
 }
 
 .imovel-card-title {
@@ -673,6 +684,8 @@
   .imovel-gallery-main {
     height: 100vw;
     min-height: 100vw;
+    aspect-ratio: auto;
+    background: #000000;
   }
 
   .imovel-gallery-slide {
@@ -695,37 +708,38 @@
     display: none;
   }
 
-  /* Header permanece absoluto sobre a galeria no mobile (posição original do overlay) - tarefa 2 */
+  /* Header fixo no topo da tela no mobile para que os botões permaneçam sempre visíveis ao rolar */
   .imovel-modal-header {
-    position: absolute;
+    position: fixed;
     top: 0;
     right: 0;
-    z-index: 101;
+    left: auto;
+    z-index: 10001;
   }
 
-  /* Botões com fundo sutil para melhorar visibilidade sobre fotos claras e escuras - item 1.2 */
+  /* Botões com cor azul e fundo translúcido no mobile */
   .imovel-modal-close-btn,
   .imovel-modal-share-btn,
   .imovel-modal-edit-btn {
-    background: rgba(0, 0, 0, 0.28);
-    color: #ffffff;
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
-    /* Sem animação de escala no toque - item 1.2 */
+    background: rgba(255, 255, 255, 0.7);
+    color: #191970;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    /* Sem animação de escala no toque */
     transition: none;
-    /* Sem highlight azul ao tocar - item 1.2 */
+    /* Sem highlight azul ao tocar */
     -webkit-tap-highlight-color: transparent;
     -webkit-touch-callout: none;
   }
 
-  /* Nenhuma animação ao pressionar os botões X e compartilhar no mobile - item 1.2 */
+  /* Nenhuma animação ao pressionar os botões X e compartilhar no mobile */
   .imovel-modal-close-btn:hover,
   .imovel-modal-share-btn:hover,
   .imovel-modal-edit-btn:hover,
   .imovel-modal-close-btn:active,
   .imovel-modal-share-btn:active,
   .imovel-modal-edit-btn:active {
-    background: rgba(0, 0, 0, 0.28);
+    background: rgba(255, 255, 255, 0.7);
     transform: none;
   }
 
@@ -736,7 +750,7 @@
 
   .imovel-info-scroll {
     overflow: visible;
-    padding: 24px 20px 16px 20px;
+    padding: 24px 20px 8px 20px;
   }
 
   .imovel-title {
@@ -810,7 +824,7 @@
   }
 
   .imovel-info-scroll {
-    padding: 20px 16px 100px 16px;
+    padding: 20px 16px 8px 16px;
   }
 
   .imovel-actions {
