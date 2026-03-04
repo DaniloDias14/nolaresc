@@ -233,6 +233,24 @@ const ImovelModal = ({
     isHorizontal: false /* true se o gesto foi identificado como swipe horizontal */,
   });
 
+  /* Registra touchmove com passive:false na galeria para permitir preventDefault no iOS Safari */
+  useEffect(() => {
+    const el = galleryRef.current;
+    if (!el) return;
+    const handler = (e) => {
+      if (
+        gestureRef.current.directionLocked &&
+        gestureRef.current.isHorizontal
+      ) {
+        e.preventDefault();
+      }
+    };
+    el.addEventListener("touchmove", handler, { passive: false });
+    return () => {
+      el.removeEventListener("touchmove", handler);
+    };
+  }, []);
+
   /* Início do toque: registra posição inicial X e Y para distinguir swipe de scroll */
   const handleStart = (e) => {
     if (!isMobile || !galleryRef.current) return;
@@ -292,7 +310,7 @@ const ImovelModal = ({
     if (fotoIndex === 0 && diff > 0) {
       newTranslate = prevTranslate + diff * 0.3;
     } else if (fotoIndex === fotos.length - 1 && diff < 0) {
-    /* Aplicar resistência nas bordas: última imagem (esquerda) */
+      /* Aplicar resistência nas bordas: última imagem (esquerda) */
       newTranslate = prevTranslate + diff * 0.3;
     }
 

@@ -17,6 +17,8 @@ const Curtidas = ({ usuario }) => {
   const [imageSwipeStates, setImageSwipeStates] = useState({});
   /* Ref para armazenar estado do gesto por imóvel, sem causar re-renders - correção swipe vs scroll */
   const gestureRefs = useRef({});
+  /* Refs para os containers de carousel de cada card - correção swipe iOS Safari */
+  const carouselRefs = useRef({});
 
   const navigate = useNavigate();
 
@@ -136,6 +138,34 @@ const Curtidas = ({ usuario }) => {
       console.error(err);
     }
   };
+
+  /* Registra touchmove com passive:false nos carousels para permitir preventDefault no iOS Safari */
+  useEffect(() => {
+    const refs = carouselRefs.current;
+    const handlers = {};
+
+    Object.keys(refs).forEach((id) => {
+      const el = refs[id];
+      if (!el) return;
+      const handler = (e) => {
+        const gesture = gestureRefs.current[id];
+        if (gesture && gesture.directionLocked && gesture.isHorizontal) {
+          e.preventDefault();
+        }
+      };
+      handlers[id] = handler;
+      el.addEventListener("touchmove", handler, { passive: false });
+    });
+
+    return () => {
+      Object.keys(handlers).forEach((id) => {
+        const el = refs[id];
+        if (el && handlers[id]) {
+          el.removeEventListener("touchmove", handlers[id]);
+        }
+      });
+    };
+  });
 
   /* Retorna translateX em % para o track de imagens do card */
   const getImageTranslate = (id) => {
@@ -318,6 +348,9 @@ const Curtidas = ({ usuario }) => {
                 {imovel.fotos && imovel.fotos.length > 0 ? (
                   <div
                     className="carousel"
+                    ref={(el) => {
+                      carouselRefs.current[imovel.imovel_id] = el;
+                    }}
                     onTouchStart={(e) =>
                       handleImageTouchStart(
                         e,
