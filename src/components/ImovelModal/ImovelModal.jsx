@@ -20,6 +20,7 @@ const ImovelModal = ({
   setCurtidas,
   onDescurtir,
   onCurtir,
+  parentPushedHistory = false,
 }) => {
   const [fotoIndex, setFotoIndex] = useState(0);
   const [caracteristicas, setCaracteristicas] = useState(null);
@@ -55,10 +56,17 @@ const ImovelModal = ({
     };
   }, []);
 
-  /* Botão físico de voltar do celular fecha o modal sem piscar e sem duplo clique */
+  /* Botão físico de voltar / seta de voltar do navegador fecha o modal.
+     Se o componente pai (Comprar/Curtidas) já empurrou uma entrada no
+     histórico (parentPushedHistory=true), não fazemos pushState próprio.
+     Se é acesso direto (ImovelPage), fazemos pushState para que o botão
+     voltar tenha algo para consumir. */
   useEffect(() => {
     closedRef.current = false;
-    window.history.pushState({ imovelModalOpen: true }, "");
+
+    if (!parentPushedHistory) {
+      window.history.pushState({ imovelModalOpen: true }, "");
+    }
 
     const handlePopState = () => {
       if (closedRef.current) return;

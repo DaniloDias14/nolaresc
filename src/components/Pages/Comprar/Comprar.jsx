@@ -102,9 +102,13 @@ const Comprar = ({ usuario }) => {
   const handleCloseModal = () => {
     setImovelSelecionado(null);
 
-    // Go back in history to restore original URL
-    if (window.location.pathname.startsWith("/imovel/")) {
-      window.history.back();
+    /* Restaura a URL original sem navegar.
+       O history.back() já foi acionado pelo ImovelModal (botão X, overlay
+       ou botão voltar do navegador/celular), então só precisamos garantir
+       que a URL reflita a página atual caso o popstate já tenha rodado. */
+    const currentPath = window.location.pathname;
+    if (currentPath.startsWith("/imovel/")) {
+      window.history.replaceState(null, "", "/comprar");
     }
   };
 
@@ -1003,6 +1007,7 @@ const Comprar = ({ usuario }) => {
           curtidas={curtidas}
           setCurtidas={setCurtidas}
           onClose={handleCloseModal}
+          parentPushedHistory={true}
         />
       )}
     </div>

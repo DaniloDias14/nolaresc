@@ -315,9 +315,12 @@ const Curtidas = ({ usuario }) => {
   const handleCloseModal = () => {
     setImovelSelecionado(null);
 
-    // Go back in history to restore original URL
-    if (window.location.pathname.startsWith("/imovel/")) {
-      window.history.back();
+    /* Restaura a URL original sem navegar.
+       O history.back() já foi acionado pelo ImovelModal, então só
+       precisamos garantir que a URL reflita a página atual. */
+    const currentPath = window.location.pathname;
+    if (currentPath.startsWith("/imovel/")) {
+      window.history.replaceState(null, "", "/curtidas");
     }
   };
 
@@ -516,6 +519,7 @@ const Curtidas = ({ usuario }) => {
           setCurtidas={setCurtidas}
           onDescurtir={removerImovel}
           onCurtir={adicionarImovel}
+          parentPushedHistory={true}
         />
       )}
     </div>
