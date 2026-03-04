@@ -47,7 +47,7 @@
   height: 44px;
   border-radius: 50%;
   border: none;
-  background: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.35);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   color: #191970;
@@ -61,7 +61,7 @@
 .imovel-modal-close-btn:hover,
 .imovel-modal-share-btn:hover {
   transform: scale(1.15);
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.55);
 }
 
 /* Botão de editar com mesmo estilo dos outros botões do header */
@@ -70,7 +70,7 @@
   height: 44px;
   border-radius: 50%;
   border: none;
-  background: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.35);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   color: #191970;
@@ -83,7 +83,7 @@
 
 .imovel-modal-edit-btn:hover {
   transform: scale(1.15);
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.55);
 }
 
 /* Mensagem "Link copiado!" com cantos mais arredondados (50px) */
@@ -721,7 +721,7 @@
   .imovel-modal-close-btn,
   .imovel-modal-share-btn,
   .imovel-modal-edit-btn {
-    background: rgba(255, 255, 255, 0.7);
+    background: rgba(255, 255, 255, 0.35);
     color: #191970;
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
@@ -739,7 +739,7 @@
   .imovel-modal-close-btn:active,
   .imovel-modal-share-btn:active,
   .imovel-modal-edit-btn:active {
-    background: rgba(255, 255, 255, 0.7);
+    background: rgba(255, 255, 255, 0.35);
     transform: none;
   }
 
@@ -750,7 +750,7 @@
 
   .imovel-info-scroll {
     overflow: visible;
-    padding: 24px 20px 8px 20px;
+    padding: 24px 20px 32px 20px;
   }
 
   .imovel-title {
@@ -824,7 +824,7 @@
   }
 
   .imovel-info-scroll {
-    padding: 20px 16px 8px 16px;
+    padding: 20px 16px 32px 16px;
   }
 
   .imovel-actions {
