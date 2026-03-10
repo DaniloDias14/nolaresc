@@ -621,6 +621,8 @@ const ImovelModal = ({
                           src={`${foto.caminho_foto}`}
                           alt={`Foto ${index + 1}`}
                           className="imovel-gallery-image"
+                          loading={index <= 1 ? "eager" : "lazy"}
+                          decoding="async"
                           onError={() =>
                             index === fotoIndex && setImageError(true)
                           }
@@ -708,6 +710,8 @@ const ImovelModal = ({
                     <img
                       src={`${foto.caminho_foto}`}
                       alt={`Miniatura ${index + 1}`}
+                      loading="lazy"
+                      decoding="async"
                     />
                   </button>
                 ))}

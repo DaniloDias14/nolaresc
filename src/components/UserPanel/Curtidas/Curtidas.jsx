@@ -393,6 +393,8 @@ const Curtidas = ({ usuario }) => {
                           src={foto.caminho_foto}
                           alt={`${imovel.titulo} - foto ${idx + 1}`}
                           className="property-image"
+                          loading="lazy"
+                          decoding="async"
                         />
                       ))}
                     </div>

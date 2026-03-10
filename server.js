@@ -9,6 +9,7 @@ import bcrypt from "bcrypt";
 import { v4 as uuidv4 } from "uuid";
 import { enviarEmail } from "./src/emails/email.js";
 import jwt from "jsonwebtoken"; // Import jwt
+import sharp from "sharp"; // Para otimização de imagens
 
 import { fileURLToPath } from "url";
 
@@ -2227,22 +2228,8 @@ app.put("/api/imoveis_caracteristicas/:imovel_id", async (req, res) => {
 // Caminho absoluto e estável para uploads
 const uploadDir = path.join(process.cwd(), "public", "fotos_imoveis");
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    cb(
-      null,
-      `${Date.now()}-${Math.random().toString(36).slice(2)}${path.extname(
-        file.originalname,
-      )}`,
-    );
-  },
-});
+// Usa memoryStorage para processar a imagem com sharp antes de salvar
+const storage = multer.memoryStorage();
 
 const upload = multer({
   storage,
@@ -2260,6 +2247,19 @@ const upload = multer({
 
 const uploadFotos = upload.array("fotos", 10);
 
+// Função para otimizar imagem e converter para WebP
+const otimizarImagem = async (buffer, outputPath) => {
+  await sharp(buffer)
+    .webp({ quality: 85 }) // WebP com qualidade alta (85%)
+    .resize({
+      width: 1920,
+      height: 1080,
+      fit: "inside",
+      withoutEnlargement: true, // Não aumenta imagens menores
+    })
+    .toFile(outputPath);
+};
+
 app.post("/api/imoveis/:id/upload", uploadFotos, async (req, res) => {
   const { id } = req.params;
 
@@ -2268,12 +2268,24 @@ app.post("/api/imoveis/:id/upload", uploadFotos, async (req, res) => {
       return res.status(400).json({ error: "Nenhuma imagem enviada" });
     }
 
+    // Garante que o diretório de upload existe
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+
     const fotosInseridas = [];
 
-    // Processa cada foto e salva no banco de dados
+    // Processa cada foto, otimiza e salva
     for (const file of req.files) {
+      // Gera nome único com extensão .webp
+      const nomeArquivo = `${Date.now()}-${Math.random().toString(36).slice(2)}.webp`;
+      const caminhoCompleto = path.join(uploadDir, nomeArquivo);
+
+      // Otimiza e converte para WebP
+      await otimizarImagem(file.buffer, caminhoCompleto);
+
       // Caminho relativo que será acessado pelo frontend via rota estática /fotos_imoveis
-      const caminho = `/fotos_imoveis/${file.filename}`;
+      const caminho = `/fotos_imoveis/${nomeArquivo}`;
 
       const result = await pool.query(
         "INSERT INTO fotos_imoveis (imovel_id, caminho_foto) VALUES ($1, $2) RETURNING *",

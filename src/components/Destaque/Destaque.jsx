@@ -397,6 +397,8 @@ const Destaque = ({ usuario, curtidas, setCurtidas, onImovelClick }) => {
                           src={foto.caminho_foto}
                           alt={`${imovel.titulo} - foto ${idx + 1}`}
                           className="destaque-image"
+                          loading="lazy"
+                          decoding="async"
                         />
                       ))}
                     </div>
