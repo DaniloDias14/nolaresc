@@ -38,6 +38,9 @@
   align-items: center;
   transition: opacity 0.3s ease;
   text-decoration: none;
+  /* Remover highlight azul ao tocar */
+  -webkit-tap-highlight-color: transparent;
+  tap-highlight-color: transparent;
 }
 
 .footer-logo-link:hover {
@@ -94,6 +97,9 @@
   font-size: 0.95rem;
   transition: color 0.3s ease;
   text-decoration: none;
+  /* Remover highlight azul ao tocar */
+  -webkit-tap-highlight-color: transparent;
+  tap-highlight-color: transparent;
 }
 
 .contact-item:hover {
@@ -118,6 +124,9 @@
   border-radius: 50%;
   background: rgba(240, 239, 226, 0.1);
   text-decoration: none;
+  /* Remover highlight azul ao tocar */
+  -webkit-tap-highlight-color: transparent;
+  tap-highlight-color: transparent;
 }
 
 /* Alterada animação dos botões sociais: expandem ao invés de subir */
@@ -145,6 +154,9 @@
   font-size: 0.95rem;
   text-decoration: none;
   transition: color 0.3s ease;
+  /* Remover highlight azul ao tocar */
+  -webkit-tap-highlight-color: transparent;
+  tap-highlight-color: transparent;
 }
 
 .footer-legal a:hover {

@@ -68,6 +68,11 @@
   line-height: 1.8;
   font-weight: 400;
   color: var(--text-gray);
+  /* Centralizar texto horizontalmente e começar do meio da página */
+  margin-left: auto;
+  margin-right: auto;
+  max-width: 800px;
+  text-align: center;
 }
 
 .sobrenos-text-centered {
@@ -146,6 +151,9 @@
   color: var(--primary-blue);
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  /* Remover highlight azul ao tocar */
+  -webkit-tap-highlight-color: transparent;
+  tap-highlight-color: transparent;
 }
 
 .sobrenos-contato-icon-button:hover {
@@ -223,6 +231,9 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   font-family: "Sanchez", serif;
   border: 2px solid var(--primary-blue);
+  /* Remover highlight azul ao tocar */
+  -webkit-tap-highlight-color: transparent;
+  tap-highlight-color: transparent;
 }
 
 .sobrenos-rede-link:hover {
@@ -267,7 +278,7 @@
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 2rem;
-  max-width: 900px;
+  max-width: 700px;
   margin: 0 auto;
 }
 
@@ -360,6 +371,9 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   font-family: "Sanchez", serif;
   border: 2px solid var(--primary-blue);
+  /* Remover highlight azul ao tocar */
+  -webkit-tap-highlight-color: transparent;
+  tap-highlight-color: transparent;
 }
 
 .sobrenos-equipa-rede-link:hover {
@@ -411,6 +425,9 @@
   font-family: "Sanchez", serif;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 4px 12px rgba(25, 25, 112, 0.2);
+  /* Remover highlight azul ao tocar */
+  -webkit-tap-highlight-color: transparent;
+  tap-highlight-color: transparent;
 }
 
 .sobrenos-btn-curriculo:hover {
@@ -533,6 +550,10 @@
     grid-template-columns: 1fr;
     gap: 1.5rem;
     max-width: 100%;
+    /* Centralizar cards na grid */
+    justify-items: center;
+    max-width: 400px;
+    margin: 0 auto;
   }
 
   .sobrenos-equipa-image-wrapper {
@@ -663,6 +684,10 @@
     grid-template-columns: 1fr;
     gap: 1.2rem;
     max-width: 100%;
+    /* Centralizar cards na grid */
+    justify-items: center;
+    max-width: 400px;
+    margin: 0 auto;
   }
 
   .sobrenos-equipa-image-wrapper {
@@ -792,6 +817,10 @@
     grid-template-columns: 1fr;
     gap: 1.2rem;
     max-width: 100%;
+    /* Centralizar cards na grid */
+    justify-items: center;
+    max-width: 400px;
+    margin: 0 auto;
   }
 
   .sobrenos-equipa-image-wrapper {

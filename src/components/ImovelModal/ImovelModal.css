@@ -613,6 +613,9 @@
   min-width: 46px;
   width: 46px;
   height: 46px;
+  /* Remover highlight azul ao tocar no botão */
+  -webkit-tap-highlight-color: transparent;
+  tap-highlight-color: transparent;
 }
 
 .imovel-like-btn:hover {
@@ -794,6 +797,9 @@
 
   .imovel-contact-btn {
     max-width: none;
+    /* Remover highlight azul ao tocar no botão */
+    -webkit-tap-highlight-color: transparent;
+    tap-highlight-color: transparent;
   }
 
   .imovel-id-inline {

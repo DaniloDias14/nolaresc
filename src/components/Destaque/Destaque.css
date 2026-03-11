@@ -74,6 +74,9 @@
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
+  /* Remover highlight azul ao tocar */
+  -webkit-tap-highlight-color: transparent;
+  tap-highlight-color: transparent;
 }
 
 .destaque-card:hover {

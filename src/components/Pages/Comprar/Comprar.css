@@ -36,6 +36,9 @@
   box-shadow: 0 10px 28px rgba(25, 25, 112, 0.3);
   display: flex;
   flex-direction: column;
+  /* Remover highlight azul ao tocar */
+  -webkit-tap-highlight-color: transparent;
+  tap-highlight-color: transparent;
 }
 
 .property-card:hover {

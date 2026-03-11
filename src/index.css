@@ -13,6 +13,9 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  /* Remover highlight azul do navegador ao tocar em elementos */
+  -webkit-tap-highlight-color: transparent;
+  tap-highlight-color: transparent;
 }
 
 html {
@@ -36,4 +39,17 @@ main {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+}
+
+/* Remover comportamentos padrão de toque e seleção em elementos interativos */
+button,
+a,
+input,
+select,
+textarea {
+  /* Desabilitar tap highlight em iOS */
+  -webkit-tap-highlight-color: transparent;
+  tap-highlight-color: transparent;
+  /* Desabilitar menu de contexto ao pressionar longo */
+  -webkit-touch-callout: none;
 }

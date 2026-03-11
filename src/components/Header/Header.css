@@ -23,6 +23,9 @@
   display: flex;
   align-items: center;
   transition: opacity 0.3s ease;
+  /* Remover highlight azul ao tocar */
+  -webkit-tap-highlight-color: transparent;
+  tap-highlight-color: transparent;
 }
 
 .logo-img {
@@ -45,6 +48,9 @@
   z-index: 1001;
   /* Set color to blue for menu-toggle icon */
   color: var(--primary-blue);
+  /* Remover highlight azul ao tocar */
+  -webkit-tap-highlight-color: transparent;
+  tap-highlight-color: transparent;
 }
 
 .hamburger-line {
@@ -73,6 +79,9 @@
   transition: all 0.3s ease;
   position: relative;
   font-family: "Sanchez", serif;
+  /* Remover highlight azul ao tocar */
+  -webkit-tap-highlight-color: transparent;
+  tap-highlight-color: transparent;
 }
 
 .menu li a::after {
