@@ -237,12 +237,10 @@ const verificarAdmin = async (req, res, next) => {
     );
 
     if (result.rows.length === 0 || result.rows[0].tipo_usuario !== "adm") {
-      return res
-        .status(403)
-        .json({
-          error:
-            "Acesso negado. Apenas administradores podem realizar esta ação.",
-        });
+      return res.status(403).json({
+        error:
+          "Acesso negado. Apenas administradores podem realizar esta ação.",
+      });
     }
 
     next();
@@ -334,7 +332,7 @@ setInterval(
 );
 
 // =========================
-// FUNÇÕES DE CONTROLE DE TENTATIVAS
+// FUNÇÕES DE CONTROLE DE TENTATIVAS (EMAIL)
 // =========================
 
 // Função para criar tabela de rastreamento de tentativas falhas (se não existir)
@@ -355,13 +353,15 @@ const garantirTabelasTentativas = async () => {
       ON tentativas_verificacao_email(email, tipo);
     `);
   } catch (err) {
-    console.error("Erro ao garantir tabelas de tentativas:", err);
+    logErroSeguro("Erro ao garantir tabelas de tentativas", err);
   }
 };
 
 // Chamar ao iniciar servidor
 garantirTabelasTentativas();
 
+// FUNÇÃO: Verifica se um email está bloqueado por excesso de tentativas erradas
+// Consolidada para evitar duplicação com verificarRateLimitLogin (3.1 - código duplicado)
 const verificarBloqueioTentativasEmail = async (email, tipo) => {
   try {
     const result = await pool.query(
@@ -385,7 +385,7 @@ const verificarBloqueioTentativasEmail = async (email, tipo) => {
         bloqueado: true,
         tempoRestante,
         tentativasRestantes: 0,
-        mensagem: `Você está bloqueado. Tente novamente em ${tempoRestante} segundos.`,
+        mensagem: `Você está bloqueado. Tente novamente em ${Math.ceil(tempoRestante / 60)} minutos.`,
       };
     }
 
@@ -394,11 +394,13 @@ const verificarBloqueioTentativasEmail = async (email, tipo) => {
       tentativasRestantes: dados.tentativas_restantes || 5,
     };
   } catch (err) {
-    console.error("Erro ao verificar bloqueio de tentativas:", err);
+    logErroSeguro("Erro ao verificar bloqueio de tentativas por email", err);
     return { bloqueado: false, tentativasRestantes: 5 };
   }
 };
 
+// FUNÇÃO: Registra tentativa errada de verificação por email e bloqueia se necessário
+// Consolidada: unifica a lógica de contagem de tentativas para todos os fluxos de email
 const registrarTentativaErradaEmail = async (email, tipo) => {
   try {
     const result = await pool.query(
@@ -439,7 +441,7 @@ const registrarTentativaErradaEmail = async (email, tipo) => {
       );
     }
   } catch (err) {
-    console.error("Erro ao registrar tentativa errada:", err);
+    logErroSeguro("Erro ao registrar tentativa errada por email", err);
   }
 };
 
@@ -1650,30 +1652,67 @@ app.get("/api/estatisticas/imovel-mais-curtido", async (req, res) => {
 // ROTAS DE CURTIDAS
 // =========================
 
-// ROTA: Busca todas as curtidas de um usuário específico
+// ROTA: Busca todas as curtidas de um usuário específico (com paginação opcional)
 app.get("/api/curtidas/:usuarioId", async (req, res) => {
   const { usuarioId } = req.params;
 
-  // VALIDAÇÃO: Campo obrigatório
-  if (!usuarioId) {
-    return res.status(400).json({ error: "usuarioId é obrigatório" });
+  // VALIDAÇÃO: Campo obrigatório e numérico
+  if (!usuarioId || !validarIdNumerico(usuarioId)) {
+    return res.status(400).json({ error: "usuarioId inválido" });
   }
 
   try {
+    // PAGINAÇÃO: Parâmetros opcionais via query string (?page=1&limit=20)
+    const pagina = req.query.page
+      ? Math.max(1, Number.parseInt(req.query.page, 10))
+      : null;
+    const limite = req.query.limit
+      ? Math.min(100, Math.max(1, Number.parseInt(req.query.limit, 10)))
+      : null;
+
+    // DB QUERY: Conta total de curtidas do usuário
+    const totalResult = await pool.query(
+      `SELECT COUNT(*) as total FROM curtidas c
+       LEFT JOIN imoveis i ON i.id = c.imovel_id
+       WHERE c.usuario_id = $1 AND i.visivel = true`,
+      [usuarioId],
+    );
+    const total = Number.parseInt(totalResult.rows[0].total, 10);
+
+    // Monta cláusula de paginação apenas se solicitada
+    const paginacaoSQL =
+      pagina && limite ? `LIMIT ${limite} OFFSET ${(pagina - 1) * limite}` : "";
+
     // DB QUERY: Busca todas as curtidas do usuário (apenas imóveis visíveis)
     const result = await pool.query(
       `SELECT c.*, i.titulo, i.preco, i.preco_destaque, i.cidade, i.bairro
        FROM curtidas c
        LEFT JOIN imoveis i ON i.id = c.imovel_id
        WHERE c.usuario_id = $1 AND i.visivel = true
-       ORDER BY c.data_curtida DESC`,
+       ORDER BY c.data_curtida DESC
+       ${paginacaoSQL}`,
       [usuarioId],
     );
 
-    res.json(result.rows);
+    // Retorna dados com metadados de paginação quando paginação é usada
+    if (pagina && limite) {
+      res.json({
+        dados: result.rows,
+        paginacao: {
+          total,
+          pagina,
+          limite,
+          totalPaginas: Math.ceil(total / limite),
+        },
+      });
+    } else {
+      res.json(result.rows);
+    }
   } catch (err) {
-    console.error("Erro ao buscar curtidas:", err);
-    res.status(500).json({ error: "Erro ao buscar curtidas" });
+    const codigoErro = logErroSeguro("Erro ao buscar curtidas", err);
+    res
+      .status(500)
+      .json({ error: "Erro ao buscar curtidas", codigo: codigoErro });
   }
 });
 
@@ -1724,6 +1763,24 @@ app.post("/api/curtidas/:usuarioId/:imovelId", async (req, res) => {
 
 app.get("/api/imoveis/ocultos", async (req, res) => {
   try {
+    // PAGINAÇÃO: Parâmetros opcionais via query string (?page=1&limit=50)
+    const pagina = req.query.page
+      ? Math.max(1, Number.parseInt(req.query.page, 10))
+      : null;
+    const limite = req.query.limit
+      ? Math.min(200, Math.max(1, Number.parseInt(req.query.limit, 10)))
+      : null;
+
+    // DB QUERY: Conta total de imóveis ocultos
+    const totalResult = await pool.query(
+      "SELECT COUNT(*) as total FROM imoveis WHERE visivel = false",
+    );
+    const total = Number.parseInt(totalResult.rows[0].total, 10);
+
+    // Monta cláusula de paginação apenas se solicitada
+    const paginacaoSQL =
+      pagina && limite ? `LIMIT ${limite} OFFSET ${(pagina - 1) * limite}` : "";
+
     // DB QUERY: Busca imóveis ocultos com características e fotos
     const result = await pool.query(
       `SELECT
@@ -1803,18 +1860,54 @@ app.get("/api/imoveis/ocultos", async (req, res) => {
       LEFT JOIN imoveis_caracteristicas ic ON ic.imovel_id = i.id
       WHERE i.visivel = false
       GROUP BY i.id, ic.id
-      ORDER BY i.data_criacao DESC`,
+      ORDER BY i.data_criacao DESC
+      ${paginacaoSQL}`,
     );
-    res.json(result.rows);
+
+    // Retorna dados com metadados de paginação quando paginação é usada
+    if (pagina && limite) {
+      res.json({
+        dados: result.rows,
+        paginacao: {
+          total,
+          pagina,
+          limite,
+          totalPaginas: Math.ceil(total / limite),
+        },
+      });
+    } else {
+      res.json(result.rows);
+    }
   } catch (err) {
-    console.error("Erro ao buscar imóveis ocultos:", err);
-    res.status(500).json({ error: "Erro ao buscar imóveis ocultos" });
+    const codigoErro = logErroSeguro("Erro ao buscar imóveis ocultos", err);
+    res
+      .status(500)
+      .json({ error: "Erro ao buscar imóveis ocultos", codigo: codigoErro });
   }
 });
 
-// ROTA: Busca todos os imóveis visíveis
+// ROTA: Busca todos os imóveis visíveis (com paginação opcional)
 app.get("/api/imoveis", async (req, res) => {
   try {
+    // PAGINAÇÃO: Parâmetros opcionais via query string (?page=1&limit=50)
+    // Se não fornecidos, retorna todos os imóveis (comportamento padrão mantido)
+    const pagina = req.query.page
+      ? Math.max(1, Number.parseInt(req.query.page, 10))
+      : null;
+    const limite = req.query.limit
+      ? Math.min(200, Math.max(1, Number.parseInt(req.query.limit, 10)))
+      : null;
+
+    // DB QUERY: Conta total de imóveis visíveis (para metadados de paginação)
+    const totalResult = await pool.query(
+      "SELECT COUNT(*) as total FROM imoveis WHERE visivel = true",
+    );
+    const total = Number.parseInt(totalResult.rows[0].total, 10);
+
+    // Monta cláusula de paginação apenas se solicitada
+    const paginacaoSQL =
+      pagina && limite ? `LIMIT ${limite} OFFSET ${(pagina - 1) * limite}` : "";
+
     // DB QUERY: Busca imóveis com características e fotos
     const result = await pool.query(
       `SELECT
@@ -1894,12 +1987,30 @@ app.get("/api/imoveis", async (req, res) => {
       LEFT JOIN imoveis_caracteristicas ic ON ic.imovel_id = i.id
       WHERE i.visivel = true
       GROUP BY i.id, ic.id
-      ORDER BY i.data_criacao DESC`,
+      ORDER BY i.data_criacao DESC
+      ${paginacaoSQL}`,
     );
-    res.json(result.rows);
+
+    // Retorna dados com metadados de paginação quando paginação é usada
+    if (pagina && limite) {
+      res.json({
+        dados: result.rows,
+        paginacao: {
+          total,
+          pagina,
+          limite,
+          totalPaginas: Math.ceil(total / limite),
+        },
+      });
+    } else {
+      // Mantém compatibilidade: retorna array simples quando sem paginação
+      res.json(result.rows);
+    }
   } catch (err) {
-    console.error("Erro ao buscar imóveis:", err);
-    res.status(500).json({ error: "Erro ao buscar imóveis" });
+    const codigoErro = logErroSeguro("Erro ao buscar imóveis", err);
+    res
+      .status(500)
+      .json({ error: "Erro ao buscar imóveis", codigo: codigoErro });
   }
 });
 
@@ -2610,12 +2721,11 @@ app.put("/api/imoveis_caracteristicas/:imovel_id", async (req, res) => {
       .status(200)
       .json({ message: "Características atualizadas com sucesso!" });
   } catch (err) {
-    console.error("[v0] Erro ao atualizar características:", err);
-    console.error("[v0] Query values:", values);
-    console.error("[v0] Body recebido:", req.body);
+    // SEGURANÇA: Usa log seguro que não expõe detalhes em produção
+    const codigoErro = logErroSeguro("Erro ao atualizar características", err);
     res.status(500).json({
       error: "Erro ao atualizar características",
-      details: err.message,
+      codigo: codigoErro,
     });
   }
 });

@@ -6,6 +6,16 @@ import "./Curtidas.css";
 import ImovelModal from "../../ImovelModal/ImovelModal";
 import { AiFillHeart, AiOutlineHeart } from "react-icons/ai";
 
+// SEGURANÇA (2.6): Sanitiza URL de foto para prevenir injeção de protocolo (javascript:, data:, etc.)
+const sanitizarUrlFoto = (url) => {
+  if (!url || typeof url !== "string") return "";
+  const limpa = url.trim();
+  if (limpa.startsWith("/") || limpa.startsWith("https://")) {
+    return limpa;
+  }
+  return "";
+};
+
 const Curtidas = ({ usuario }) => {
   const [imoveis, setImoveis] = useState([]);
   const [imovelSelecionado, setImovelSelecionado] = useState(null);
@@ -390,7 +400,7 @@ const Curtidas = ({ usuario }) => {
                       {imovel.fotos.map((foto, idx) => (
                         <img
                           key={idx}
-                          src={foto.caminho_foto}
+                          src={sanitizarUrlFoto(foto.caminho_foto)}
                           alt={`${imovel.titulo} - foto ${idx + 1}`}
                           className="property-image"
                           loading="lazy"

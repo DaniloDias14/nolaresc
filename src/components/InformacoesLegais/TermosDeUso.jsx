@@ -9,7 +9,7 @@ const TermosDeUso = () => {
         <section className="legal-header">
           <h1 className="legal-title">Termos de Uso</h1>
           <p className="legal-subtitle">Nolare Imobiliária</p>
-          <p className="legal-date">Última atualização: Janeiro de 2026</p>
+          <p className="legal-date">Última atualização: Março de 2026</p>
         </section>
 
         {/* Introdução */}

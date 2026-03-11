@@ -8,6 +8,16 @@ import Destaque from "../../Destaque/Destaque";
 import Filtro from "../../Filtro/Filtro";
 import { AiFillHeart, AiOutlineHeart } from "react-icons/ai";
 
+// SEGURANÇA (2.6): Sanitiza URL de foto para prevenir injeção de protocolo (javascript:, data:, etc.)
+const sanitizarUrlFoto = (url) => {
+  if (!url || typeof url !== "string") return "";
+  const limpa = url.trim();
+  if (limpa.startsWith("/") || limpa.startsWith("https://")) {
+    return limpa;
+  }
+  return "";
+};
+
 const Comprar = ({ usuario }) => {
   const [imoveis, setImoveis] = useState([]);
   const [imoveisFiltrados, setImoveisFiltrados] = useState([]);
@@ -825,7 +835,7 @@ const Comprar = ({ usuario }) => {
                           {imovel.fotos.map((foto, idx) => (
                             <img
                               key={idx}
-                              src={foto.caminho_foto}
+                              src={sanitizarUrlFoto(foto.caminho_foto)}
                               alt={`${imovel.titulo} - foto ${idx + 1}`}
                               className="property-image"
                               loading="lazy"

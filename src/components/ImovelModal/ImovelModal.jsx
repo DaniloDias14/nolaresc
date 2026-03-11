@@ -12,6 +12,18 @@ import {
 } from "react-icons/io5";
 import EditarImovel from "../AdminPanel/EditarImovel/EditarImovel";
 
+// SEGURANÇA (2.6): Sanitiza URL de foto para prevenir injeção de protocolo (javascript:, data:, etc.)
+// React já escapa strings em JSX, mas validamos o protocolo da URL de imagens explicitamente
+const sanitizarUrlFoto = (url) => {
+  if (!url || typeof url !== "string") return "";
+  const limpa = url.trim();
+  // Permite apenas URLs relativas (começando com /) ou https://
+  if (limpa.startsWith("/") || limpa.startsWith("https://")) {
+    return limpa;
+  }
+  return "";
+};
+
 const ImovelModal = ({
   imovel,
   onClose,
@@ -618,7 +630,7 @@ const ImovelModal = ({
                     {fotos.map((foto, index) => (
                       <div key={index} className="imovel-gallery-slide">
                         <img
-                          src={`${foto.caminho_foto}`}
+                          src={sanitizarUrlFoto(foto.caminho_foto)}
                           alt={`Foto ${index + 1}`}
                           className="imovel-gallery-image"
                           loading={index <= 1 ? "eager" : "lazy"}
@@ -708,7 +720,7 @@ const ImovelModal = ({
                     aria-label={`Ver foto ${index + 1}`}
                   >
                     <img
-                      src={`${foto.caminho_foto}`}
+                      src={sanitizarUrlFoto(foto.caminho_foto)}
                       alt={`Miniatura ${index + 1}`}
                       loading="lazy"
                       decoding="async"
