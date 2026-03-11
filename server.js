@@ -8,8 +8,9 @@ import path from "path";
 import bcrypt from "bcrypt";
 import { v4 as uuidv4 } from "uuid";
 import { enviarEmail } from "./src/emails/email.js";
-import jwt from "jsonwebtoken"; // Import jwt
-import sharp from "sharp"; // Para otimização de imagens
+import jwt from "jsonwebtoken";
+import sharp from "sharp";
+import crypto from "crypto";
 
 import { fileURLToPath } from "url";
 
@@ -17,13 +18,75 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 dotenv.config();
+
+// =========================
+// VALIDAÇÃO DE VARIÁVEIS DE AMBIENTE CRÍTICAS
+// =========================
+const variaveisObrigatorias = [
+  "JWT_SECRET",
+  "PGUSER",
+  "PGPASSWORD",
+  "PGHOST",
+  "PGDATABASE",
+];
+variaveisObrigatorias.forEach((varName) => {
+  if (!process.env[varName]) {
+    console.error(
+      `ERRO CRÍTICO: Variável de ambiente ${varName} não está definida.`,
+    );
+    process.exit(1);
+  }
+});
+
 const app = express();
 app.set("trust proxy", 1);
 const PORT = process.env.BACKEND_PORT || 5000;
-const JWT_SECRET = process.env.JWT_SECRET; // Ensure JWT_SECRET is defined in your .env file
+const JWT_SECRET = process.env.JWT_SECRET;
+const FRONTEND_URL = process.env.FRONTEND_URL || "https://nolaresc.com.br";
 
-app.use(cors());
-app.use(express.json());
+// =========================
+// HEADERS DE SEGURANÇA
+// =========================
+app.use((req, res, next) => {
+  // Previne clickjacking
+  res.setHeader("X-Frame-Options", "DENY");
+  // Previne XSS
+  res.setHeader("X-XSS-Protection", "1; mode=block");
+  // Previne MIME type sniffing
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  // Política de referrer
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  // Remove header que expõe tecnologia
+  res.removeHeader("X-Powered-By");
+  next();
+});
+
+// =========================
+// CORS CONFIGURADO
+// =========================
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Permite requisições sem origin (apps mobile, Postman, etc)
+    const allowedOrigins = [
+      FRONTEND_URL,
+      "http://localhost:5173",
+      "http://localhost:3000",
+      "https://nolaresc.com.br",
+      "https://www.nolaresc.com.br",
+    ];
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(null, true); // Em produção, permitir por enquanto
+    }
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
+
+app.use(cors(corsOptions));
+app.use(express.json({ limit: "10mb" }));
 
 // Serve arquivos estáticos do build do Vite
 app.use(express.static(path.join(__dirname, "dist")));
@@ -45,9 +108,11 @@ app.use(
 // FUNÇÕES AUXILIARES
 // =========================
 
-// FUNÇÃO: Gera código de verificação de 5 dígitos
+// FUNÇÃO: Gera código de verificação de 5 dígitos (usando crypto para maior segurança)
 const gerarCodigoVerificacao = () => {
-  return Math.floor(10000 + Math.random() * 90000).toString();
+  const randomBytes = crypto.randomBytes(4);
+  const randomNumber = randomBytes.readUInt32BE(0);
+  return (10000 + (randomNumber % 90000)).toString();
 };
 
 // FUNÇÃO: Gera token UUID seguro
@@ -59,6 +124,214 @@ const gerarToken = () => {
 const validarToken = (expiracao) => {
   return new Date() < new Date(expiracao);
 };
+
+// =========================
+// FUNÇÕES DE VALIDAÇÃO DE ENTRADA
+// =========================
+
+// FUNÇÃO: Valida formato de email
+const validarEmail = (email) => {
+  if (!email || typeof email !== "string") return false;
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email) && email.length <= 255;
+};
+
+// FUNÇÃO: Valida força da senha
+const validarForcaSenha = (senha) => {
+  if (!senha || typeof senha !== "string")
+    return { valido: false, mensagem: "Senha é obrigatória" };
+  if (senha.length < 8)
+    return { valido: false, mensagem: "Senha deve ter no mínimo 8 caracteres" };
+  if (senha.length > 128)
+    return {
+      valido: false,
+      mensagem: "Senha deve ter no máximo 128 caracteres",
+    };
+  if (!/[a-z]/.test(senha))
+    return {
+      valido: false,
+      mensagem: "Senha deve conter pelo menos uma letra minúscula",
+    };
+  if (!/[A-Z]/.test(senha))
+    return {
+      valido: false,
+      mensagem: "Senha deve conter pelo menos uma letra maiúscula",
+    };
+  if (!/[0-9]/.test(senha))
+    return {
+      valido: false,
+      mensagem: "Senha deve conter pelo menos um número",
+    };
+  return { valido: true, mensagem: "" };
+};
+
+// FUNÇÃO: Sanitiza string (remove caracteres perigosos)
+const sanitizarString = (str, maxLength = 255) => {
+  if (!str || typeof str !== "string") return "";
+  return str.trim().slice(0, maxLength).replace(/[<>]/g, ""); // Remove < e > para prevenir XSS básico
+};
+
+// FUNÇÃO: Valida nome
+const validarNome = (nome) => {
+  if (!nome || typeof nome !== "string") return false;
+  const nomeLimpo = nome.trim();
+  return nomeLimpo.length >= 3 && nomeLimpo.length <= 100;
+};
+
+// FUNÇÃO: Valida ID numérico
+const validarIdNumerico = (id) => {
+  const idNum = Number.parseInt(id, 10);
+  return !Number.isNaN(idNum) && idNum > 0;
+};
+
+// FUNÇÃO: Log seguro (não expõe detalhes em produção)
+const logErroSeguro = (contexto, erro) => {
+  const codigoErro = `ERR_${Date.now()}_${crypto.randomBytes(4).toString("hex").toUpperCase()}`;
+  console.error(`[${codigoErro}] ${contexto}`);
+  if (process.env.NODE_ENV === "development") {
+    console.error("Detalhes:", erro);
+  }
+  return codigoErro;
+};
+
+// =========================
+// MIDDLEWARE DE AUTENTICAÇÃO JWT
+// =========================
+
+// MIDDLEWARE: Verifica token JWT
+const verificarTokenJWT = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res
+      .status(401)
+      .json({ error: "Token de autenticação não fornecido" });
+  }
+
+  const token = authHeader.split(" ")[1];
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch (error) {
+    if (error.name === "TokenExpiredError") {
+      return res.status(401).json({ error: "Token expirado" });
+    }
+    return res.status(401).json({ error: "Token inválido" });
+  }
+};
+
+// MIDDLEWARE: Verifica se usuário é administrador
+const verificarAdmin = async (req, res, next) => {
+  try {
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      return res.status(401).json({ error: "Usuário não autenticado" });
+    }
+
+    const result = await pool.query(
+      "SELECT tipo_usuario FROM usuarios WHERE id = $1",
+      [userId],
+    );
+
+    if (result.rows.length === 0 || result.rows[0].tipo_usuario !== "adm") {
+      return res
+        .status(403)
+        .json({
+          error:
+            "Acesso negado. Apenas administradores podem realizar esta ação.",
+        });
+    }
+
+    next();
+  } catch (error) {
+    const codigoErro = logErroSeguro(
+      "Erro ao verificar permissões de admin",
+      error,
+    );
+    return res
+      .status(500)
+      .json({ error: "Erro ao verificar permissões", codigo: codigoErro });
+  }
+};
+
+// FUNÇÃO: Gera token JWT para usuário
+const gerarTokenJWT = (userId, tipoUsuario) => {
+  return jwt.sign(
+    { userId, tipoUsuario },
+    JWT_SECRET,
+    { expiresIn: "24h" }, // Token expira em 24 horas
+  );
+};
+
+// =========================
+// RATE LIMITING SIMPLES (SEM BIBLIOTECA EXTERNA)
+// =========================
+const tentativasLogin = new Map();
+const LIMITE_TENTATIVAS = 5;
+const JANELA_BLOQUEIO_MS = 15 * 60 * 1000; // 15 minutos
+
+const verificarRateLimitLogin = (identificador) => {
+  const agora = Date.now();
+  const dados = tentativasLogin.get(identificador);
+
+  if (!dados) {
+    return { bloqueado: false, tentativasRestantes: LIMITE_TENTATIVAS };
+  }
+
+  // Limpa tentativas antigas
+  if (agora > dados.expiraEm) {
+    tentativasLogin.delete(identificador);
+    return { bloqueado: false, tentativasRestantes: LIMITE_TENTATIVAS };
+  }
+
+  if (dados.tentativas >= LIMITE_TENTATIVAS) {
+    const tempoRestante = Math.ceil((dados.expiraEm - agora) / 1000);
+    return {
+      bloqueado: true,
+      tempoRestante,
+      mensagem: `Muitas tentativas de login. Tente novamente em ${Math.ceil(tempoRestante / 60)} minutos.`,
+    };
+  }
+
+  return {
+    bloqueado: false,
+    tentativasRestantes: LIMITE_TENTATIVAS - dados.tentativas,
+  };
+};
+
+const registrarTentativaLoginFalha = (identificador) => {
+  const agora = Date.now();
+  const dados = tentativasLogin.get(identificador);
+
+  if (!dados || agora > dados.expiraEm) {
+    tentativasLogin.set(identificador, {
+      tentativas: 1,
+      expiraEm: agora + JANELA_BLOQUEIO_MS,
+    });
+  } else {
+    dados.tentativas += 1;
+  }
+};
+
+const limparTentativasLogin = (identificador) => {
+  tentativasLogin.delete(identificador);
+};
+
+// Limpeza periódica do mapa de rate limiting (a cada 5 minutos)
+setInterval(
+  () => {
+    const agora = Date.now();
+    for (const [key, value] of tentativasLogin.entries()) {
+      if (agora > value.expiraEm) {
+        tentativasLogin.delete(key);
+      }
+    }
+  },
+  5 * 60 * 1000,
+);
 
 // =========================
 // FUNÇÕES DE CONTROLE DE TENTATIVAS
@@ -185,13 +458,32 @@ app.post("/api/login", async (req, res) => {
     return res.status(400).json({ error: "Email e senha são obrigatórios" });
   }
 
+  // VALIDAÇÃO: Formato de email
+  if (!validarEmail(email)) {
+    return res.status(400).json({ error: "Formato de email inválido" });
+  }
+
+  // RATE LIMITING: Verifica se IP está bloqueado
+  const identificador = req.ip || req.connection.remoteAddress || email;
+  const rateLimit = verificarRateLimitLogin(identificador);
+
+  if (rateLimit.bloqueado) {
+    return res.status(429).json({
+      error: rateLimit.mensagem,
+      tempoRestante: rateLimit.tempoRestante,
+    });
+  }
+
   try {
-    // DB QUERY: Busca usuário por email
+    // DB QUERY: Busca usuário por email (sanitizado)
+    const emailLimpo = sanitizarString(email.toLowerCase(), 255);
     const result = await pool.query("SELECT * FROM usuarios WHERE email = $1", [
-      email,
+      emailLimpo,
     ]);
 
     if (result.rows.length === 0) {
+      // SEGURANÇA: Registra tentativa falha e retorna mensagem genérica
+      registrarTentativaLoginFalha(identificador);
       return res.status(401).json({ error: "Credenciais inválidas" });
     }
 
@@ -201,8 +493,13 @@ app.post("/api/login", async (req, res) => {
     const senhaValida = await bcrypt.compare(senha, user.senha);
 
     if (!senhaValida) {
+      // SEGURANÇA: Registra tentativa falha
+      registrarTentativaLoginFalha(identificador);
       return res.status(401).json({ error: "Credenciais inválidas" });
     }
+
+    // SUCESSO: Limpa tentativas de login
+    limparTentativasLogin(identificador);
 
     // DB QUERY: Registra sessão de login
     await pool.query(
@@ -216,20 +513,28 @@ app.post("/api/login", async (req, res) => {
       timeZone: "America/Sao_Paulo",
     });
 
+    // SEGURANÇA: Envio de email assíncrono sem expor erros
     enviarEmail("loginDetectado", user.email, "Novo Login Detectado - Nolare", {
       nome: user.nome,
       dataHora: dataHora,
     }).catch((err) => {
-      console.error("Erro ao enviar e-mail de login detectado:", err);
+      logErroSeguro("Erro ao enviar e-mail de login detectado", err);
     });
 
     // SEGURANÇA: Remove senha antes de enviar resposta
     const { senha: _, ...userSemSenha } = user;
 
-    res.json({ user: userSemSenha });
+    // SEGURANÇA: Gera token JWT para autenticação
+    const token = gerarTokenJWT(user.id, user.tipo_usuario);
+
+    res.json({
+      user: userSemSenha,
+      token,
+      expiresIn: 86400, // 24 horas em segundos
+    });
   } catch (err) {
-    console.error("Erro ao fazer login:", err);
-    res.status(500).json({ error: "Erro no servidor" });
+    const codigoErro = logErroSeguro("Erro ao fazer login", err);
+    res.status(500).json({ error: "Erro no servidor", codigo: codigoErro });
   }
 });
 
@@ -274,16 +579,38 @@ app.post("/api/register", async (req, res) => {
     return res.status(400).json({ error: "Todos os campos são obrigatórios" });
   }
 
-  // VALIDAÇÃO: Tipo de usuário permitido
-  if (!["user", "adm"].includes(tipo_usuario)) {
+  // VALIDAÇÃO: Nome
+  if (!validarNome(nome)) {
+    return res
+      .status(400)
+      .json({ error: "Nome deve ter entre 3 e 100 caracteres" });
+  }
+
+  // VALIDAÇÃO: Formato de email
+  if (!validarEmail(email)) {
+    return res.status(400).json({ error: "Formato de email inválido" });
+  }
+
+  // VALIDAÇÃO: Força da senha
+  const validacaoSenha = validarForcaSenha(senha);
+  if (!validacaoSenha.valido) {
+    return res.status(400).json({ error: validacaoSenha.mensagem });
+  }
+
+  // VALIDAÇÃO: Tipo de usuário permitido (não permite criar admin via registro público)
+  if (tipo_usuario !== "user") {
     return res.status(400).json({ error: "Tipo de usuário inválido" });
   }
 
   try {
+    // Sanitização dos dados
+    const nomeLimpo = sanitizarString(nome, 100);
+    const emailLimpo = sanitizarString(email.toLowerCase(), 255);
+
     // DB QUERY: Verifica se email já existe
     const emailExiste = await pool.query(
       "SELECT id FROM usuarios WHERE email = $1",
-      [email],
+      [emailLimpo],
     );
     const emailJaExiste = emailExiste.rows.length > 0;
 
@@ -297,10 +624,10 @@ app.post("/api/register", async (req, res) => {
     await pool.query(
       "INSERT INTO email_verificacao_pendente (nome, email, senha, tipo_usuario, codigo, expiracao, aceitou_termos, aceitou_privacidade) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) ON CONFLICT (email) DO UPDATE SET codigo = $5, expiracao = $6, criado_em = NOW()",
       [
-        nome,
-        email,
-        await bcrypt.hash(senha, 10),
-        tipo_usuario,
+        nomeLimpo,
+        emailLimpo,
+        await bcrypt.hash(senha, 12), // Aumentado para 12 rounds
+        "user", // Sempre user, nunca admin via registro público
         codigo,
         expiracao,
         aceitouTermosValue,
@@ -312,24 +639,25 @@ app.post("/api/register", async (req, res) => {
       // Email novo - enviar código real
       await enviarEmail(
         "verificarCadastro",
-        email,
+        emailLimpo,
         "Verificação de Cadastro - Nolare",
         {
-          nome: nome,
+          nome: nomeLimpo,
           codigo: codigo,
         },
       );
     }
 
+    // SEGURANÇA: Resposta uniforme para prevenir enumeração de usuários
     res.status(201).json({
       success: true,
       needsVerification: true,
       message:
-        "Cadastro iniciado! Verifique seu e-mail para confirmar sua conta.",
+        "Se este email não estiver cadastrado, você receberá um código de verificação em breve.",
     });
   } catch (err) {
-    console.error("Erro ao registrar usuário:", err);
-    res.status(500).json({ error: "Erro no servidor" });
+    const codigoErro = logErroSeguro("Erro ao registrar usuário", err);
+    res.status(500).json({ error: "Erro no servidor", codigo: codigoErro });
   }
 });
 
@@ -808,11 +1136,18 @@ app.post("/api/email/recuperacao/solicitar", async (req, res) => {
     return res.status(400).json({ error: "Email é obrigatório" });
   }
 
+  // VALIDAÇÃO: Formato de email
+  if (!validarEmail(email)) {
+    return res.status(400).json({ error: "Formato de email inválido" });
+  }
+
   try {
+    const emailLimpo = sanitizarString(email.toLowerCase(), 255);
+
     // DB QUERY: Busca usuário
     const userResult = await pool.query(
       "SELECT id, nome, email FROM usuarios WHERE email = $1",
-      [email],
+      [emailLimpo],
     );
 
     // Criar registro pendente com código inválido para bloquear qualquer tentativa
@@ -820,12 +1155,13 @@ app.post("/api/email/recuperacao/solicitar", async (req, res) => {
 
     if (!emailExiste) {
       // Email não existe - criar registro falso para simular fluxo
-      await criarRegistroFalsoVerificacao(email); // Usando a nova função
+      await criarRegistroFalsoVerificacao(emailLimpo);
 
-      // Enviar resposta como se tudo estivesse normal
+      // SEGURANÇA: Resposta uniforme para prevenir enumeração de usuários
       res.json({
         success: true,
-        message: "Código de recuperação enviado para o e-mail",
+        message:
+          "Se o email estiver cadastrado, você receberá um código de recuperação em breve.",
       });
       return;
     }
@@ -870,13 +1206,15 @@ app.post("/api/email/recuperacao/solicitar", async (req, res) => {
       },
     );
 
+    // SEGURANÇA: Resposta uniforme para prevenir enumeração de usuários
     res.json({
       success: true,
-      message: "Código de recuperação enviado para o e-mail",
+      message:
+        "Se o email estiver cadastrado, você receberá um código de recuperação em breve.",
     });
   } catch (err) {
-    console.error("Erro ao solicitar recuperação:", err);
-    res.status(500).json({ error: "Erro no servidor" });
+    const codigoErro = logErroSeguro("Erro ao solicitar recuperação", err);
+    res.status(500).json({ error: "Erro no servidor", codigo: codigoErro });
   }
 });
 
@@ -1014,15 +1352,29 @@ app.post("/api/email/recuperacao/redefinir", async (req, res) => {
     });
   }
 
+  // VALIDAÇÃO: Formato de email
+  if (!validarEmail(email)) {
+    return res.status(400).json({ error: "Formato de email inválido" });
+  }
+
+  // VALIDAÇÃO: Força da nova senha
+  const validacaoSenha = validarForcaSenha(novaSenha);
+  if (!validacaoSenha.valido) {
+    return res.status(400).json({ error: validacaoSenha.mensagem });
+  }
+
   try {
+    const emailLimpo = sanitizarString(email.toLowerCase(), 255);
+
     // DB QUERY: Busca usuário
     const userResult = await pool.query(
       "SELECT id FROM usuarios WHERE email = $1",
-      [email],
+      [emailLimpo],
     );
 
     if (userResult.rows.length === 0) {
-      return res.status(404).json({ error: "Usuário não encontrado" });
+      // SEGURANÇA: Resposta genérica para não revelar se email existe
+      return res.status(400).json({ error: "Token inválido ou expirado" });
     }
 
     const user = userResult.rows[0];
@@ -1043,8 +1395,8 @@ app.post("/api/email/recuperacao/redefinir", async (req, res) => {
       return res.status(400).json({ error: "Token expirado" });
     }
 
-    // Hash da nova senha
-    const senhaHash = await bcrypt.hash(novaSenha, 10);
+    // Hash da nova senha com 12 rounds
+    const senhaHash = await bcrypt.hash(novaSenha, 12);
 
     // Atualiza senha
     await pool.query("UPDATE usuarios SET senha = $1 WHERE id = $2", [
@@ -1057,13 +1409,21 @@ app.post("/api/email/recuperacao/redefinir", async (req, res) => {
       tokenData.id,
     ]);
 
+    // SEGURANÇA: Invalida todas as sessões anteriores do usuário
+    await pool.query(
+      "UPDATE usuario_sessoes SET ativo = FALSE WHERE usuario_id = $1",
+      [user.id],
+    );
+
     res.json({
       success: true,
       message: "Senha redefinida com sucesso!",
     });
   } catch (err) {
-    console.error("Erro ao redefinir senha:", err);
-    res.status(500).json({ error: "Erro ao redefinir senha" });
+    const codigoErro = logErroSeguro("Erro ao redefinir senha", err);
+    res
+      .status(500)
+      .json({ error: "Erro ao redefinir senha", codigo: codigoErro });
   }
 });
 
@@ -1671,99 +2031,140 @@ app.get("/api/imoveis/:id", async (req, res) => {
   }
 });
 
-// ROTA: Cria novo imóvel
-app.post("/api/imoveis", async (req, res) => {
-  const {
-    titulo,
-    descricao,
-    preco,
-    preco_destaque,
-    destaque,
-    status,
-    finalidade,
-    cep,
-    area_total,
-    area_construida,
-    visivel,
-    criado_por,
-    estado,
-    cidade,
-    bairro,
-    tipo,
-    coordenadas,
-  } = req.body;
+// ROTA: Cria novo imóvel (PROTEGIDA - APENAS ADMINS)
+app.post(
+  "/api/imoveis",
+  verificarTokenJWT,
+  verificarAdmin,
+  async (req, res) => {
+    const {
+      titulo,
+      descricao,
+      preco,
+      preco_destaque,
+      destaque,
+      status,
+      finalidade,
+      cep,
+      area_total,
+      area_construida,
+      visivel,
+      criado_por,
+      estado,
+      cidade,
+      bairro,
+      tipo,
+      coordenadas,
+    } = req.body;
 
-  // VALIDAÇÃO: Campos obrigatórios
-  if (!titulo || !preco || !criado_por) {
-    return res.status(400).json({ error: "Campos obrigatórios ausentes" });
-  }
-
-  // VALIDAÇÃO: Verifica se usuário existe
-  try {
-    const usuarioExiste = await pool.query(
-      "SELECT id FROM usuarios WHERE id = $1",
-      [criado_por],
-    );
-    if (usuarioExiste.rows.length === 0) {
-      return res.status(404).json({ error: "Usuário criador não encontrado" });
+    // VALIDAÇÃO: Campos obrigatórios
+    if (!titulo || !preco || !criado_por) {
+      return res.status(400).json({ error: "Campos obrigatórios ausentes" });
     }
-  } catch (err) {
-    console.error("Erro ao validar usuário:", err);
-    return res.status(500).json({ error: "Erro ao validar usuário" });
-  }
 
-  // VALIDAÇÃO: Tipos de imóvel permitidos
-  const tiposPermitidos = [
-    "Casa",
-    "Apartamento",
-    "Cobertura",
-    "Kitnet",
-    "Terreno",
-    "Sala comercial",
-    "Galpão",
-    "Sítio",
-    "Fazenda",
-  ];
+    // VALIDAÇÃO: Título
+    if (
+      typeof titulo !== "string" ||
+      titulo.trim().length < 3 ||
+      titulo.trim().length > 200
+    ) {
+      return res
+        .status(400)
+        .json({ error: "Título deve ter entre 3 e 200 caracteres" });
+    }
 
-  if (tipo && !tiposPermitidos.includes(tipo)) {
-    return res.status(400).json({ error: "Tipo de imóvel inválido" });
-  }
+    // VALIDAÇÃO: Preço
+    const precoNumerico = Number.parseFloat(preco);
+    if (Number.isNaN(precoNumerico) || precoNumerico <= 0) {
+      return res
+        .status(400)
+        .json({ error: "Preço deve ser um número positivo" });
+    }
 
-  try {
-    // DB QUERY: Insere novo imóvel
-    const imovelResult = await pool.query(
-      `INSERT INTO imoveis
+    // VALIDAÇÃO: Verifica se usuário existe
+    if (!validarIdNumerico(criado_por)) {
+      return res.status(400).json({ error: "ID do criador inválido" });
+    }
+
+    try {
+      const usuarioExiste = await pool.query(
+        "SELECT id FROM usuarios WHERE id = $1",
+        [criado_por],
+      );
+      if (usuarioExiste.rows.length === 0) {
+        return res
+          .status(404)
+          .json({ error: "Usuário criador não encontrado" });
+      }
+    } catch (err) {
+      const codigoErro = logErroSeguro("Erro ao validar usuário", err);
+      return res
+        .status(500)
+        .json({ error: "Erro ao validar usuário", codigo: codigoErro });
+    }
+
+    // VALIDAÇÃO: Tipos de imóvel permitidos
+    const tiposPermitidos = [
+      "Casa",
+      "Apartamento",
+      "Cobertura",
+      "Kitnet",
+      "Terreno",
+      "Sala comercial",
+      "Galpão",
+      "Sítio",
+      "Fazenda",
+    ];
+
+    if (tipo && !tiposPermitidos.includes(tipo)) {
+      return res.status(400).json({ error: "Tipo de imóvel inválido" });
+    }
+
+    try {
+      // Sanitiza strings
+      const tituloLimpo = sanitizarString(titulo, 200);
+      const descricaoLimpa = sanitizarString(descricao || "", 5000);
+      const estadoLimpo = sanitizarString(estado || "", 50);
+      const cidadeLimpa = sanitizarString(cidade || "", 100);
+      const bairroLimpo = sanitizarString(bairro || "", 100);
+
+      // DB QUERY: Insere novo imóvel
+      const imovelResult = await pool.query(
+        `INSERT INTO imoveis
         (titulo, descricao, preco, preco_destaque, destaque, status, finalidade, cep, area_total, area_construida, visivel, criado_por, estado, cidade, bairro, tipo, coordenadas)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
        RETURNING id`,
-      [
-        titulo,
-        descricao || "",
-        preco,
-        preco_destaque || null,
-        destaque || false,
-        status || null,
-        finalidade || null,
-        cep || null,
-        area_total || null,
-        area_construida || null,
-        visivel !== undefined ? visivel : true,
-        criado_por,
-        estado || null,
-        cidade || null,
-        bairro || null,
-        tipo || null,
-        coordenadas || null,
-      ],
-    );
+        [
+          tituloLimpo,
+          descricaoLimpa,
+          precoNumerico,
+          preco_destaque ? Number.parseFloat(preco_destaque) : null,
+          destaque || false,
+          status || null,
+          finalidade || null,
+          cep || null,
+          area_total ? Number.parseFloat(area_total) : null,
+          area_construida ? Number.parseFloat(area_construida) : null,
+          visivel !== undefined ? visivel : true,
+          criado_por,
+          estadoLimpo || null,
+          cidadeLimpa || null,
+          bairroLimpo || null,
+          tipo || null,
+          coordenadas || null,
+        ],
+      );
 
-    const imovelId = imovelResult.rows[0].id;
-    res.status(201).json({ id: imovelId });
-  } catch (err) {
-    console.error("Erro ao cadastrar imóvel:", err);
-    res.status(500).json({ error: "Erro ao cadastrar imóvel" });
-  }
-});
+      const imovelId = imovelResult.rows[0].id;
+      res.status(201).json({ id: imovelId });
+    } catch (err) {
+      const codigoErro = logErroSeguro("Erro ao cadastrar imóvel", err);
+      res
+        .status(500)
+        .json({ error: "Erro ao cadastrar imóvel", codigo: codigoErro });
+    }
+  },
+);
 
 // ROTA: Atualiza imóvel (cria nova linha de informações no BD)
 app.put("/api/imoveis/:id", async (req, res) => {
@@ -2342,48 +2743,76 @@ app.delete("/api/fotos/:id", async (req, res) => {
 });
 
 // =========================
-// ROTAS DE ADMINISTRAÇÃO
+// ROTAS DE ADMINISTRAÇÃO (PROTEGIDAS)
 // =========================
 
-app.post("/api/admin/adicionar-admin", async (req, res) => {
-  const { nome, email, senha } = req.body;
+// ROTA: Adiciona novo administrador (APENAS ADMINS AUTENTICADOS)
+app.post(
+  "/api/admin/adicionar-admin",
+  verificarTokenJWT,
+  verificarAdmin,
+  async (req, res) => {
+    const { nome, email, senha } = req.body;
 
-  // VALIDAÇÃO: Campos obrigatórios
-  if (!nome || !email || !senha) {
-    return res.status(400).json({ error: "Todos os campos são obrigatórios" });
-  }
-
-  try {
-    // DB QUERY: Verifica se email já existe
-    const emailExiste = await pool.query(
-      "SELECT id FROM usuarios WHERE email = $1",
-      [email],
-    );
-
-    if (emailExiste.rows.length > 0) {
-      return res.status(400).json({ error: "Este email já está cadastrado" });
+    // VALIDAÇÃO: Campos obrigatórios
+    if (!nome || !email || !senha) {
+      return res
+        .status(400)
+        .json({ error: "Todos os campos são obrigatórios" });
     }
 
-    // Hash da senha
-    const senhaHash = await bcrypt.hash(senha, 10);
+    // VALIDAÇÃO: Nome
+    if (!validarNome(nome)) {
+      return res
+        .status(400)
+        .json({ error: "Nome deve ter entre 3 e 100 caracteres" });
+    }
 
-    // Insere diretamente na tabela usuarios com tipo_usuario = 'adm'
-    const result = await pool.query(
-      "INSERT INTO usuarios (nome, email, senha, tipo_usuario) VALUES ($1, $2, $3, $4) RETURNING id, nome, email, tipo_usuario, data_criacao",
-      [nome, email, senhaHash, "adm"],
-    );
+    // VALIDAÇÃO: Formato de email
+    if (!validarEmail(email)) {
+      return res.status(400).json({ error: "Formato de email inválido" });
+    }
 
-    res.status(201).json({
-      success: true,
-      user: result.rows[0],
-      message: "Administrador cadastrado com sucesso!",
-    });
-  } catch (err) {
-    console.error("Erro ao cadastrar administrador:", err);
-    res.status(500).json({ error: "Erro no servidor" });
-  }
-});
-// </CHANGE>
+    // VALIDAÇÃO: Força da senha
+    const validacaoSenha = validarForcaSenha(senha);
+    if (!validacaoSenha.valido) {
+      return res.status(400).json({ error: validacaoSenha.mensagem });
+    }
+
+    try {
+      const nomeLimpo = sanitizarString(nome, 100);
+      const emailLimpo = sanitizarString(email.toLowerCase(), 255);
+
+      // DB QUERY: Verifica se email já existe
+      const emailExiste = await pool.query(
+        "SELECT id FROM usuarios WHERE email = $1",
+        [emailLimpo],
+      );
+
+      if (emailExiste.rows.length > 0) {
+        return res.status(400).json({ error: "Este email já está cadastrado" });
+      }
+
+      // Hash da senha com 12 rounds
+      const senhaHash = await bcrypt.hash(senha, 12);
+
+      // Insere diretamente na tabela usuarios com tipo_usuario = 'adm'
+      const result = await pool.query(
+        "INSERT INTO usuarios (nome, email, senha, tipo_usuario) VALUES ($1, $2, $3, $4) RETURNING id, nome, email, tipo_usuario, data_criacao",
+        [nomeLimpo, emailLimpo, senhaHash, "adm"],
+      );
+
+      res.status(201).json({
+        success: true,
+        user: result.rows[0],
+        message: "Administrador cadastrado com sucesso!",
+      });
+    } catch (err) {
+      const codigoErro = logErroSeguro("Erro ao cadastrar administrador", err);
+      res.status(500).json({ error: "Erro no servidor", codigo: codigoErro });
+    }
+  },
+);
 
 // =========================
 // MIDDLEWARE DE ERROS DO MULTER
