@@ -9,7 +9,7 @@ const PoliticaDePrivacidade = () => {
         <section className="legal-header">
           <h1 className="legal-title">Política de Privacidade</h1>
           <p className="legal-subtitle">Nolare Imobiliária</p>
-          <p className="legal-date">Última atualização: Janeiro de 2025</p>
+          <p className="legal-date">Última atualização: Março de 2026</p>
         </section>
 
         {/* Introdução */}

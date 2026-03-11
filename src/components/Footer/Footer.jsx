@@ -110,7 +110,7 @@ const Footer = () => {
       </div>
 
       <div className="footer-bottom">
-        <p>© 2025 Nolare. Todos os direitos reservados.</p>
+        <p>© 2026 Nolare. Todos os direitos reservados.</p>
       </div>
     </footer>
   );
