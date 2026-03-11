@@ -25,6 +25,17 @@ function renderTemplate(templateFunction, props) {
   return html;
 }
 
+// PERFORMANCE/SEGURANÇA: Transporter criado uma única vez (singleton) — evita nova conexão TCP a cada envio (2.7)
+const transporter = nodemailer.createTransport({
+  host: process.env.EMAIL_HOST,
+  port: Number(process.env.EMAIL_PORT),
+  secure: false,
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
+
 // FUNÇÃO: Envia e-mail usando template específico
 export async function enviarEmail(templateKey, to, subject, props) {
   // Valida se o template existe
@@ -36,18 +47,7 @@ export async function enviarEmail(templateKey, to, subject, props) {
   // Renderiza o template em HTML
   const html = renderTemplate(Template, props);
 
-  // Configura o transporte SMTP
-  const transporter = nodemailer.createTransport({
-    host: process.env.EMAIL_HOST,
-    port: Number(process.env.EMAIL_PORT),
-    secure: false,
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-  });
-
-  // Envia o e-mail
+  // Envia o e-mail usando o transporter singleton
   return transporter.sendMail({
     from: `"Nolare" <${process.env.EMAIL_USER}>`,
     to,

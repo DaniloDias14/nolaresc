@@ -64,14 +64,26 @@ const App = () => {
 
   const isDashboardRoute = location.pathname === "/dashboard";
 
-  // Recupera dados do usuário do localStorage ao carregar a aplicação
+  // Recupera dados mínimos do usuário do localStorage ao carregar a aplicação (2.4)
+  // SEGURANÇA: Apenas nome e tipo_usuario são necessários para a UI
   useEffect(() => {
     const savedUser = localStorage.getItem("nolare_user");
     if (savedUser) {
-      const parsedUser = JSON.parse(savedUser);
-      setUser(parsedUser);
-      setAdmLogged(parsedUser.tipo_usuario === "adm");
-      setIsLoggedIn(true);
+      try {
+        const parsedUser = JSON.parse(savedUser);
+        // SEGURANÇA: Só considera dados válidos se tiver ao menos o tipo_usuario
+        if (parsedUser && parsedUser.tipo_usuario) {
+          setUser(parsedUser);
+          setAdmLogged(parsedUser.tipo_usuario === "adm");
+          setIsLoggedIn(true);
+        } else {
+          // Dados inválidos ou corrompidos — limpa localStorage
+          localStorage.removeItem("nolare_user");
+        }
+      } catch {
+        // JSON inválido — limpa localStorage
+        localStorage.removeItem("nolare_user");
+      }
     }
   }, []);
 

@@ -717,25 +717,28 @@ const LoginModal = ({ onClose, setAdmLogged, setUser }) => {
       if (response.data && response.data.user) {
         const user = response.data.user;
 
+        // SEGURANÇA: Armazena apenas dados mínimos de exibição no localStorage (2.4)
+        const userParaArmazenar = {
+          nome: user.nome,
+          tipo_usuario: user.tipo_usuario,
+        };
         setUser(user);
-        localStorage.setItem("nolare_user", JSON.stringify(user));
+        localStorage.setItem("nolare_user", JSON.stringify(userParaArmazenar));
 
-        if (lembrarMe) {
-          localStorage.setItem(
-            "nolare_credenciais",
-            JSON.stringify({ email: loginEmail, senha: loginSenha })
-          );
-        } else {
+        // SEGURANÇA: Salva o token JWT separadamente para uso nas chamadas de API autenticadas
+        if (response.data.token) {
+          localStorage.setItem("nolare_token", response.data.token);
+        }
+
+        // SEGURANÇA: Removido salvamento de senha em texto puro no localStorage (1.3)
+        // A funcionalidade "Lembrar-me" não deve jamais salvar credenciais em texto claro
+        if (!lembrarMe) {
           localStorage.removeItem("nolare_credenciais");
         }
 
         setAdmLogged(user.tipo_usuario === "adm");
 
-        if (user.tipo_usuario === "adm") {
-          console.log("Fez login como adm");
-        } else if (user.tipo_usuario === "user") {
-          console.log("Fez login como user");
-        }
+        // SEGURANÇA: Removidos console.log que expõem tipo de usuário no console (2.2)
 
         setError("");
         onClose();
@@ -861,8 +864,8 @@ const LoginModal = ({ onClose, setAdmLogged, setUser }) => {
       if (errorData.statusCode === "BLOQUEADO") {
         setError(
           `${errorData.error} Tempo restante: ${formatarTempoRestante(
-            errorData.tempoRestante
-          )}`
+            errorData.tempoRestante,
+          )}`,
         );
         setTempoRestanteVerificacao(errorData.tempoRestante);
       } else if (errorData.expired) {
@@ -887,7 +890,7 @@ const LoginModal = ({ onClose, setAdmLogged, setUser }) => {
     // MODIFICADO: Validação simplificada dos checkboxes
     if (!aceitouTermos || !aceitouPrivacidade) {
       setError(
-        "Você deve aceitar os Termos de Uso e a Política de Privacidade para confirmar seu cadastro."
+        "Você deve aceitar os Termos de Uso e a Política de Privacidade para confirmar seu cadastro.",
       );
       return;
     }
@@ -926,7 +929,7 @@ const LoginModal = ({ onClose, setAdmLogged, setUser }) => {
       setError("");
       setFieldErrors({});
       alert(
-        "Cadastro realizado com sucesso! Faça o login com suas credenciais."
+        "Cadastro realizado com sucesso! Faça o login com suas credenciais.",
       );
     } catch (err) {
       const errorData = err.response?.data || {};
@@ -958,7 +961,7 @@ const LoginModal = ({ onClose, setAdmLogged, setUser }) => {
 
       if (errorData.statusCode === "LIMIT_EXCEEDED") {
         setError(
-          `${errorData.error} Tente novamente em ${errorData.tempoRestante} minutos.`
+          `${errorData.error} Tente novamente em ${errorData.tempoRestante} minutos.`,
         );
       } else {
         setError(errorData.error || "Erro ao reenviar código");
@@ -1004,7 +1007,7 @@ const LoginModal = ({ onClose, setAdmLogged, setUser }) => {
 
       if (errorData.statusCode === "LIMIT_EXCEEDED") {
         setError(
-          `${errorData.error} Tente novamente em ${errorData.tempoRestante} minutos.`
+          `${errorData.error} Tente novamente em ${errorData.tempoRestante} minutos.`,
         );
       } else {
         setError(errorData.error || "Erro no servidor");
@@ -1049,8 +1052,8 @@ const LoginModal = ({ onClose, setAdmLogged, setUser }) => {
       if (errorData.statusCode === "BLOQUEADO") {
         setError(
           `${errorData.error} Tempo restante: ${formatarTempoRestante(
-            errorData.tempoRestante
-          )}`
+            errorData.tempoRestante,
+          )}`,
         );
         setTempoRestanteVerificacao(errorData.tempoRestante);
       } else if (errorData.tentativasRestantes !== undefined) {
@@ -1107,7 +1110,7 @@ const LoginModal = ({ onClose, setAdmLogged, setUser }) => {
           headers: {
             Authorization: `Bearer ${tokenRecuperacao}`,
           },
-        }
+        },
       );
 
       setTab("login");
