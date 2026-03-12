@@ -644,19 +644,18 @@ app.post("/api/register", async (req, res) => {
     const senhaHash = await bcrypt.hash(senha, 12);
 
     // Usamos tabela de pendências de verificação
-    // CORREÇÃO: Inclui a coluna aceita_emails_comerciais (adicionada via ALTER TABLE)
-    // e garante que o ON CONFLICT DO UPDATE atualize todos os campos relevantes
+    // CORREÇÃO: Usa EXCLUDED para referenciar os valores que seriam inseridos no ON CONFLICT
     await pool.query(
       `INSERT INTO email_verificacao_pendente
         (nome, email, senha, tipo_usuario, codigo, expiracao, aceitou_termos, aceitou_privacidade, aceita_emails_comerciais)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, FALSE)
        ON CONFLICT (email) DO UPDATE SET
-         nome = $1,
-         senha = $3,
-         codigo = $5,
-         expiracao = $6,
-         aceitou_termos = $7,
-         aceitou_privacidade = $8,
+         nome = EXCLUDED.nome,
+         senha = EXCLUDED.senha,
+         codigo = EXCLUDED.codigo,
+         expiracao = EXCLUDED.expiracao,
+         aceitou_termos = EXCLUDED.aceitou_termos,
+         aceitou_privacidade = EXCLUDED.aceitou_privacidade,
          aceita_emails_comerciais = FALSE,
          atualizado_em = NOW(),
          verificado = FALSE`,
