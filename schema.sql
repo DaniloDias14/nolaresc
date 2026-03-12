@@ -347,3 +347,13 @@ ALTER TABLE ONLY public.email_comercial
 
 ALTER TABLE ONLY public.email_comercial
     ADD CONSTRAINT email_comercial_imovel_id_fkey FOREIGN KEY (imovel_id) REFERENCES public.imoveis(id) ON DELETE CASCADE;
+
+--------------Alterações-------------
+ALTER TABLE public.usuarios
+  ADD COLUMN IF NOT EXISTS aceita_emails_comerciais BOOLEAN NOT NULL DEFAULT FALSE;
+
+CREATE INDEX IF NOT EXISTS idx_usuarios_aceita_emails_comerciais
+  ON public.usuarios (aceita_emails_comerciais);
+
+ALTER TABLE public.email_verificacao_pendente
+  ADD COLUMN IF NOT EXISTS aceita_emails_comerciais BOOLEAN NOT NULL DEFAULT FALSE;

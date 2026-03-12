@@ -579,6 +579,7 @@ const LoginModal = ({ onClose, setAdmLogged, setUser }) => {
   const [registerTipo, setRegisterTipo] = useState("user");
   const [aceitouTermos, setAceitouTermos] = useState(false);
   const [aceitouPrivacidade, setAceitouPrivacidade] = useState(false);
+  const [aceitaEmailsComerciais, setAceitaEmailsComerciais] = useState(false);
   const [recuperacaoEmail, setRecuperacaoEmail] = useState("");
   const [codigoRecuperacao, setCodigoRecuperacao] = useState([
     "",
@@ -900,15 +901,15 @@ const LoginModal = ({ onClose, setAdmLogged, setUser }) => {
     try {
       const codigoCompleto = codigoCadastroVerificacao.join("");
 
-      // MODIFICADO: Enviando aceitouTermos e aceitouPrivacidade para o backend
       await axios.post("/api/email/verificacao/confirmar-cadastro", {
         email: emailCadastroVerificacao,
         codigo: codigoCompleto,
         aceitouTermos,
         aceitouPrivacidade,
-        nome: dadosCadastroTemp.nome, // Mantido para compatibilidade com o backend
-        senha: dadosCadastroTemp.senha, // Mantido para compatibilidade com o backend
-        tipo_usuario: dadosCadastroTemp.tipo_usuario, // Mantido para compatibilidade com o backend
+        aceita_emails_comerciais: aceitaEmailsComerciais,
+        nome: dadosCadastroTemp.nome,
+        senha: dadosCadastroTemp.senha,
+        tipo_usuario: dadosCadastroTemp.tipo_usuario,
       });
 
       setTab("login");
@@ -920,6 +921,7 @@ const LoginModal = ({ onClose, setAdmLogged, setUser }) => {
       setCodigoCadastroVerificacao(["", "", "", "", ""]);
       setAceitouTermos(false);
       setAceitouPrivacidade(false);
+      setAceitaEmailsComerciais(false);
       setDadosCadastroTemp({
         nome: "",
         email: "",
@@ -1771,6 +1773,27 @@ const LoginModal = ({ onClose, setAdmLogged, setUser }) => {
                       className="login-checkbox-label"
                     >
                       Aceito a Política de Privacidade
+                    </label>
+                  </div>
+                </div>
+
+                <div className="login-form-group">
+                  <div className="login-checkbox-group">
+                    <input
+                      id="aceitaEmailsComerciais"
+                      type="checkbox"
+                      checked={aceitaEmailsComerciais}
+                      onChange={(e) =>
+                        setAceitaEmailsComerciais(e.target.checked)
+                      }
+                      disabled={carregando}
+                      className="login-checkbox"
+                    />
+                    <label
+                      htmlFor="aceitaEmailsComerciais"
+                      className="login-checkbox-label"
+                    >
+                      Quero receber e-mails com ofertas e novidades
                     </label>
                   </div>
                 </div>

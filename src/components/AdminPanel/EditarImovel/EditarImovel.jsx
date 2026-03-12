@@ -90,6 +90,7 @@ const EditarImovel = ({
     finalidade: "",
     destaque: false,
     visivel: true,
+    enviarNotificacao: false,
     cep: "",
     estado: "",
     cidade: "",
@@ -422,7 +423,7 @@ const EditarImovel = ({
           }
         } else {
           setErrorMsg(
-            "Por favor, arraste apenas arquivos de imagem (JPG, PNG, etc.)"
+            "Por favor, arraste apenas arquivos de imagem (JPG, PNG, etc.)",
           );
           setTimeout(() => setErrorMsg(""), 3000);
         }
@@ -539,6 +540,9 @@ const EditarImovel = ({
         return dataEntrega;
       };
 
+      const token = localStorage.getItem("nolare_token");
+      const authHeader = token ? { Authorization: `Bearer ${token}` } : {};
+
       const imovelPayload = {
         titulo: formData.titulo || null,
         descricao: formData.descricao || null,
@@ -555,12 +559,14 @@ const EditarImovel = ({
         bairro: formData.bairro || null,
         area_total: parseNumberOrNull(formData.area_total),
         area_construida: parseNumberOrNull(formData.area_construida),
-        atualizado_por: 1,
+        enviarNotificacao: !!formData.enviarNotificacao,
         coordenadas: formData.coordenadas || null,
       };
 
       try {
-        await axios.put(`/api/imoveis/${imovelId}`, imovelPayload);
+        await axios.put(`/api/imoveis/${imovelId}`, imovelPayload, {
+          headers: authHeader,
+        });
         imovelUpdated = true;
       } catch (err) {
         console.error("[v0] Erro ao atualizar imóvel principal:", err);
@@ -592,22 +598,18 @@ const EditarImovel = ({
       try {
         await axios.put(
           `/api/imoveis_caracteristicas/${imovelId}`,
-          caracteristicasPayload
+          caracteristicasPayload,
+          { headers: authHeader },
         );
         caracteristicasUpdated = true;
       } catch (err) {
-        console.error(
-          "[v0] Erro ao atualizar características (continuando):",
-          err
-        );
-        // Não lança erro, apenas loga e continua
+        // Não lança erro, apenas continua
       }
 
       for (const fotoId of fotosToRemove) {
         try {
-          await axios.delete(`/api/fotos/${fotoId}`);
+          await axios.delete(`/api/fotos/${fotoId}`, { headers: authHeader });
         } catch (err) {
-          console.error("[v0] Erro ao deletar foto (continuando):", err);
           // Continua mesmo se falhar
         }
       }
@@ -620,13 +622,16 @@ const EditarImovel = ({
       if (formDataFotos.has("fotos")) {
         try {
           await axios.post(`/api/imoveis/${imovelId}/upload`, formDataFotos, {
-            headers: { "Content-Type": "multipart/form-data" },
+            headers: {
+              ...authHeader,
+              "Content-Type": "multipart/form-data",
+            },
           });
           fotosUpdated = true;
         } catch (uploadErr) {
           console.error(
             "[v0] Erro ao fazer upload das fotos (continuando):",
-            uploadErr
+            uploadErr,
           );
           // Continua mesmo se falhar
         }
@@ -759,7 +764,7 @@ const EditarImovel = ({
               <button
                 className={`tab ${activeTab === 1 ? "active" : ""} ${
                   Object.keys(fieldErrors).some((key) =>
-                    ["titulo", "descricao", "preco"].includes(key)
+                    ["titulo", "descricao", "preco"].includes(key),
                   )
                     ? "has-error"
                     : ""
@@ -925,6 +930,15 @@ const EditarImovel = ({
                         }}
                       />
                       <span>Ocultar (não exibir para usuários)</span>
+                    </label>
+                    <label className="checkbox-label">
+                      <input
+                        type="checkbox"
+                        name="enviarNotificacao"
+                        checked={!!formData.enviarNotificacao}
+                        onChange={handleInputChange}
+                      />
+                      <span>Enviar notificação para usuários que curtiram</span>
                     </label>
                   </div>
 
@@ -1151,7 +1165,7 @@ const EditarImovel = ({
                                     handleRemoveExistingFoto(foto.id);
                                   } else {
                                     handleRemoveFoto(
-                                      idx - existingFotos.length
+                                      idx - existingFotos.length,
                                     );
                                   }
                                 }}
@@ -1168,7 +1182,7 @@ const EditarImovel = ({
                                   if (!isExisting) {
                                     handleFotoChange(
                                       idx - existingFotos.length,
-                                      e.target.files[0]
+                                      e.target.files[0],
                                     );
                                   }
                                 }}

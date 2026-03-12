@@ -1027,6 +1027,113 @@ app.post("/api/email/verificacao/validar", async (req, res) => {
   }
 });
 
+// ROTA: Confirma cadastro após verificação do código (aceita termos e preferência de email comercial)
+app.post("/api/email/verificacao/confirmar-cadastro", async (req, res) => {
+  const {
+    email,
+    codigo,
+    aceitouTermos,
+    aceitouPrivacidade,
+    aceita_emails_comerciais,
+  } = req.body;
+
+  if (!email || !codigo) {
+    return res.status(400).json({ error: "Email e código são obrigatórios" });
+  }
+
+  if (!aceitouTermos || !aceitouPrivacidade) {
+    return res
+      .status(400)
+      .json({
+        error:
+          "É necessário aceitar os termos de uso e a política de privacidade",
+      });
+  }
+
+  try {
+    const emailLimpo = sanitizarString(email.toLowerCase(), 255);
+
+    const pendente = await pool.query(
+      "SELECT * FROM email_verificacao_pendente WHERE email = $1 AND verificado = FALSE",
+      [emailLimpo],
+    );
+
+    if (pendente.rows.length === 0) {
+      return res
+        .status(400)
+        .json({ error: "Nenhum cadastro pendente para este email" });
+    }
+
+    const registro = pendente.rows[0];
+
+    if (!validarToken(registro.expiracao)) {
+      return res
+        .status(400)
+        .json({
+          error: "Código expirado. Solicite um novo cadastro.",
+          expired: true,
+        });
+    }
+
+    if (registro.codigo !== codigo) {
+      return res.status(400).json({ error: "Código inválido" });
+    }
+
+    // Verifica se email já existe
+    const emailExiste = await pool.query(
+      "SELECT id FROM usuarios WHERE email = $1",
+      [emailLimpo],
+    );
+    if (emailExiste.rows.length > 0) {
+      // Marca como verificado e retorna sucesso (idempotente)
+      await pool.query(
+        "UPDATE email_verificacao_pendente SET verificado = TRUE WHERE email = $1",
+        [emailLimpo],
+      );
+      return res.json({
+        success: true,
+        message: "Cadastro confirmado com sucesso!",
+      });
+    }
+
+    const aceitaEmailsComerciais = aceita_emails_comerciais === true;
+
+    // Insere usuário definitivamente
+    await pool.query(
+      "INSERT INTO usuarios (nome, email, senha, tipo_usuario, aceita_emails_comerciais) VALUES ($1, $2, $3, $4, $5)",
+      [
+        registro.nome,
+        emailLimpo,
+        registro.senha,
+        "user",
+        aceitaEmailsComerciais,
+      ],
+    );
+
+    // Marca pendente como verificado
+    await pool.query(
+      "UPDATE email_verificacao_pendente SET verificado = TRUE WHERE email = $1",
+      [emailLimpo],
+    );
+
+    // Envia email de boas-vindas (categoria Conta — sempre enviado)
+    enviarEmail(
+      "verificarCadastro",
+      emailLimpo,
+      "Cadastro Confirmado - Nolare",
+      {
+        nome: registro.nome,
+        codigo: "",
+      },
+    ).catch((err) => logErroSeguro("Erro ao enviar email de boas-vindas", err));
+
+    res.json({ success: true, message: "Cadastro confirmado com sucesso!" });
+  } catch (err) {
+    const codigoErro = logErroSeguro("Erro ao confirmar cadastro", err);
+    res.status(500).json({ error: "Erro no servidor", codigo: codigoErro });
+  }
+});
+
 app.post("/api/email/recuperacao/solicitar", async (req, res) => {
   const { email } = req.body;
 
@@ -1582,12 +1689,20 @@ app.get(
 // =========================
 
 // ROTA: Busca todas as curtidas de um usuário específico (com paginação opcional)
-app.get("/api/curtidas/:usuarioId", async (req, res) => {
+app.get("/api/curtidas/:usuarioId", verificarTokenJWT, async (req, res) => {
   const { usuarioId } = req.params;
 
   // VALIDAÇÃO: Campo obrigatório e numérico
   if (!usuarioId || !validarIdNumerico(usuarioId)) {
     return res.status(400).json({ error: "usuarioId inválido" });
+  }
+
+  // SEGURANÇA: Usuário comum só pode ver as próprias curtidas; admin pode ver qualquer uma
+  if (
+    req.user.tipoUsuario !== "adm" &&
+    String(req.user.userId) !== String(usuarioId)
+  ) {
+    return res.status(403).json({ error: "Acesso negado" });
   }
 
   try {
@@ -1708,28 +1823,33 @@ app.post(
 
 // =========================
 
-app.get("/api/imoveis/ocultos", async (req, res) => {
-  try {
-    // PAGINAÇÃO: Parâmetros opcionais via query string (?page=1&limit=50)
-    const pagina = req.query.page
-      ? Math.max(1, Number.parseInt(req.query.page, 10))
-      : null;
-    const limite = req.query.limit
-      ? Math.min(200, Math.max(1, Number.parseInt(req.query.limit, 10)))
-      : null;
+app.get(
+  "/api/imoveis/ocultos",
+  verificarTokenJWT,
+  verificarAdmin,
+  async (req, res) => {
+    try {
+      // PAGINAÇÃO: Parâmetros opcionais via query string (?page=1&limit=50)
+      const pagina = req.query.page
+        ? Math.max(1, Number.parseInt(req.query.page, 10))
+        : null;
+      const limite = req.query.limit
+        ? Math.min(200, Math.max(1, Number.parseInt(req.query.limit, 10)))
+        : null;
 
-    // DB QUERY: Conta total de imóveis ocultos
-    const totalResult = await pool.query(
-      "SELECT COUNT(*) as total FROM imoveis WHERE visivel = false",
-    );
-    const total = Number.parseInt(totalResult.rows[0].total, 10);
+      // DB QUERY: Conta total de imóveis ocultos
+      const totalResult = await pool.query(
+        "SELECT COUNT(*) as total FROM imoveis WHERE visivel = false",
+      );
+      const total = Number.parseInt(totalResult.rows[0].total, 10);
 
-    // SEGURANÇA: Prepara parâmetros posicionais para paginação (1.12)
-    const queryParams = pagina && limite ? [limite, (pagina - 1) * limite] : [];
+      // SEGURANÇA: Prepara parâmetros posicionais para paginação (1.12)
+      const queryParams =
+        pagina && limite ? [limite, (pagina - 1) * limite] : [];
 
-    // DB QUERY: Busca imóveis ocultos com características e fotos
-    const result = await pool.query(
-      `SELECT
+      // DB QUERY: Busca imóveis ocultos com características e fotos
+      const result = await pool.query(
+        `SELECT
         i.id AS imovel_id,
         i.titulo,
         i.descricao,
@@ -1808,30 +1928,31 @@ app.get("/api/imoveis/ocultos", async (req, res) => {
       GROUP BY i.id, ic.id
       ORDER BY i.data_criacao DESC
       ${queryParams.length ? "LIMIT $1 OFFSET $2" : ""}`,
-      queryParams,
-    );
+        queryParams,
+      );
 
-    // Retorna dados com metadados de paginação quando paginação é usada
-    if (pagina && limite) {
-      res.json({
-        dados: result.rows,
-        paginacao: {
-          total,
-          pagina,
-          limite,
-          totalPaginas: Math.ceil(total / limite),
-        },
-      });
-    } else {
-      res.json(result.rows);
+      // Retorna dados com metadados de paginação quando paginação é usada
+      if (pagina && limite) {
+        res.json({
+          dados: result.rows,
+          paginacao: {
+            total,
+            pagina,
+            limite,
+            totalPaginas: Math.ceil(total / limite),
+          },
+        });
+      } else {
+        res.json(result.rows);
+      }
+    } catch (err) {
+      const codigoErro = logErroSeguro("Erro ao buscar imóveis ocultos", err);
+      res
+        .status(500)
+        .json({ error: "Erro ao buscar imóveis ocultos", codigo: codigoErro });
     }
-  } catch (err) {
-    const codigoErro = logErroSeguro("Erro ao buscar imóveis ocultos", err);
-    res
-      .status(500)
-      .json({ error: "Erro ao buscar imóveis ocultos", codigo: codigoErro });
-  }
-});
+  },
+);
 
 // ROTA: Busca todos os imóveis visíveis (com paginação opcional)
 app.get("/api/imoveis", async (req, res) => {
@@ -2110,7 +2231,6 @@ app.post(
       area_total,
       area_construida,
       visivel,
-      criado_por,
       estado,
       cidade,
       bairro,
@@ -2118,8 +2238,11 @@ app.post(
       coordenadas,
     } = req.body;
 
+    // SEGURANÇA: criado_por extraído do token JWT, nunca do body
+    const criado_por = req.user.userId;
+
     // VALIDAÇÃO: Campos obrigatórios
-    if (!titulo || !preco || !criado_por) {
+    if (!titulo || !preco) {
       return res.status(400).json({ error: "Campos obrigatórios ausentes" });
     }
 
@@ -2140,28 +2263,6 @@ app.post(
       return res
         .status(400)
         .json({ error: "Preço deve ser um número positivo" });
-    }
-
-    // VALIDAÇÃO: Verifica se usuário existe
-    if (!validarIdNumerico(criado_por)) {
-      return res.status(400).json({ error: "ID do criador inválido" });
-    }
-
-    try {
-      const usuarioExiste = await pool.query(
-        "SELECT id FROM usuarios WHERE id = $1",
-        [criado_por],
-      );
-      if (usuarioExiste.rows.length === 0) {
-        return res
-          .status(404)
-          .json({ error: "Usuário criador não encontrado" });
-      }
-    } catch (err) {
-      const codigoErro = logErroSeguro("Erro ao validar usuário", err);
-      return res
-        .status(500)
-        .json({ error: "Erro ao validar usuário", codigo: codigoErro });
     }
 
     // VALIDAÇÃO: Tipos de imóvel permitidos
@@ -2246,13 +2347,16 @@ app.put(
       area_total,
       area_construida,
       visivel,
-      atualizado_por,
       estado,
       cidade,
       bairro,
       tipo,
       coordenadas,
+      enviarNotificacao,
     } = req.body;
+
+    // SEGURANÇA: atualizado_por extraído do token JWT, nunca do body
+    const atualizadoPor = req.user.userId;
 
     // VALIDAÇÃO: Campos obrigatórios
     if (!titulo || !preco) {
@@ -2269,21 +2373,7 @@ app.put(
         return res.status(404).json({ error: "Imóvel não encontrado" });
       }
 
-      const imovelAntigo = imovelExiste.rows[0];
-      const precoDestiqueAnterior = imovelAntigo.preco_destaque;
-      const novoPrecoDestaque = preco_destaque;
-
-      let deveEnviarEmail = false;
-
-      // Se adicionou preco_destaque ou se reduziu o valor
-      if (
-        novoPrecoDestaque &&
-        (!precoDestiqueAnterior || novoPrecoDestaque < precoDestiqueAnterior)
-      ) {
-        deveEnviarEmail = true;
-      }
-
-      // SEGURANÇA: Sanitiza strings antes de salvar (2.5)
+      // SEGURANÇA: Sanitiza strings antes de salvar
       const tituloLimpo = sanitizarString(titulo, 200);
       const descricaoLimpa = sanitizarString(descricao || "", 5000);
       const estadoLimpo = sanitizarString(estado || "", 50);
@@ -2311,7 +2401,7 @@ app.put(
           area_total || null,
           area_construida || null,
           visivel !== undefined ? visivel : true,
-          atualizado_por || null,
+          atualizadoPor,
           estadoLimpo || null,
           cidadeLimpa || null,
           bairroLimpo || null,
@@ -2321,12 +2411,15 @@ app.put(
         ],
       );
 
-      if (deveEnviarEmail) {
+      // Envia e-mails apenas se o admin marcou a checkbox de notificação
+      if (enviarNotificacao === true) {
+        const imovelAtual = imovelExiste.rows[0];
+
         const curtidasResult = await pool.query(
           `SELECT u.email, u.nome
-         FROM curtidas c
-         JOIN usuarios u ON u.id = c.usuario_id
-         WHERE c.imovel_id = $1`,
+           FROM curtidas c
+           JOIN usuarios u ON u.id = c.usuario_id
+           WHERE c.imovel_id = $1 AND u.aceita_emails_comerciais = TRUE`,
           [id],
         );
 
@@ -2343,14 +2436,13 @@ app.put(
           enviarEmail(
             "promocaoCurtidas",
             curtida.email,
-            `🔥 Oferta Especial: ${imovelAtualizado.titulo} - Nolare`,
+            `Oferta Especial: ${imovelAtualizado.titulo} - Nolare`,
             {
               nome: curtida.nome,
               imovel: imovelAtualizado,
             },
           )
             .then(() => {
-              // Registra o envio no banco
               return pool.query(
                 "INSERT INTO email_comercial (usuario_id, imovel_id) SELECT id, $2 FROM usuarios WHERE email = $1",
                 [curtida.email, id],
@@ -2526,12 +2618,10 @@ app.post(
         "Erro ao cadastrar características",
         err,
       );
-      res
-        .status(500)
-        .json({
-          error: "Erro ao cadastrar características",
-          codigo: codigoErro,
-        });
+      res.status(500).json({
+        error: "Erro ao cadastrar características",
+        codigo: codigoErro,
+      });
     }
   },
 );

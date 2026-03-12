@@ -289,7 +289,7 @@ const AdicionarImovel = ({ showPopup, setShowPopup }) => {
           handleFotoChange(index, file);
         } else {
           setErrorMsg(
-            "Por favor, arraste apenas arquivos de imagem (JPG, PNG, etc.)"
+            "Por favor, arraste apenas arquivos de imagem (JPG, PNG, etc.)",
           );
           setTimeout(() => setErrorMsg(""), 3000);
         }
@@ -462,6 +462,9 @@ const AdicionarImovel = ({ showPopup, setShowPopup }) => {
         return dataEntrega;
       };
 
+      const token = localStorage.getItem("nolare_token");
+      const authHeader = token ? { Authorization: `Bearer ${token}` } : {};
+
       const imovelPayload = {
         titulo: formData.titulo || null,
         descricao: formData.descricao || null,
@@ -478,11 +481,12 @@ const AdicionarImovel = ({ showPopup, setShowPopup }) => {
         bairro: formData.bairro || null,
         area_total: parseNumberOrNull(formData.area_total),
         area_construida: parseNumberOrNull(formData.area_construida),
-        criado_por: 1,
         coordenadas: formData.coordenadas || null,
       };
 
-      const createRes = await axios.post("/api/imoveis", imovelPayload);
+      const createRes = await axios.post("/api/imoveis", imovelPayload, {
+        headers: authHeader,
+      });
       const imovelId = createRes.data?.id;
       if (!imovelId)
         throw new Error("ID do imóvel não retornado pelo servidor");
@@ -509,7 +513,9 @@ const AdicionarImovel = ({ showPopup, setShowPopup }) => {
         }, {}),
       };
 
-      await axios.post("/api/imoveis_caracteristicas", caracteristicasPayload);
+      await axios.post("/api/imoveis_caracteristicas", caracteristicasPayload, {
+        headers: authHeader,
+      });
 
       const formDataFotos = new FormData();
       formData.fotos.forEach((foto) => {
@@ -519,12 +525,14 @@ const AdicionarImovel = ({ showPopup, setShowPopup }) => {
       if (formDataFotos.has("fotos")) {
         try {
           await axios.post(`/api/imoveis/${imovelId}/upload`, formDataFotos, {
-            headers: { "Content-Type": "multipart/form-data" },
+            headers: {
+              ...authHeader,
+              "Content-Type": "multipart/form-data",
+            },
           });
         } catch (uploadErr) {
-          console.error("Erro ao fazer upload das fotos:", uploadErr);
           throw new Error(
-            "Erro ao fazer upload das fotos do imóvel. Verifique o tamanho e formato das imagens."
+            "Erro ao fazer upload das fotos do imóvel. Verifique o tamanho e formato das imagens.",
           );
         }
       }
@@ -632,7 +640,7 @@ const AdicionarImovel = ({ showPopup, setShowPopup }) => {
               <button
                 className={`tab ${activeTab === 1 ? "active" : ""} ${
                   Object.keys(fieldErrors).some((key) =>
-                    ["titulo", "descricao", "preco"].includes(key)
+                    ["titulo", "descricao", "preco"].includes(key),
                   )
                     ? "has-error"
                     : ""

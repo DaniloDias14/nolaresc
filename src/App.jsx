@@ -33,14 +33,14 @@ import Curtidas from "./components/UserPanel/Curtidas/Curtidas.jsx";
 
 const ProtectedAdminRoute = ({ children, user, isLoggedIn }) => {
   if (!isLoggedIn || !user || user.tipo_usuario !== "adm") {
-    return null;
+    return <Navigate to="/comprar" replace />;
   }
   return children;
 };
 
 const ProtectedUserRoute = ({ children, user, isLoggedIn }) => {
-  if (!isLoggedIn || !user || user.tipo_usuario !== "user") {
-    return null;
+  if (!isLoggedIn || !user) {
+    return <Navigate to="/comprar" replace />;
   }
   return children;
 };
@@ -186,11 +186,9 @@ const App = () => {
           <Route
             path="/dashboard"
             element={
-              isLoggedIn && user && user.tipo_usuario === "adm" ? (
+              <ProtectedAdminRoute user={user} isLoggedIn={isLoggedIn}>
                 <Dashboard />
-              ) : (
-                <></>
-              )
+              </ProtectedAdminRoute>
             }
           />
 
@@ -215,15 +213,13 @@ const App = () => {
           <Route
             path="/imoveis-ocultos"
             element={
-              isLoggedIn && user && user.tipo_usuario === "adm" ? (
+              <ProtectedAdminRoute user={user} isLoggedIn={isLoggedIn}>
                 <OcultarImovel usuario={user} />
-              ) : (
-                <></>
-              )
+              </ProtectedAdminRoute>
             }
           />
 
-          <Route path="*" element={<></>} />
+          <Route path="*" element={<Navigate to="/comprar" replace />} />
         </Routes>
       </main>
 
