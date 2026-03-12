@@ -640,13 +640,31 @@ app.post("/api/register", async (req, res) => {
     const aceitouTermosValue = aceitouTermos === true ? true : false;
     const aceitouPrivacidadeValue = aceitouPrivacidade === true ? true : false;
 
+    // HASH DA SENHA: feito antes do INSERT para reutilizar o valor no ON CONFLICT DO UPDATE
+    const senhaHash = await bcrypt.hash(senha, 12);
+
     // Usamos tabela de pendências de verificação
+    // CORREÇÃO: Inclui a coluna aceita_emails_comerciais (adicionada via ALTER TABLE)
+    // e garante que o ON CONFLICT DO UPDATE atualize todos os campos relevantes
     await pool.query(
-      "INSERT INTO email_verificacao_pendente (nome, email, senha, tipo_usuario, codigo, expiracao, aceitou_termos, aceitou_privacidade) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) ON CONFLICT (email) DO UPDATE SET codigo = $5, expiracao = $6, criado_em = NOW()",
+      `INSERT INTO email_verificacao_pendente
+        (nome, email, senha, tipo_usuario, codigo, expiracao, aceitou_termos, aceitou_privacidade, aceita_emails_comerciais)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, FALSE)
+       ON CONFLICT (email) DO UPDATE SET
+         nome = $1,
+         senha = $3,
+         codigo = $5,
+         expiracao = $6,
+         aceitou_termos = $7,
+         aceitou_privacidade = $8,
+         aceita_emails_comerciais = FALSE,
+         atualizado_em = NOW(),
+         criado_em = NOW(),
+         verificado = FALSE`,
       [
         nomeLimpo,
         emailLimpo,
-        await bcrypt.hash(senha, 12), // Aumentado para 12 rounds
+        senhaHash,
         "user", // Sempre user, nunca admin via registro público
         codigo,
         expiracao,
@@ -1042,12 +1060,10 @@ app.post("/api/email/verificacao/confirmar-cadastro", async (req, res) => {
   }
 
   if (!aceitouTermos || !aceitouPrivacidade) {
-    return res
-      .status(400)
-      .json({
-        error:
-          "É necessário aceitar os termos de uso e a política de privacidade",
-      });
+    return res.status(400).json({
+      error:
+        "É necessário aceitar os termos de uso e a política de privacidade",
+    });
   }
 
   try {
@@ -1067,12 +1083,10 @@ app.post("/api/email/verificacao/confirmar-cadastro", async (req, res) => {
     const registro = pendente.rows[0];
 
     if (!validarToken(registro.expiracao)) {
-      return res
-        .status(400)
-        .json({
-          error: "Código expirado. Solicite um novo cadastro.",
-          expired: true,
-        });
+      return res.status(400).json({
+        error: "Código expirado. Solicite um novo cadastro.",
+        expired: true,
+      });
     }
 
     if (registro.codigo !== codigo) {
