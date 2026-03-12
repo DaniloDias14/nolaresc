@@ -692,6 +692,11 @@ app.post("/api/register", async (req, res) => {
         "Se este email não estiver cadastrado, você receberá um código de verificação em breve.",
     });
   } catch (err) {
+    // DEBUG: Log completo do erro para identificar o problema
+    console.error("[DEBUG_REGISTER] Erro completo:", err);
+    console.error("[DEBUG_REGISTER] Mensagem:", err.message);
+    console.error("[DEBUG_REGISTER] Stack:", err.stack);
+
     const codigoErro = logErroSeguro("Erro ao registrar usuário", err);
     res.status(500).json({ error: "Erro no servidor", codigo: codigoErro });
   }
