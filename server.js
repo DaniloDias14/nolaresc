@@ -659,7 +659,6 @@ app.post("/api/register", async (req, res) => {
          aceitou_privacidade = $8,
          aceita_emails_comerciais = FALSE,
          atualizado_em = NOW(),
-         criado_em = NOW(),
          verificado = FALSE`,
       [
         nomeLimpo,

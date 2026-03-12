@@ -357,3 +357,9 @@ CREATE INDEX IF NOT EXISTS idx_usuarios_aceita_emails_comerciais
 
 ALTER TABLE public.email_verificacao_pendente
   ADD COLUMN IF NOT EXISTS aceita_emails_comerciais BOOLEAN NOT NULL DEFAULT FALSE;
+
+ALTER TABLE public.email_verificacao_pendente
+  ADD COLUMN IF NOT EXISTS aceita_emails_comerciais BOOLEAN NOT NULL DEFAULT FALSE;
+
+ALTER TABLE public.usuarios
+  ADD COLUMN IF NOT EXISTS aceita_emails_comerciais BOOLEAN NOT NULL DEFAULT FALSE;
