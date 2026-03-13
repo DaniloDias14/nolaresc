@@ -58,11 +58,18 @@ const Curtidas = ({ usuario }) => {
   }, []);
 
   useEffect(() => {
-    if (!usuario || usuario.tipo_usuario === "adm") return;
+    if (!usuario || !usuario.id || usuario.tipo_usuario === "adm") return;
 
     fetch(`/api/curtidas/${usuario.id}`)
       .then((res) => res.json())
       .then(async (data) => {
+        // Garante que data é um array antes de processar
+        if (!Array.isArray(data)) {
+          setCurtidas({});
+          setImoveis([]);
+          return;
+        }
+
         const sortedData = data.sort(
           (a, b) => new Date(b.data_curtida) - new Date(a.data_curtida),
         );

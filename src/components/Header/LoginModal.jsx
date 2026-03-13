@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import axios from "axios";
 import { IoClose, IoEyeOutline, IoEyeOffOutline } from "react-icons/io5";
+import { useToast } from "../Toast/Toast";
 import logo_azul from "../../assets/img/logo/logo_azul.png";
 import "./LoginModal.css";
 
@@ -564,6 +565,7 @@ const PoliticaDePrivacidade = () => (
 );
 
 const LoginModal = ({ onClose, setAdmLogged, setUser }) => {
+  const { showToast } = useToast();
   const [tab, setTab] = useState("login");
   const [loginEmail, setLoginEmail] = useState("");
   const [loginSenha, setLoginSenha] = useState("");
@@ -617,8 +619,8 @@ const LoginModal = ({ onClose, setAdmLogged, setUser }) => {
   });
   // REMOVIDOS: const [visualizandoTermos, setVisualizandoTermos] = useState(false)
   // REMOVIDOS: const [visualizandoPrivacidade, setVisualizandoPrivacidade] = useState(false)
-  const [mostrarTermos, setMostrarTermos] = useState(true);
-  const [mostrarPrivacidade, setMostrarPrivacidade] = useState(true);
+  const [mostrarTermos, setMostrarTermos] = useState(false);
+  const [mostrarPrivacidade, setMostrarPrivacidade] = useState(false);
   const [fechandoTermos, setFechandoTermos] = useState(false);
   const [fechandoPrivacidade, setFechandoPrivacidade] = useState(false);
 
@@ -930,8 +932,10 @@ const LoginModal = ({ onClose, setAdmLogged, setUser }) => {
       });
       setError("");
       setFieldErrors({});
-      alert(
+      showToast(
         "Cadastro realizado com sucesso! Faça o login com suas credenciais.",
+        "success",
+        4000,
       );
     } catch (err) {
       const errorData = err.response?.data || {};
@@ -956,7 +960,10 @@ const LoginModal = ({ onClose, setAdmLogged, setUser }) => {
         setTentativasVerificacao(5);
         setTempoRestanteVerificacao(0);
         setError("");
-        alert("Novo código de verificação enviado para o seu e-mail!");
+        showToast(
+          "Novo código de verificação enviado para o seu e-mail!",
+          "success",
+        );
       }
     } catch (err) {
       const errorData = err.response?.data || {};
@@ -1003,7 +1010,7 @@ const LoginModal = ({ onClose, setAdmLogged, setUser }) => {
 
       setEtapaRecuperacao("codigo");
       setError("");
-      alert("Código de recuperação enviado para o seu e-mail!");
+      showToast("Código de recuperação enviado para o seu e-mail!", "success");
     } catch (err) {
       const errorData = err.response?.data || {};
 
@@ -1124,7 +1131,11 @@ const LoginModal = ({ onClose, setAdmLogged, setUser }) => {
       setTokenRecuperacao("");
       setError("");
       setFieldErrors({});
-      alert("Senha redefinida com sucesso! Faça o login com a nova senha.");
+      showToast(
+        "Senha redefinida com sucesso! Faça o login com a nova senha.",
+        "success",
+        4000,
+      );
     } catch (err) {
       const errorMsg = err.response?.data?.error || "Erro no servidor";
       setError(errorMsg);
@@ -1680,12 +1691,6 @@ const LoginModal = ({ onClose, setAdmLogged, setUser }) => {
                     cadastro
                   </p>
                 </div>
-
-                {error && (
-                  <div className="login-alert login-alert-error" role="alert">
-                    {error}
-                  </div>
-                )}
 
                 <div className="login-terms-section">
                   <div

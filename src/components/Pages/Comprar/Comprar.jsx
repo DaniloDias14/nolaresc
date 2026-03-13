@@ -6,6 +6,7 @@ import "./Comprar.css";
 import ImovelModal from "../../ImovelModal/ImovelModal";
 import Destaque from "../../Destaque/Destaque";
 import Filtro from "../../Filtro/Filtro";
+import { useToast } from "../../Toast/Toast";
 import { AiFillHeart, AiOutlineHeart } from "react-icons/ai";
 
 // SEGURANÇA (2.6): Sanitiza URL de foto para prevenir injeção de protocolo (javascript:, data:, etc.)
@@ -19,6 +20,7 @@ const sanitizarUrlFoto = (url) => {
 };
 
 const Comprar = ({ usuario }) => {
+  const { showToast } = useToast();
   const [imoveis, setImoveis] = useState([]);
   const [imoveisFiltrados, setImoveisFiltrados] = useState([]);
   const [paginaAtual, setPaginaAtual] = useState(1);
@@ -87,15 +89,18 @@ const Comprar = ({ usuario }) => {
     }
   }, [id, imoveis]);
 
-  // Fetch user likes
+  // Fetch user likes - só busca se usuario.id existir
   useEffect(() => {
-    if (usuario) {
+    if (usuario && usuario.id) {
       fetch(`/api/curtidas/${usuario.id}`)
         .then((res) => res.json())
         .then((data) => {
-          const curtidasMap = {};
-          data.forEach((c) => (curtidasMap[c.imovel_id] = true));
-          setCurtidas(curtidasMap);
+          // Garante que data é um array antes de iterar
+          if (Array.isArray(data)) {
+            const curtidasMap = {};
+            data.forEach((c) => (curtidasMap[c.imovel_id] = true));
+            setCurtidas(curtidasMap);
+          }
         })
         .catch((err) => console.error("Erro ao buscar curtidas:", err));
     }
@@ -431,13 +436,13 @@ const Comprar = ({ usuario }) => {
       return;
     }
 
-    if (!usuario) {
-      alert("Você precisa fazer login para curtir os imóveis!");
+    if (!usuario || !usuario.id) {
+      showToast("Você precisa fazer login para curtir os imóveis!", "warning");
       return;
     }
 
     if (usuario.tipo_usuario === "adm") {
-      alert("Administradores não podem curtir imóveis.");
+      showToast("Administradores não podem curtir imóveis.", "warning");
       return;
     }
 
@@ -459,7 +464,7 @@ const Comprar = ({ usuario }) => {
       }));
     } catch (err) {
       console.error(err);
-      alert("Não foi possível curtir/descurtir o imóvel.");
+      showToast("Não foi possível curtir/descurtir o imóvel.", "error");
     }
   };
 

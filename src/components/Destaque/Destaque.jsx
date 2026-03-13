@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import "./Destaque.css";
+import { useToast } from "../Toast/Toast";
 import { AiFillHeart, AiOutlineHeart } from "react-icons/ai";
 
 // SEGURANÇA (2.6): Sanitiza URL de foto para prevenir injeção de protocolo (javascript:, data:, etc.)
@@ -15,6 +16,7 @@ const sanitizarUrlFoto = (url) => {
 };
 
 const Destaque = ({ usuario, curtidas, setCurtidas, onImovelClick }) => {
+  const { showToast } = useToast();
   const [imoveisDestaque, setImoveisDestaque] = useState([]);
   const [imagemAtual, setImagemAtual] = useState({});
   const carouselRef = useRef(null);
@@ -59,13 +61,13 @@ const Destaque = ({ usuario, curtidas, setCurtidas, onImovelClick }) => {
       return;
     }
 
-    if (!usuario) {
-      alert("Você precisa fazer login para curtir os imóveis!");
+    if (!usuario || !usuario.id) {
+      showToast("Você precisa fazer login para curtir os imóveis!", "warning");
       return;
     }
 
     if (usuario.tipo_usuario === "adm") {
-      alert("Administradores não podem curtir imóveis.");
+      showToast("Administradores não podem curtir imóveis.", "warning");
       return;
     }
 
@@ -89,7 +91,7 @@ const Destaque = ({ usuario, curtidas, setCurtidas, onImovelClick }) => {
       }));
     } catch (err) {
       console.error(err);
-      alert("Não foi possível curtir/descurtir o imóvel.");
+      showToast("Não foi possível curtir/descurtir o imóvel.", "error");
     }
   };
 

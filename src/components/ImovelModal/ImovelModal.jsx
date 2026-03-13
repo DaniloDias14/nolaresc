@@ -10,6 +10,7 @@ import {
   IoHomeOutline,
   IoPencil,
 } from "react-icons/io5";
+import { useToast } from "../Toast/Toast";
 import EditarImovel from "../AdminPanel/EditarImovel/EditarImovel";
 
 // SEGURANÇA (2.6): Sanitiza URL de foto para prevenir injeção de protocolo (javascript:, data:, etc.)
@@ -34,6 +35,7 @@ const ImovelModal = ({
   onCurtir,
   parentPushedHistory = false,
 }) => {
+  const { showToast } = useToast();
   const [fotoIndex, setFotoIndex] = useState(0);
   const [caracteristicas, setCaracteristicas] = useState(null);
   const [showCopyMessage, setShowCopyMessage] = useState(false);
@@ -370,13 +372,13 @@ const ImovelModal = ({
   };
 
   const toggleCurtida = async () => {
-    if (!usuario) {
-      alert("Você precisa fazer login para curtir os imóveis!");
+    if (!usuario || !usuario.id) {
+      showToast("Você precisa fazer login para curtir os imóveis!", "warning");
       return;
     }
 
     if (usuario.tipo_usuario === "adm") {
-      alert("Administradores não podem curtir imóveis.");
+      showToast("Administradores não podem curtir imóveis.", "warning");
       return;
     }
 
@@ -422,7 +424,7 @@ const ImovelModal = ({
       });
     } catch (err) {
       console.error(err);
-      alert("Não foi possível curtir/descurtir o imóvel.");
+      showToast("Não foi possível curtir/descurtir o imóvel.", "error");
     }
   };
 

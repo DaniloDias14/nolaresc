@@ -49,15 +49,18 @@ const ImovelPage = ({ usuario }) => {
       });
   }, [id, navigate]);
 
-  // Fetch user likes if logged in
+  // Fetch user likes if logged in - só busca se usuario.id existir
   useEffect(() => {
-    if (usuario) {
+    if (usuario && usuario.id) {
       fetch(`/api/curtidas/${usuario.id}`)
         .then((res) => res.json())
         .then((data) => {
-          const curtidasMap = {};
-          data.forEach((c) => (curtidasMap[c.imovel_id] = true));
-          setCurtidas(curtidasMap);
+          // Garante que data é um array antes de iterar
+          if (Array.isArray(data)) {
+            const curtidasMap = {};
+            data.forEach((c) => (curtidasMap[c.imovel_id] = true));
+            setCurtidas(curtidasMap);
+          }
         })
         .catch((err) => console.error("Erro ao buscar curtidas:", err));
     }
