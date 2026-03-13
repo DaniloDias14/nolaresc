@@ -71,8 +71,8 @@ const App = () => {
     if (savedUser) {
       try {
         const parsedUser = JSON.parse(savedUser);
-        // SEGURANÇA: Só considera dados válidos se tiver ao menos o tipo_usuario
-        if (parsedUser && parsedUser.tipo_usuario) {
+        // SEGURANÇA: Só considera dados válidos se tiver ao menos o tipo_usuario e id
+        if (parsedUser && parsedUser.tipo_usuario && parsedUser.id) {
           setUser(parsedUser);
           setAdmLogged(parsedUser.tipo_usuario === "adm");
           setIsLoggedIn(true);

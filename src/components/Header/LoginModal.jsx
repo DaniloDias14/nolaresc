@@ -720,8 +720,9 @@ const LoginModal = ({ onClose, setAdmLogged, setUser }) => {
       if (response.data && response.data.user) {
         const user = response.data.user;
 
-        // SEGURANÇA: Armazena apenas dados mínimos de exibição no localStorage (2.4)
+        // SEGURANÇA: Armazena dados mínimos de exibição + id no localStorage (2.4)
         const userParaArmazenar = {
+          id: user.id,
           nome: user.nome,
           tipo_usuario: user.tipo_usuario,
         };

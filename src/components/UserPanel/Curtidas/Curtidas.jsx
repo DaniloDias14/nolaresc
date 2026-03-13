@@ -60,7 +60,13 @@ const Curtidas = ({ usuario }) => {
   useEffect(() => {
     if (!usuario || !usuario.id || usuario.tipo_usuario === "adm") return;
 
-    fetch(`/api/curtidas/${usuario.id}`)
+    const token = localStorage.getItem("nolare_token");
+
+    fetch(`/api/curtidas/${usuario.id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
       .then((res) => res.json())
       .then(async (data) => {
         // Garante que data é um array antes de processar
@@ -125,9 +131,14 @@ const Curtidas = ({ usuario }) => {
   const toggleCurtida = async (imovelId) => {
     if (!usuario) return;
 
+    const token = localStorage.getItem("nolare_token");
+
     try {
       const res = await fetch(`/api/curtidas/${usuario.id}/${imovelId}`, {
         method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       if (!res.ok) throw new Error("Erro ao alternar curtida");

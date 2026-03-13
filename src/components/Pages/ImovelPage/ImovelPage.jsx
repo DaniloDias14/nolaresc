@@ -52,7 +52,12 @@ const ImovelPage = ({ usuario }) => {
   // Fetch user likes if logged in - só busca se usuario.id existir
   useEffect(() => {
     if (usuario && usuario.id) {
-      fetch(`/api/curtidas/${usuario.id}`)
+      const token = localStorage.getItem("nolare_token");
+      fetch(`/api/curtidas/${usuario.id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
         .then((res) => res.json())
         .then((data) => {
           // Garante que data é um array antes de iterar

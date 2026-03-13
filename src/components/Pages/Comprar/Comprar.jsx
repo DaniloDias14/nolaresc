@@ -92,7 +92,12 @@ const Comprar = ({ usuario }) => {
   // Fetch user likes - só busca se usuario.id existir
   useEffect(() => {
     if (usuario && usuario.id) {
-      fetch(`/api/curtidas/${usuario.id}`)
+      const token = localStorage.getItem("nolare_token");
+      fetch(`/api/curtidas/${usuario.id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
         .then((res) => res.json())
         .then((data) => {
           // Garante que data é um array antes de iterar
@@ -447,8 +452,12 @@ const Comprar = ({ usuario }) => {
     }
 
     try {
+      const token = localStorage.getItem("nolare_token");
       const res = await fetch(`/api/curtidas/${usuario.id}/${imovelId}`, {
         method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
       if (!res.ok) throw new Error("Erro ao alternar curtida");
 
