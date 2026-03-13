@@ -120,6 +120,7 @@ const App = () => {
     setIsLoggedIn(false);
     setAdmLogged(false);
     localStorage.removeItem("nolare_user");
+    localStorage.removeItem("nolare_token");
   };
 
   // Abre popup de editar imóvel com imóvel data (apenas para admin)
