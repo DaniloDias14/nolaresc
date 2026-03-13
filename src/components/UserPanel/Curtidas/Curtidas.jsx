@@ -58,7 +58,7 @@ const Curtidas = ({ usuario }) => {
   }, []);
 
   useEffect(() => {
-    if (!usuario || !usuario.id || usuario.tipo_usuario === "adm") return;
+    if (!usuario || !usuario.id) return;
 
     const token = localStorage.getItem("nolare_token");
 

@@ -220,18 +220,13 @@ const AdicionarImovel = ({ showPopup, setShowPopup }) => {
     }
   };
 
-  // VALIDAÇÃO: Limite de 5MB por foto e formatos aceitos (PNG, JPG, JPEG)
-  const LIMITE_FOTO_MB = 5;
-  const LIMITE_FOTO_BYTES = LIMITE_FOTO_MB * 1024 * 1024;
-  const FORMATOS_ACEITOS = ["image/png", "image/jpeg"];
-
+  // VALIDAÇÃO: Aceita qualquer formato de imagem (PNG, JPG, JPEG, GIF, WebP, AVIF, etc.)
   const handleFotoChange = (index, file) => {
     if (!file) return;
 
-    // Valida formato do arquivo (PNG, JPG, JPEG)
-    const FORMATOS_ACEITOS = ["image/png", "image/jpeg"];
-    if (!FORMATOS_ACEITOS.includes(file.type)) {
-      setErrorMsg("Formato inválido. Utilize apenas PNG, JPG ou JPEG.");
+    // Valida se é um arquivo de imagem (aceita qualquer formato de imagem)
+    if (!file.type.startsWith("image/")) {
+      setErrorMsg("Formato inválido. Envie apenas arquivos de imagem.");
       setTimeout(() => setErrorMsg(""), 4000);
       return;
     }
@@ -544,6 +539,8 @@ const AdicionarImovel = ({ showPopup, setShowPopup }) => {
               ...authHeader,
               "Content-Type": "multipart/form-data",
             },
+            maxContentLength: Infinity,
+            maxBodyLength: Infinity,
           });
         } catch (uploadErr) {
           // ROLLBACK: Remove o imóvel criado para não deixar registro sem fotos no banco
@@ -554,9 +551,23 @@ const AdicionarImovel = ({ showPopup, setShowPopup }) => {
           } catch (_deleteErr) {
             // Ignora erro do delete — o erro principal já será exibido ao usuário
           }
-          throw new Error(
-            "Erro ao fazer upload das fotos. O imóvel foi removido automaticamente. Verifique o formato das imagens (PNG, JPG ou JPEG) e tente novamente.",
-          );
+
+          // Mensagem de erro mais específica baseada no status
+          let uploadErrorMsg =
+            "Erro ao fazer upload das fotos. O imóvel foi removido automaticamente.";
+
+          if (uploadErr.response?.status === 413) {
+            uploadErrorMsg =
+              "Arquivo muito grande. O servidor não permite uploads tão grandes. Tente reduzir o tamanho das imagens ou entre em contato com o suporte técnico para aumentar o limite no servidor.";
+          } else if (uploadErr.response?.status === 400) {
+            uploadErrorMsg =
+              "Formato de imagem inválido. Envie apenas arquivos de imagem válidos.";
+          } else if (uploadErr.message?.includes("Network Error")) {
+            uploadErrorMsg =
+              "Erro de conexão durante o upload. Verifique sua internet e tente novamente.";
+          }
+
+          throw new Error(uploadErrorMsg);
         }
       }
 

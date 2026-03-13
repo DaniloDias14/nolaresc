@@ -1,5 +1,6 @@
 "use client";
 import { FiSettings } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
 import "./FloatingButtonAdmin.css";
 
 const FloatingButtonAdmin = ({
@@ -10,6 +11,14 @@ const FloatingButtonAdmin = ({
   onOcultarImovelClick,
   onAdicionarAdminClick,
 }) => {
+  const navigate = useNavigate();
+
+  // Função para navegar até a página de curtidas
+  const handleCurtidasClick = () => {
+    navigate("/curtidas");
+    setShowConfigOptions(false);
+  };
+
   return (
     <div className="floating-container">
       {/* Botão principal */}
@@ -26,6 +35,9 @@ const FloatingButtonAdmin = ({
         </button>
         <button onClick={onAdicionarImovelClick} className="config-link">
           Adicionar Imóvel
+        </button>
+        <button onClick={handleCurtidasClick} className="config-link">
+          Curtidas
         </button>
         <button onClick={onDashboardClick} className="config-link">
           Dashboard

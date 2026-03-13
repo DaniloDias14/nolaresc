@@ -329,13 +329,13 @@ const EditarImovel = ({
     }
   };
 
+  // VALIDAÇÃO: Aceita qualquer formato de imagem (PNG, JPG, JPEG, GIF, WebP, AVIF, etc.)
   const handleFotoChange = (index, file) => {
     if (!file) return;
 
-    // Valida formato do arquivo (PNG, JPG, JPEG)
-    const FORMATOS_ACEITOS = ["image/png", "image/jpeg"];
-    if (!FORMATOS_ACEITOS.includes(file.type)) {
-      setErrorMsg("Formato inválido. Utilize apenas PNG, JPG ou JPEG.");
+    // Valida se é um arquivo de imagem (aceita qualquer formato de imagem)
+    if (!file.type.startsWith("image/")) {
+      setErrorMsg("Formato inválido. Envie apenas arquivos de imagem.");
       setTimeout(() => setErrorMsg(""), 4000);
       return;
     }
@@ -636,14 +636,28 @@ const EditarImovel = ({
               ...authHeader,
               "Content-Type": "multipart/form-data",
             },
+            maxContentLength: Infinity,
+            maxBodyLength: Infinity,
           });
           fotosUpdated = true;
         } catch (uploadErr) {
-          console.error(
-            "[v0] Erro ao fazer upload das fotos (continuando):",
-            uploadErr,
-          );
-          // Continua mesmo se falhar
+          // Mensagem de erro mais específica baseada no status
+          let uploadErrorMsg = "Erro ao fazer upload das fotos.";
+
+          if (uploadErr.response?.status === 413) {
+            uploadErrorMsg =
+              "Arquivo muito grande. O servidor não permite uploads tão grandes. Tente reduzir o tamanho das imagens ou entre em contato com o suporte técnico para aumentar o limite no servidor.";
+          } else if (uploadErr.response?.status === 400) {
+            uploadErrorMsg =
+              "Formato de imagem inválido. Envie apenas arquivos de imagem válidos.";
+          } else if (uploadErr.message?.includes("Network Error")) {
+            uploadErrorMsg =
+              "Erro de conexão durante o upload. Verifique sua internet e tente novamente.";
+          }
+
+          console.error("[v0] Erro ao fazer upload das fotos:", uploadErr);
+          setErrorMsg(uploadErrorMsg);
+          // Continua mesmo se falhar - o imóvel já foi atualizado
         }
       }
 

@@ -39,6 +39,7 @@ const ProtectedAdminRoute = ({ children, user, isLoggedIn }) => {
 };
 
 const ProtectedUserRoute = ({ children, user, isLoggedIn }) => {
+  // Permite acesso para qualquer usuário logado (user ou admin)
   if (!isLoggedIn || !user) {
     return <Navigate to="/comprar" replace />;
   }

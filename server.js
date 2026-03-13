@@ -112,7 +112,8 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.use(express.json({ limit: "10mb" }));
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
 // Serve arquivos estáticos do build do Vite
 app.use(express.static(path.join(__dirname, "dist")));
@@ -2856,17 +2857,30 @@ const uploadDir = path.join(process.cwd(), "public", "fotos_imoveis");
 // Usa memoryStorage para processar a imagem com sharp antes de salvar
 const storage = multer.memoryStorage();
 
-// SEM LIMITE DE TAMANHO: administradores são responsáveis pelo tamanho das imagens
-// FORMATOS PERMITIDOS: apenas PNG, JPG e JPEG
-const FORMATOS_PERMITIDOS = ["image/png", "image/jpeg"];
+// LIMITE DE TAMANHO: 50MB por arquivo para permitir imagens de alta resolução
+// FORMATOS PERMITIDOS: todos os formatos de imagem comuns (PNG, JPG, JPEG, GIF, WebP, AVIF, BMP, TIFF)
+const FORMATOS_PERMITIDOS = [
+  "image/png",
+  "image/jpeg",
+  "image/gif",
+  "image/webp",
+  "image/avif",
+  "image/bmp",
+  "image/tiff",
+];
 
 const upload = multer({
   storage,
+  limits: {
+    fileSize: 50 * 1024 * 1024, // 50MB por arquivo
+    files: 10, // máximo 10 arquivos por request
+  },
   fileFilter: (req, file, cb) => {
-    if (FORMATOS_PERMITIDOS.includes(file.mimetype)) {
+    // Aceita qualquer tipo de imagem
+    if (file.mimetype.startsWith("image/")) {
       cb(null, true);
     } else {
-      cb(new Error("Formato não permitido. Use apenas PNG, JPG ou JPEG."));
+      cb(new Error("Formato não permitido. Envie apenas arquivos de imagem."));
     }
   },
 });
@@ -3041,13 +3055,23 @@ app.post(
 
       // DB QUERY: Verifica se email já está em uso por usuário ativo
       const emailExiste = await pool.query(
-        "SELECT id FROM usuarios WHERE email = $1",
+        "SELECT id, tipo_usuario FROM usuarios WHERE email = $1",
         [emailLimpo],
       );
 
-      if (emailExiste.rows.length > 0) {
-        return res.status(400).json({ error: "Este email já está cadastrado" });
+      // Se o usuário já existe como admin, retorna erro
+      if (
+        emailExiste.rows.length > 0 &&
+        emailExiste.rows[0].tipo_usuario === "adm"
+      ) {
+        return res
+          .status(400)
+          .json({ error: "Este email já está cadastrado como administrador" });
       }
+
+      // Se o usuário existe como user, será promovido a admin na confirmação
+      const usuarioExistenteId =
+        emailExiste.rows.length > 0 ? emailExiste.rows[0].id : null;
 
       // Hash da senha antes de armazenar na tabela de pendência
       const senhaHash = await bcrypt.hash(senha, 12);
@@ -3162,25 +3186,42 @@ app.post(
         });
       }
 
-      // VERIFICAÇÃO: Email não pode ter sido cadastrado entre etapa 1 e etapa 2
+      // VERIFICAÇÃO: Verifica se usuário já existe e qual o tipo
       const emailExiste = await pool.query(
-        "SELECT id FROM usuarios WHERE email = $1",
+        "SELECT id, tipo_usuario FROM usuarios WHERE email = $1",
         [emailLimpo],
       );
 
-      if (emailExiste.rows.length > 0) {
-        await pool.query(
-          "UPDATE email_verificacao_pendente SET verificado = TRUE WHERE email = $1",
-          [emailLimpo],
-        );
-        return res.status(400).json({ error: "Este email já está cadastrado" });
-      }
+      let result;
 
-      // Insere administrador definitivamente com tipo_usuario = 'adm'
-      const result = await pool.query(
-        "INSERT INTO usuarios (nome, email, senha, tipo_usuario, aceita_emails_comerciais) VALUES ($1, $2, $3, $4, FALSE) RETURNING id, nome, email, tipo_usuario, data_criacao",
-        [registro.nome, emailLimpo, registro.senha, "adm"],
-      );
+      if (emailExiste.rows.length > 0) {
+        const usuarioExistente = emailExiste.rows[0];
+
+        // Se já é admin, marca como verificado e retorna erro
+        if (usuarioExistente.tipo_usuario === "adm") {
+          await pool.query(
+            "UPDATE email_verificacao_pendente SET verificado = TRUE WHERE email = $1",
+            [emailLimpo],
+          );
+          return res
+            .status(400)
+            .json({
+              error: "Este email já está cadastrado como administrador",
+            });
+        }
+
+        // Se é user, promove para admin (atualiza tipo_usuario e senha)
+        result = await pool.query(
+          "UPDATE usuarios SET tipo_usuario = $1, senha = $2 WHERE id = $3 RETURNING id, nome, email, tipo_usuario, data_criacao",
+          ["adm", registro.senha, usuarioExistente.id],
+        );
+      } else {
+        // Insere novo administrador
+        result = await pool.query(
+          "INSERT INTO usuarios (nome, email, senha, tipo_usuario, aceita_emails_comerciais) VALUES ($1, $2, $3, $4, FALSE) RETURNING id, nome, email, tipo_usuario, data_criacao",
+          [registro.nome, emailLimpo, registro.senha, "adm"],
+        );
+      }
 
       // Marca pendência como verificada
       await pool.query(
