@@ -2857,26 +2857,16 @@ const uploadDir = path.join(process.cwd(), "public", "fotos_imoveis");
 // Usa memoryStorage para processar a imagem com sharp antes de salvar
 const storage = multer.memoryStorage();
 
-// LIMITE DE TAMANHO: 50MB por arquivo para permitir imagens de alta resolução
-// FORMATOS PERMITIDOS: todos os formatos de imagem comuns (PNG, JPG, JPEG, GIF, WebP, AVIF, BMP, TIFF)
-const FORMATOS_PERMITIDOS = [
-  "image/png",
-  "image/jpeg",
-  "image/gif",
-  "image/webp",
-  "image/avif",
-  "image/bmp",
-  "image/tiff",
-];
-
+// LIMITE DE TAMANHO: 200MB por arquivo — sem limite prático para imagens
+// FORMATOS PERMITIDOS: qualquer formato de imagem (PNG, JPG, JPEG, GIF, WebP, AVIF, BMP, TIFF, HEIC, etc.)
 const upload = multer({
   storage,
   limits: {
-    fileSize: 50 * 1024 * 1024, // 50MB por arquivo
+    fileSize: 200 * 1024 * 1024, // 200MB por arquivo
     files: 10, // máximo 10 arquivos por request
   },
   fileFilter: (req, file, cb) => {
-    // Aceita qualquer tipo de imagem
+    // VALIDAÇÃO: Aceita qualquer arquivo cujo mimetype comece com "image/"
     if (file.mimetype.startsWith("image/")) {
       cb(null, true);
     } else {
@@ -2885,6 +2875,7 @@ const upload = multer({
   },
 });
 
+// Aceita múltiplas fotos (envio em lote) OU uma foto única (envio individual)
 const uploadFotos = upload.array("fotos", 10);
 
 // Função para otimizar imagem e converter para WebP
@@ -3203,11 +3194,9 @@ app.post(
             "UPDATE email_verificacao_pendente SET verificado = TRUE WHERE email = $1",
             [emailLimpo],
           );
-          return res
-            .status(400)
-            .json({
-              error: "Este email já está cadastrado como administrador",
-            });
+          return res.status(400).json({
+            error: "Este email já está cadastrado como administrador",
+          });
         }
 
         // Se é user, promove para admin (atualiza tipo_usuario e senha)
@@ -3249,6 +3238,14 @@ app.post(
 // =========================
 app.use((err, req, res, next) => {
   if (err instanceof multer.MulterError) {
+    // ERRO: Arquivo excede o limite definido no multer — retorna 413 para o cliente
+    if (err.code === "LIMIT_FILE_SIZE") {
+      return res
+        .status(413)
+        .json({
+          error: "Arquivo muito grande. O limite por arquivo é de 200MB.",
+        });
+    }
     return res.status(400).json({ error: `Erro no upload: ${err.message}` });
   }
 

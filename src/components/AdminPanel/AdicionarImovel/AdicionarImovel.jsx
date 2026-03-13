@@ -527,47 +527,51 @@ const AdicionarImovel = ({ showPopup, setShowPopup }) => {
         headers: authHeader,
       });
 
-      const formDataFotos = new FormData();
-      formData.fotos.forEach((foto) => {
-        if (foto) formDataFotos.append("fotos", foto);
-      });
+      // UPLOAD: Envia cada foto individualmente para evitar o limite de tamanho do proxy (Nginx)
+      // Cada requisição carrega apenas 1 imagem, eliminando o erro 413
+      const fotosParaEnviar = formData.fotos.filter((foto) => foto !== null);
 
-      if (formDataFotos.has("fotos")) {
-        try {
-          await axios.post(`/api/imoveis/${imovelId}/upload`, formDataFotos, {
-            headers: {
-              ...authHeader,
-              "Content-Type": "multipart/form-data",
-            },
-            maxContentLength: Infinity,
-            maxBodyLength: Infinity,
-          });
-        } catch (uploadErr) {
-          // ROLLBACK: Remove o imóvel criado para não deixar registro sem fotos no banco
+      if (fotosParaEnviar.length > 0) {
+        for (const foto of fotosParaEnviar) {
+          const formDataFoto = new FormData();
+          formDataFoto.append("fotos", foto);
+
           try {
-            await axios.delete(`/api/imoveis/${imovelId}`, {
-              headers: authHeader,
+            await axios.post(`/api/imoveis/${imovelId}/upload`, formDataFoto, {
+              headers: {
+                ...authHeader,
+                "Content-Type": "multipart/form-data",
+              },
+              maxContentLength: Infinity,
+              maxBodyLength: Infinity,
             });
-          } catch (_deleteErr) {
-            // Ignora erro do delete — o erro principal já será exibido ao usuário
+          } catch (uploadErr) {
+            // ROLLBACK: Remove o imóvel criado para não deixar registro sem fotos no banco
+            try {
+              await axios.delete(`/api/imoveis/${imovelId}`, {
+                headers: authHeader,
+              });
+            } catch (_deleteErr) {
+              // Ignora erro do delete — o erro principal já será exibido ao usuário
+            }
+
+            // Mensagem de erro específica por tipo de falha
+            let uploadErrorMsg =
+              "Erro ao fazer upload das fotos. O imóvel foi removido automaticamente.";
+
+            if (uploadErr.response?.status === 413) {
+              uploadErrorMsg =
+                "Arquivo muito grande. O imóvel foi removido automaticamente. Tente utilizar uma imagem menor.";
+            } else if (uploadErr.response?.status === 400) {
+              uploadErrorMsg =
+                "Formato de imagem inválido. O imóvel foi removido automaticamente. Envie apenas arquivos de imagem válidos.";
+            } else if (uploadErr.message?.includes("Network Error")) {
+              uploadErrorMsg =
+                "Erro de conexão durante o upload. O imóvel foi removido automaticamente. Verifique sua internet e tente novamente.";
+            }
+
+            throw new Error(uploadErrorMsg);
           }
-
-          // Mensagem de erro mais específica baseada no status
-          let uploadErrorMsg =
-            "Erro ao fazer upload das fotos. O imóvel foi removido automaticamente.";
-
-          if (uploadErr.response?.status === 413) {
-            uploadErrorMsg =
-              "Arquivo muito grande. O servidor não permite uploads tão grandes. Tente reduzir o tamanho das imagens ou entre em contato com o suporte técnico para aumentar o limite no servidor.";
-          } else if (uploadErr.response?.status === 400) {
-            uploadErrorMsg =
-              "Formato de imagem inválido. Envie apenas arquivos de imagem válidos.";
-          } else if (uploadErr.message?.includes("Network Error")) {
-            uploadErrorMsg =
-              "Erro de conexão durante o upload. Verifique sua internet e tente novamente.";
-          }
-
-          throw new Error(uploadErrorMsg);
         }
       }
 
