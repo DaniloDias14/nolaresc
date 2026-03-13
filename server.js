@@ -2881,13 +2881,17 @@ const uploadFotos = upload.array("fotos", 10);
 // Função para otimizar imagem e converter para WebP
 const otimizarImagem = async (buffer, outputPath) => {
   await sharp(buffer)
-    .webp({ quality: 85 }) // WebP com qualidade alta (85%)
+    // Corrige automaticamente a rotação baseada nos dados EXIF da foto
+    // Isso resolve fotos tiradas em retrato que chegam deitadas
+    .rotate()
     .resize({
-      width: 1920,
-      height: 1080,
-      fit: "inside",
-      withoutEnlargement: true, // Não aumenta imagens menores
+      width: 1200,
+      height: 1200,
+      fit: "contain", // Encaixa a imagem inteira sem cortar nenhuma borda
+      background: { r: 255, g: 255, b: 255, alpha: 1 }, // Fundo branco nas áreas vazias
+      withoutEnlargement: true, // Não aumenta imagens menores que 1200x1200
     })
+    .webp({ quality: 85 }) // WebP com qualidade alta (85%)
     .toFile(outputPath);
 };
 
