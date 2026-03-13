@@ -1,6 +1,8 @@
+import dotenv from "dotenv";
+dotenv.config();
+
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
 import pool from "./db.js";
 import multer from "multer";
 import fs from "fs";
@@ -693,9 +695,15 @@ app.post("/api/register", async (req, res) => {
     });
   } catch (err) {
     // DEBUG: Log completo do erro para identificar o problema
-    console.error("[DEBUG_REGISTER] Erro completo:", err);
-    console.error("[DEBUG_REGISTER] Mensagem:", err.message);
-    console.error("[DEBUG_REGISTER] Stack:", err.stack);
+    console.error("=== ERRO DETALHADO NO REGISTRO ===");
+    console.error("Erro:", err);
+    console.error("Mensagem:", err.message);
+    console.error("Código PostgreSQL:", err.code);
+    console.error("Detalhes:", err.detail);
+    console.error("Tabela:", err.table);
+    console.error("Coluna:", err.column);
+    console.error("Stack:", err.stack);
+    console.error("=== FIM DO ERRO ===");
 
     const codigoErro = logErroSeguro("Erro ao registrar usuário", err);
     res.status(500).json({ error: "Erro no servidor", codigo: codigoErro });
