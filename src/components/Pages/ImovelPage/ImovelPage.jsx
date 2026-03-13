@@ -23,8 +23,9 @@ const ImovelPage = ({ usuario }) => {
   useEffect(() => {
     if (!id) return;
 
+    // CORREÇÃO: usa o token correto (nolare_token) para que admins possam acessar imóveis ocultos
     const headers = {};
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("nolare_token");
     if (token) {
       headers.Authorization = `Bearer ${token}`;
     }
@@ -32,7 +33,7 @@ const ImovelPage = ({ usuario }) => {
     fetch(`/api/imoveis/${id}`, { headers })
       .then((res) => {
         if (res.status === 403) {
-          // Property is hidden and user is not admin
+          // Imóvel oculto e usuário não é administrador — redireciona para a página anterior
           throw new Error("Acesso negado");
         }
         if (!res.ok) throw new Error("Imóvel não encontrado");
@@ -45,7 +46,7 @@ const ImovelPage = ({ usuario }) => {
       .catch((err) => {
         console.error("Erro ao buscar imóvel:", err);
         setLoading(false);
-        navigate("/comprar", { replace: true });
+        navigate(-1);
       });
   }, [id, navigate]);
 

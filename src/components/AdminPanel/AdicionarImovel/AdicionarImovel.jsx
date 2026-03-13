@@ -220,10 +220,33 @@ const AdicionarImovel = ({ showPopup, setShowPopup }) => {
     }
   };
 
+  // VALIDAÇÃO: Limite de 5MB por foto e formatos aceitos (PNG, JPG, JPEG)
+  const LIMITE_FOTO_MB = 5;
+  const LIMITE_FOTO_BYTES = LIMITE_FOTO_MB * 1024 * 1024;
+  const FORMATOS_ACEITOS = ["image/png", "image/jpeg"];
+
   const handleFotoChange = (index, file) => {
+    if (!file) return;
+
+    // Valida formato do arquivo
+    if (!FORMATOS_ACEITOS.includes(file.type)) {
+      setErrorMsg("Formato inválido. Utilize apenas PNG, JPG ou JPEG.");
+      setTimeout(() => setErrorMsg(""), 4000);
+      return;
+    }
+
+    // Valida tamanho do arquivo
+    if (file.size > LIMITE_FOTO_BYTES) {
+      setErrorMsg(
+        `A imagem "${file.name}" excede o limite de ${LIMITE_FOTO_MB}MB por foto.`,
+      );
+      setTimeout(() => setErrorMsg(""), 4000);
+      return;
+    }
+
     setFormData((prev) => {
       const newFotos = [...prev.fotos];
-      newFotos[index] = file || null;
+      newFotos[index] = file;
       return { ...prev, fotos: newFotos };
     });
   };
@@ -1025,9 +1048,10 @@ const AdicionarImovel = ({ showPopup, setShowPopup }) => {
                           </>
                         ) : (
                           <label className="foto-upload-label">
+                            {/* ACEITA: apenas PNG, JPG e JPEG com limite de 5MB */}
                             <input
                               type="file"
-                              accept="image/*"
+                              accept="image/png,image/jpeg"
                               onChange={(e) =>
                                 handleFotoChange(idx, e.target.files[0])
                               }

@@ -1,236 +1,102 @@
-/* Overlay */
-.adicionar-admin-overlay {
+/* ================================
+   Popup Overlay
+================================ */
+.popup-overlay {
   position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.65);
-  backdrop-filter: blur(8px);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  z-index: 2000;
-  padding: 20px;
-}
-
-/* Main Modal Container */
-.adicionar-admin-modal {
-  position: relative;
-  background: #ffffff;
-  padding: 2.5rem;
-  border-radius: 16px;
+  top: 0;
+  left: 0;
   width: 100%;
-  max-width: 440px;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-  font-family: "Sanchez", serif;
-  animation: slideUp 0.25s ease-out;
-  will-change: transform, opacity;
-  max-height: 85vh;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.popup {
+  background-color: #fff;
+  padding: 50px 30px 30px 30px; /* aumentar padding-top de 30px para 50px para dar mais espaço antes do campo de fotos */
+  border-radius: 10px;
+  width: 90%;
+  max-width: 900px;
+  max-height: 90vh;
   overflow-y: auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  position: relative;
 }
 
-@keyframes slideUp {
-  from {
-    transform: translateY(20px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-/* Logo container */
-.adicionar-admin-logo-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-bottom: 1.5rem;
-}
-
-.adicionar-admin-logo {
-  height: 50px;
-  width: auto;
-  object-fit: contain;
-}
-
-/* Close button */
-.adicionar-admin-close-btn {
+/* Atualizado close-popup-btn para seguir o design do ImovelModal */
+.close-popup-btn {
   position: absolute;
-  top: 16px;
-  right: 16px;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  border: none;
-  background: transparent;
+  top: 15px;
+  right: 15px;
+  font-size: 28px;
+  font-weight: bold;
   color: #191970;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  background: transparent;
+  border: none;
   cursor: pointer;
   transition: all 0.3s ease;
-  z-index: 10;
-  padding: 0;
+  z-index: 100;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
 }
 
-.adicionar-admin-close-btn:hover {
+.close-popup-btn:hover {
   transform: scale(1.15);
   background: rgba(128, 128, 128, 0.15);
 }
 
-.adicionar-admin-close-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+/* ================================
+   Tabs Navigation
+================================ */
+.tabs-container {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 25px;
+  border-bottom: 2px solid #e0e0e0;
 }
 
-/* Title */
-.adicionar-admin-title {
-  font-size: 1.4rem;
+.tab {
+  flex: 1;
+  padding: 12px 20px;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  color: #666;
+  transition: all 0.3s ease;
+}
+
+.tab:hover {
   color: #191970;
-  margin: 0 0 1.5rem 0;
-  font-weight: 700;
-  text-align: center;
+  background-color: #f5f5f5;
 }
 
-/* Form */
-.adicionar-admin-form {
+.tab.active {
+  color: #191970;
+  border-bottom-color: #191970;
+  background-color: #f8f8ff;
+}
+
+/* ================================
+   Tab Content
+================================ */
+.tab-content {
   animation: fadeIn 0.3s ease;
 }
 
 @keyframes fadeIn {
   from {
     opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-.adicionar-admin-form-group {
-  margin-bottom: 1.5rem;
-}
-
-.adicionar-admin-form-group label {
-  display: block;
-  font-weight: 700;
-  color: #191970;
-  margin-bottom: 0.5rem;
-  font-size: 0.95rem;
-}
-
-/* Input Fields */
-.adicionar-admin-input {
-  width: 100%;
-  padding: 0.9rem 1rem;
-  border-radius: 12px;
-  border: 2px solid #e9ecef;
-  font-size: 1rem;
-  transition: all 0.3s ease;
-  background: #ffffff;
-  font-family: "Sanchez", serif;
-  color: #191970;
-}
-
-.adicionar-admin-input::placeholder {
-  color: #adb5bd;
-}
-
-.adicionar-admin-input:focus {
-  outline: none;
-  border-color: #191970;
-  box-shadow: 0 0 0 3px rgba(25, 25, 112, 0.08);
-}
-
-.adicionar-admin-input.input-error {
-  border-color: #e74c3c;
-  background-color: #fff5f5;
-}
-
-.adicionar-admin-input.input-error:focus {
-  border-color: #c0392b;
-  box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1);
-}
-
-/* Password input container with toggle button */
-.adicionar-admin-password-container {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.adicionar-admin-password-toggle {
-  position: absolute;
-  right: 12px;
-  background: none;
-  border: none;
-  color: #191970;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  transition: all 0.3s ease;
-}
-
-.adicionar-admin-password-toggle:hover {
-  transform: scale(1.1);
-  color: #2a2a8f;
-}
-
-.adicionar-admin-password-toggle:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* Field Error */
-.adicionar-admin-field-error {
-  color: #e74c3c;
-  font-size: 0.8125rem;
-  margin-top: 0.35rem;
-  padding-left: 0.25rem;
-}
-
-/* Error Message */
-.adicionar-admin-error-msg {
-  color: #e74c3c;
-  background-color: #fadbd8;
-  padding: 1rem;
-  border-radius: 12px;
-  margin-bottom: 1.5rem;
-  font-size: 0.9rem;
-  border-left: 4px solid #e74c3c;
-  animation: shake 0.4s ease;
-}
-
-@keyframes shake {
-  0%,
-  100% {
-    transform: translateX(0);
-  }
-  25% {
-    transform: translateX(-5px);
-  }
-  75% {
-    transform: translateX(5px);
-  }
-}
-
-/* Success Message */
-.adicionar-admin-success-msg {
-  color: #27ae60;
-  background-color: #d5f4e6;
-  padding: 1rem;
-  border-radius: 12px;
-  margin-bottom: 1.5rem;
-  font-size: 0.9rem;
-  border-left: 4px solid #27ae60;
-  animation: slideIn 0.3s ease;
-}
-
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
+    transform: translateY(10px);
   }
   to {
     opacity: 1;
@@ -238,103 +104,502 @@
   }
 }
 
-/* Button */
-.adicionar-admin-btn {
+/* ================================
+   Form Elements
+================================ */
+form h3 {
+  margin-bottom: 20px;
+  color: #333;
+  font-size: 22px;
+}
+
+form h4 {
+  margin-top: 20px;
+  margin-bottom: 12px;
+  font-size: 16px;
+  color: #191970;
+  border-bottom: 2px solid #e0e0e0;
+  padding-bottom: 8px;
+}
+
+.form-row {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 15px;
+  flex-wrap: wrap;
+}
+
+.form-row input[type="text"],
+.form-row input[type="number"],
+.form-row select,
+.form-row textarea {
+  flex: 1;
+  min-width: 200px;
+  padding: 10px 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+
+.form-row input:focus,
+.form-row select:focus,
+.form-row textarea:focus {
+  outline: none;
+  border-color: #191970;
+}
+
+.full-width {
   width: 100%;
-  padding: 0.95rem;
-  background: #191970;
-  color: #ffffff;
+  flex: 1 1 100%;
+}
+
+textarea {
+  resize: vertical;
+  font-family: inherit;
+}
+
+/* Remove spinners from number inputs */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* ================================
+   Checkboxes
+================================ */
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.checkbox-label span {
+  text-transform: capitalize;
+}
+
+.caracteristicas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+  margin-top: 15px;
+}
+
+/* ================================
+   Photos Section
+================================ */
+.photo-instructions {
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 15px;
+  font-style: italic;
+}
+
+.fotos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.foto-item {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background-color: #f9f9f9;
+  transition: all 0.3s ease;
+}
+
+.foto-item.has-photo {
+  border-style: solid;
+  border-color: #191970;
+  cursor: grab;
+}
+
+.foto-item.has-photo:active {
+  cursor: grabbing;
+}
+
+/* Adicionado estilo visual para drag over */
+.foto-item.drag-over {
+  border-color: #191970;
+  background-color: #e8e8ff;
+  border-width: 3px;
+  transform: scale(1.02);
+}
+
+.foto-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.foto-upload-label {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.foto-upload-label:hover {
+  background-color: #f0f0f0;
+}
+
+.foto-upload-label span {
+  font-size: 48px;
+  color: #999;
+}
+
+/* Atualizado remove-foto-btn para seguir o design do ImovelModal */
+.remove-foto-btn {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  color: #191970;
+  border: none;
+  border-radius: 50%;
+  font-size: 20px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.remove-foto-btn:hover {
+  transform: scale(1.15);
+  background: rgba(128, 128, 128, 0.15);
+}
+
+/* Added styles for Google Maps photo section */
+.foto-maps-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 15px;
+}
+
+.foto-maps {
+  width: 300px;
+  max-width: 100%;
+}
+
+/* ================================
+   Submit Button
+================================ */
+.submit-container {
+  margin-top: 25px;
+  padding-top: 20px;
+  border-top: 2px solid #e0e0e0;
+  display: flex;
+  justify-content: center;
+}
+
+/* Atualizado submit-btn para ter bordas arredondadas como o botão de contato do ImovelModal */
+.submit-btn {
+  padding: 14px 40px;
+  background-color: #191970;
+  color: white;
   border: none;
   border-radius: 50px;
+  font-size: 16px;
+  font-weight: bold;
   cursor: pointer;
-  font-weight: 700;
-  font-size: 1rem;
-  margin-top: 1.5rem;
   transition: all 0.3s ease;
-  box-shadow: 0 2px 8px rgba(25, 25, 112, 0.15);
-  font-family: "Sanchez", serif;
+  box-shadow: 0 2px 8px rgba(25, 25, 112, 0.3);
 }
 
-.adicionar-admin-btn:hover {
-  background: #2a2a8f;
-  box-shadow: 0 2px 12px rgba(25, 25, 112, 0.25);
+.submit-btn:hover {
+  background-color: #2a2a8f;
+  box-shadow: 0 4px 12px rgba(25, 25, 112, 0.4);
 }
 
-.adicionar-admin-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+/* ================================
+   Confirmation Popup
+================================ */
+.confirmation-popup {
+  background-color: #fff;
+  padding: 40px;
+  border-radius: 10px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  text-align: center;
+  animation: fadeIn 0.3s ease;
 }
 
-/* Mobile Responsive */
+.confirmation-popup h3 {
+  margin-bottom: 20px;
+  color: #191970;
+  font-size: 24px;
+}
+
+.confirmation-popup p {
+  margin-bottom: 30px;
+  color: #666;
+  font-size: 16px;
+}
+
+.confirmation-buttons {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+}
+
+.confirm-btn,
+.cancel-btn {
+  padding: 12px 30px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.confirm-btn {
+  background-color: #191970;
+  color: white;
+  box-shadow: 0 2px 8px rgba(25, 25, 112, 0.3);
+}
+
+.confirm-btn:hover {
+  background-color: #2a2a8f;
+  box-shadow: 0 4px 12px rgba(25, 25, 112, 0.4);
+}
+
+.cancel-btn {
+  background-color: #e0e0e0;
+  color: #333;
+}
+
+.cancel-btn:hover {
+  background-color: #d0d0d0;
+}
+
+/* ================================
+   Success Popup
+================================ */
+.success-popup {
+  background-color: #fff;
+  padding: 40px;
+  border-radius: 10px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  text-align: center;
+  position: relative;
+  animation: fadeIn 0.3s ease;
+}
+
+.success-popup h3 {
+  margin-bottom: 20px;
+  color: #191970;
+  font-size: 24px;
+}
+
+.success-popup p {
+  margin-bottom: 30px;
+  color: #666;
+  font-size: 16px;
+}
+
+.success-buttons {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+}
+
+.go-to-imovel-btn {
+  padding: 12px 30px;
+  background-color: #191970;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(25, 25, 112, 0.3);
+}
+
+.go-to-imovel-btn:hover {
+  background-color: #2a2a8f;
+  box-shadow: 0 4px 12px rgba(25, 25, 112, 0.4);
+}
+
+/* ================================
+   Error Messages
+================================ */
+.error-msg {
+  color: #e74c3c;
+  background-color: #fadbd8;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  border-left: 4px solid #e74c3c;
+}
+
+/* Mensagens de erro posicionadas mais próximas dos campos */
+.field-error-msg {
+  color: #e74c3c;
+  font-size: 13px;
+  margin-top: -10px;
+  margin-bottom: 10px;
+  padding-left: 5px;
+  display: block;
+  line-height: 1.4;
+}
+
+/* Added error state for input fields */
+.input-error {
+  border-color: #e74c3c !important;
+  background-color: #fff5f5;
+}
+
+.input-error:focus {
+  border-color: #c0392b !important;
+  box-shadow: 0 0 0 3px rgba(231, 76, 60, 0.1);
+}
+
+/* Indicador visual de erro nas abas mantido */
+.tab.has-error {
+  position: relative;
+}
+
+.tab.has-error::after {
+  content: "!";
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 20px;
+  height: 20px;
+  background-color: #e74c3c;
+  color: white;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ================================
+   Responsive Design
+================================ */
 @media (max-width: 768px) {
-  .adicionar-admin-overlay {
-    padding: 10px;
+  /* ================================
+     Responsive Design for Popups
+  ================================ */
+  .confirmation-popup,
+  .success-popup {
+    width: 95%;
+    padding: 30px 20px;
   }
 
-  .adicionar-admin-logo-container {
-    margin-bottom: 1rem;
+  .confirmation-popup h3,
+  .success-popup h3 {
+    font-size: 20px;
   }
 
-  .adicionar-admin-logo {
-    height: 40px;
+  .confirmation-buttons,
+  .success-buttons {
+    flex-direction: column;
   }
 
-  .adicionar-admin-modal {
+  .confirm-btn,
+  .cancel-btn,
+  .go-to-imovel-btn {
     width: 100%;
-    max-width: 100%;
-    max-height: 90vh;
-    padding: 2rem 1.5rem;
   }
 
-  .adicionar-admin-close-btn {
-    width: 40px;
-    height: 40px;
+  .popup {
+    width: 95%;
+    padding: 20px;
+    max-height: 95vh;
   }
 
-  .adicionar-admin-title {
-    font-size: 1.25rem;
-    margin-bottom: 1.2rem;
+  .tabs-container {
+    flex-direction: column;
+    gap: 5px;
   }
 
-  .adicionar-admin-input {
-    padding: 0.85rem 0.9rem;
+  .tab {
+    border-bottom: none;
+    border-left: 3px solid transparent;
   }
 
-  .adicionar-admin-btn {
-    padding: 0.9rem;
-    margin-top: 1.2rem;
+  .tab.active {
+    border-left-color: #191970;
+    border-bottom-color: transparent;
+  }
+
+  .form-row {
+    flex-direction: column;
+  }
+
+  .form-row input,
+  .form-row select,
+  .form-row textarea {
+    min-width: 100%;
+  }
+
+  .caracteristicas-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .fotos-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .submit-btn {
+    width: 100%;
   }
 }
 
 @media (max-width: 480px) {
-  .adicionar-admin-modal {
-    padding: 1.5rem 1.25rem;
+  .popup {
+    padding: 15px;
   }
 
-  .adicionar-admin-close-btn {
-    width: 36px;
-    height: 36px;
-    top: 12px;
-    right: 12px;
+  form h3 {
+    font-size: 18px;
   }
 
-  .adicionar-admin-title {
-    font-size: 1.1rem;
-    margin-bottom: 1rem;
+  .tab {
+    font-size: 12px;
+    padding: 10px;
   }
 
-  .adicionar-admin-form-group label {
-    font-size: 0.9rem;
-  }
-
-  .adicionar-admin-input {
-    padding: 0.8rem 0.85rem;
-    font-size: 1rem;
-  }
-
-  .adicionar-admin-btn {
-    padding: 0.85rem;
-    font-size: 0.95rem;
-    margin-top: 1rem;
+  .fotos-grid {
+    grid-template-columns: 1fr;
   }
 }

@@ -6,11 +6,17 @@ import { IoClose, IoEyeOutline, IoEyeOffOutline } from "react-icons/io5";
 import logo_azul from "../../../assets/img/logo/logo_azul.png";
 import "./AdicionarAdmin.css";
 
+// ETAPAS DO FLUXO: 1 = formulário de dados, 2 = inserção do código de verificação
+const ETAPA_FORMULARIO = 1;
+const ETAPA_VERIFICACAO = 2;
+
 const AdicionarAdmin = ({ showPopup, setShowPopup }) => {
+  const [etapa, setEtapa] = useState(ETAPA_FORMULARIO);
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [confirmarSenha, setConfirmarSenha] = useState("");
+  const [codigo, setCodigo] = useState("");
   const [showSenha, setShowSenha] = useState(false);
   const [showConfirmarSenha, setShowConfirmarSenha] = useState(false);
   const [error, setError] = useState("");
@@ -18,35 +24,27 @@ const AdicionarAdmin = ({ showPopup, setShowPopup }) => {
   const [carregando, setCarregando] = useState(false);
   const [sucesso, setSucesso] = useState(false);
 
-  // Validar nome completo
-  const isValidFullName = (nome) => {
-    return nome.trim().length > 0;
-  };
+  // VALIDAÇÃO: Nome válido
+  const isValidFullName = (nome) => nome.trim().length >= 3;
 
-  // Validar email
+  // VALIDAÇÃO: Formato de e-mail
   const isValidEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
 
-  // Validar senha: mínimo 8 caracteres, pelo menos 1 maiúscula, 1 minúscula, 1 número, 1 caractere especial
+  // VALIDAÇÃO: Força da senha
   const isValidPassword = (senha) => {
-    const hasUpperCase = /[A-Z]/.test(senha);
-    const hasLowerCase = /[a-z]/.test(senha);
-    const hasNumber = /[0-9]/.test(senha);
-    const hasSpecialChar = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(senha);
-    const hasMinLength = senha.length >= 8;
-
     return (
-      hasUpperCase &&
-      hasLowerCase &&
-      hasNumber &&
-      hasSpecialChar &&
-      hasMinLength
+      senha.length >= 8 &&
+      /[A-Z]/.test(senha) &&
+      /[a-z]/.test(senha) &&
+      /[0-9]/.test(senha) &&
+      /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(senha)
     );
   };
 
-  // Obter erros específicos da senha
+  // RETORNA: Lista de erros específicos da senha
   const getPasswordErrors = (senha) => {
     const errors = [];
     if (senha.length < 8) errors.push("Mínimo 8 caracteres");
@@ -58,19 +56,19 @@ const AdicionarAdmin = ({ showPopup, setShowPopup }) => {
     return errors;
   };
 
-  const handleSubmit = async (e) => {
+  // ETAPA 1: Envia os dados e solicita código de verificação por e-mail
+  const handleSubmitFormulario = async (e) => {
     e.preventDefault();
     setError("");
     setFieldErrors({});
     setCarregando(true);
-    setSucesso(false);
 
     const errors = {};
 
     if (!nome.trim()) {
       errors.nome = "Nome é obrigatório";
     } else if (!isValidFullName(nome)) {
-      errors.nome = "Nome deve ser válido";
+      errors.nome = "Nome deve ter pelo menos 3 caracteres";
     }
 
     if (!email.trim()) {
@@ -100,46 +98,81 @@ const AdicionarAdmin = ({ showPopup, setShowPopup }) => {
     }
 
     try {
-      await axios.post("/api/admin/adicionar-admin", {
-        nome,
-        email,
-        senha,
-      });
+      // Envia dados — o servidor gera o código e o envia ao e-mail informado
+      const token = localStorage.getItem("nolare_token");
+      await axios.post(
+        "/api/admin/adicionar-admin",
+        { nome, email, senha },
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
 
-      setSucesso(true);
+      // Avança para a etapa de verificação do código
+      setEtapa(ETAPA_VERIFICACAO);
       setError("");
-      setFieldErrors({});
-
-      // Limpar campos após sucesso
-      setNome("");
-      setEmail("");
-      setSenha("");
-      setConfirmarSenha("");
-
-      // Fechar popup após 2 segundos
-      setTimeout(() => {
-        setShowPopup(false);
-        setSucesso(false);
-      }, 2000);
     } catch (err) {
       const errorMsg =
-        err.response?.data?.error || "Erro ao cadastrar administrador";
+        err.response?.data?.error ||
+        "Erro ao iniciar cadastro de administrador";
       setError(errorMsg);
     } finally {
       setCarregando(false);
     }
   };
 
+  // ETAPA 2: Envia o código recebido por e-mail para confirmar o cadastro
+  const handleSubmitVerificacao = async (e) => {
+    e.preventDefault();
+    setError("");
+    setCarregando(true);
+
+    if (!codigo.trim() || codigo.trim().length !== 5) {
+      setError("Insira o código de 5 dígitos enviado ao e-mail.");
+      setCarregando(false);
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("nolare_token");
+      await axios.post(
+        "/api/admin/confirmar-admin",
+        { email, codigo: codigo.trim() },
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+
+      setSucesso(true);
+      setError("");
+
+      // Fecha o modal após 2 segundos
+      setTimeout(() => {
+        resetarEstado();
+        setShowPopup(false);
+      }, 2000);
+    } catch (err) {
+      const errorMsg =
+        err.response?.data?.error || "Erro ao confirmar cadastro";
+      setError(errorMsg);
+    } finally {
+      setCarregando(false);
+    }
+  };
+
+  // RESET: Limpa todos os campos e volta à etapa 1
+  const resetarEstado = () => {
+    setEtapa(ETAPA_FORMULARIO);
+    setNome("");
+    setEmail("");
+    setSenha("");
+    setConfirmarSenha("");
+    setCodigo("");
+    setError("");
+    setFieldErrors({});
+    setSucesso(false);
+  };
+
   const handleClose = () => {
     if (!carregando) {
+      resetarEstado();
       setShowPopup(false);
-      setNome("");
-      setEmail("");
-      setSenha("");
-      setConfirmarSenha("");
-      setError("");
-      setFieldErrors({});
-      setSucesso(false);
     }
   };
 
@@ -178,118 +211,175 @@ const AdicionarAdmin = ({ showPopup, setShowPopup }) => {
         {/* Mensagem de erro geral */}
         {error && <div className="adicionar-admin-error-msg">{error}</div>}
 
-        <form onSubmit={handleSubmit} className="adicionar-admin-form">
-          {/* Campo Nome */}
-          <div className="adicionar-admin-form-group">
-            <label htmlFor="nome">Nome</label>
-            <input
-              type="text"
-              id="nome"
-              className={`adicionar-admin-input ${
-                fieldErrors.nome ? "input-error" : ""
-              }`}
-              value={nome}
-              onChange={(e) => setNome(e.target.value)}
-              disabled={carregando}
-            />
-            {fieldErrors.nome && (
-              <p className="adicionar-admin-field-error">{fieldErrors.nome}</p>
-            )}
-          </div>
-
-          {/* Campo Email */}
-          <div className="adicionar-admin-form-group">
-            <label htmlFor="email">Email</label>
-            <input
-              type="email"
-              id="email"
-              className={`adicionar-admin-input ${
-                fieldErrors.email ? "input-error" : ""
-              }`}
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={carregando}
-            />
-            {fieldErrors.email && (
-              <p className="adicionar-admin-field-error">{fieldErrors.email}</p>
-            )}
-          </div>
-
-          {/* Campo Senha */}
-          <div className="adicionar-admin-form-group">
-            <label htmlFor="senha">Senha</label>
-            <div className="adicionar-admin-password-container">
-              <input
-                type={showSenha ? "text" : "password"}
-                id="senha"
-                className={`adicionar-admin-input ${
-                  fieldErrors.senha ? "input-error" : ""
-                }`}
-                value={senha}
-                onChange={(e) => setSenha(e.target.value)}
-                disabled={carregando}
-              />
-              <button
-                type="button"
-                className="adicionar-admin-password-toggle"
-                onClick={() => setShowSenha(!showSenha)}
-                disabled={carregando}
-              >
-                {showSenha ? (
-                  <IoEyeOutline size={20} />
-                ) : (
-                  <IoEyeOffOutline size={20} />
-                )}
-              </button>
-            </div>
-            {fieldErrors.senha && (
-              <p className="adicionar-admin-field-error">{fieldErrors.senha}</p>
-            )}
-          </div>
-
-          {/* Campo Confirmar Senha */}
-          <div className="adicionar-admin-form-group">
-            <label htmlFor="confirmarSenha">Confirmar Senha</label>
-            <div className="adicionar-admin-password-container">
-              <input
-                type={showConfirmarSenha ? "text" : "password"}
-                id="confirmarSenha"
-                className={`adicionar-admin-input ${
-                  fieldErrors.confirmarSenha ? "input-error" : ""
-                }`}
-                value={confirmarSenha}
-                onChange={(e) => setConfirmarSenha(e.target.value)}
-                disabled={carregando}
-              />
-              <button
-                type="button"
-                className="adicionar-admin-password-toggle"
-                onClick={() => setShowConfirmarSenha(!showConfirmarSenha)}
-                disabled={carregando}
-              >
-                {showConfirmarSenha ? (
-                  <IoEyeOutline size={20} />
-                ) : (
-                  <IoEyeOffOutline size={20} />
-                )}
-              </button>
-            </div>
-            {fieldErrors.confirmarSenha && (
-              <p className="adicionar-admin-field-error">
-                {fieldErrors.confirmarSenha}
-              </p>
-            )}
-          </div>
-
-          {/* Botão Cadastrar */}
-          <button
-            type="submit"
-            className="adicionar-admin-btn"
-            disabled={carregando}
+        {/* ---- ETAPA 1: Formulário de dados ---- */}
+        {etapa === ETAPA_FORMULARIO && !sucesso && (
+          <form
+            onSubmit={handleSubmitFormulario}
+            className="adicionar-admin-form"
           >
-            {carregando ? "Cadastrando..." : "Cadastrar Administrador"}
-          </button>
-        </form>
+            {/* Campo Nome */}
+            <div className="adicionar-admin-form-group">
+              <label htmlFor="nome">Nome</label>
+              <input
+                type="text"
+                id="nome"
+                className={`adicionar-admin-input ${fieldErrors.nome ? "input-error" : ""}`}
+                value={nome}
+                onChange={(e) => setNome(e.target.value)}
+                disabled={carregando}
+              />
+              {fieldErrors.nome && (
+                <p className="adicionar-admin-field-error">
+                  {fieldErrors.nome}
+                </p>
+              )}
+            </div>
+
+            {/* Campo Email */}
+            <div className="adicionar-admin-form-group">
+              <label htmlFor="email">Email</label>
+              <input
+                type="email"
+                id="email"
+                className={`adicionar-admin-input ${fieldErrors.email ? "input-error" : ""}`}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={carregando}
+              />
+              {fieldErrors.email && (
+                <p className="adicionar-admin-field-error">
+                  {fieldErrors.email}
+                </p>
+              )}
+            </div>
+
+            {/* Campo Senha */}
+            <div className="adicionar-admin-form-group">
+              <label htmlFor="senha">Senha</label>
+              <div className="adicionar-admin-password-container">
+                <input
+                  type={showSenha ? "text" : "password"}
+                  id="senha"
+                  className={`adicionar-admin-input ${fieldErrors.senha ? "input-error" : ""}`}
+                  value={senha}
+                  onChange={(e) => setSenha(e.target.value)}
+                  disabled={carregando}
+                />
+                <button
+                  type="button"
+                  className="adicionar-admin-password-toggle"
+                  onClick={() => setShowSenha(!showSenha)}
+                  disabled={carregando}
+                >
+                  {showSenha ? (
+                    <IoEyeOutline size={20} />
+                  ) : (
+                    <IoEyeOffOutline size={20} />
+                  )}
+                </button>
+              </div>
+              {fieldErrors.senha && (
+                <p className="adicionar-admin-field-error">
+                  {fieldErrors.senha}
+                </p>
+              )}
+            </div>
+
+            {/* Campo Confirmar Senha */}
+            <div className="adicionar-admin-form-group">
+              <label htmlFor="confirmarSenha">Confirmar Senha</label>
+              <div className="adicionar-admin-password-container">
+                <input
+                  type={showConfirmarSenha ? "text" : "password"}
+                  id="confirmarSenha"
+                  className={`adicionar-admin-input ${fieldErrors.confirmarSenha ? "input-error" : ""}`}
+                  value={confirmarSenha}
+                  onChange={(e) => setConfirmarSenha(e.target.value)}
+                  disabled={carregando}
+                />
+                <button
+                  type="button"
+                  className="adicionar-admin-password-toggle"
+                  onClick={() => setShowConfirmarSenha(!showConfirmarSenha)}
+                  disabled={carregando}
+                >
+                  {showConfirmarSenha ? (
+                    <IoEyeOutline size={20} />
+                  ) : (
+                    <IoEyeOffOutline size={20} />
+                  )}
+                </button>
+              </div>
+              {fieldErrors.confirmarSenha && (
+                <p className="adicionar-admin-field-error">
+                  {fieldErrors.confirmarSenha}
+                </p>
+              )}
+            </div>
+
+            <button
+              type="submit"
+              className="adicionar-admin-btn"
+              disabled={carregando}
+            >
+              {carregando ? "Enviando..." : "Enviar Código de Verificação"}
+            </button>
+          </form>
+        )}
+
+        {/* ---- ETAPA 2: Inserção do código de verificação ---- */}
+        {etapa === ETAPA_VERIFICACAO && !sucesso && (
+          <form
+            onSubmit={handleSubmitVerificacao}
+            className="adicionar-admin-form"
+          >
+            {/* Instrução para o admin */}
+            <p className="adicionar-admin-instrucao">
+              Um código de verificação foi enviado para <strong>{email}</strong>
+              . Insira-o abaixo para confirmar o cadastro do novo administrador.
+            </p>
+
+            {/* Campo Código */}
+            <div className="adicionar-admin-form-group">
+              <label htmlFor="codigo">Código de Verificação</label>
+              <input
+                type="text"
+                id="codigo"
+                className="adicionar-admin-input adicionar-admin-input-codigo"
+                value={codigo}
+                onChange={(e) =>
+                  setCodigo(e.target.value.replace(/\D/g, "").slice(0, 5))
+                }
+                placeholder="00000"
+                maxLength={5}
+                disabled={carregando}
+                autoFocus
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="adicionar-admin-btn"
+              disabled={carregando}
+            >
+              {carregando ? "Confirmando..." : "Confirmar Cadastro"}
+            </button>
+
+            {/* Link para voltar à etapa 1 */}
+            <button
+              type="button"
+              className="adicionar-admin-btn-voltar"
+              onClick={() => {
+                setEtapa(ETAPA_FORMULARIO);
+                setError("");
+                setCodigo("");
+              }}
+              disabled={carregando}
+            >
+              Voltar
+            </button>
+          </form>
+        )}
       </div>
     </div>
   );

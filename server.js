@@ -62,6 +62,7 @@ app.use((req, res, next) => {
   res.removeHeader("X-Powered-By");
 
   // SEGURANÇA: Content-Security-Policy — defesa contra XSS (1.10)
+  // CORREÇÃO: Adicionado frame-src para permitir o embed do Google Maps nos imóveis
   res.setHeader(
     "Content-Security-Policy",
     "default-src 'self'; " +
@@ -70,6 +71,7 @@ app.use((req, res, next) => {
       "font-src 'self' https://fonts.gstatic.com; " +
       "img-src 'self' data: blob: https:; " +
       "connect-src 'self'; " +
+      "frame-src https://maps.google.com https://www.google.com; " +
       "frame-ancestors 'none';",
   );
 
@@ -2854,16 +2856,22 @@ const uploadDir = path.join(process.cwd(), "public", "fotos_imoveis");
 // Usa memoryStorage para processar a imagem com sharp antes de salvar
 const storage = multer.memoryStorage();
 
+// LIMITE: 5MB por imagem, conforme requisito do sistema
+const LIMITE_TAMANHO_FOTO = 5 * 1024 * 1024; // 5MB
+
+// FORMATOS PERMITIDOS: apenas PNG, JPG e JPEG
+const FORMATOS_PERMITIDOS = ["image/png", "image/jpeg"];
+
 const upload = multer({
   storage,
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB
+    fileSize: LIMITE_TAMANHO_FOTO,
   },
   fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith("image/")) {
+    if (FORMATOS_PERMITIDOS.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error("Apenas arquivos de imagem são permitidos"));
+      cb(new Error("Formato não permitido. Use apenas PNG, JPG ou JPEG."));
     }
   },
 });
@@ -2998,7 +3006,8 @@ app.delete(
 // ROTAS DE ADMINISTRAÇÃO (PROTEGIDAS)
 // =========================
 
-// ROTA: Adiciona novo administrador (APENAS ADMINS AUTENTICADOS)
+// ROTA: Solicita cadastro de novo administrador — envia código de verificação por e-mail (APENAS ADMINS AUTENTICADOS)
+// ETAPA 1: O admin preenche nome, email e senha → sistema envia código para o e-mail informado
 app.post(
   "/api/admin/adicionar-admin",
   verificarTokenJWT,
@@ -3035,7 +3044,7 @@ app.post(
       const nomeLimpo = sanitizarString(nome, 100);
       const emailLimpo = sanitizarString(email.toLowerCase(), 255);
 
-      // DB QUERY: Verifica se email já existe
+      // DB QUERY: Verifica se email já está em uso por usuário ativo
       const emailExiste = await pool.query(
         "SELECT id FROM usuarios WHERE email = $1",
         [emailLimpo],
@@ -3045,13 +3054,143 @@ app.post(
         return res.status(400).json({ error: "Este email já está cadastrado" });
       }
 
-      // Hash da senha com 12 rounds
+      // Hash da senha antes de armazenar na tabela de pendência
       const senhaHash = await bcrypt.hash(senha, 12);
 
-      // Insere diretamente na tabela usuarios com tipo_usuario = 'adm'
+      // Gera código de verificação de 5 dígitos e validade de 10 minutos
+      const codigo = gerarCodigoVerificacao();
+      const expiracao = new Date(Date.now() + 10 * 60 * 1000);
+
+      // Salva (ou atualiza) pendência na tabela de verificação — reutiliza mesmo fluxo do cadastro comum
+      await pool.query(
+        `INSERT INTO email_verificacao_pendente
+          (nome, email, senha, tipo_usuario, codigo, expiracao, aceitou_termos, aceitou_privacidade, aceita_emails_comerciais)
+         VALUES ($1, $2, $3, $4, $5, $6, TRUE, TRUE, FALSE)
+         ON CONFLICT (email) DO UPDATE SET
+           nome = EXCLUDED.nome,
+           senha = EXCLUDED.senha,
+           tipo_usuario = EXCLUDED.tipo_usuario,
+           codigo = EXCLUDED.codigo,
+           expiracao = EXCLUDED.expiracao,
+           atualizado_em = NOW(),
+           verificado = FALSE`,
+        [nomeLimpo, emailLimpo, senhaHash, "adm", codigo, expiracao],
+      );
+
+      // Envia código de verificação para o e-mail do novo administrador
+      await enviarEmail(
+        "verificarCadastro",
+        emailLimpo,
+        "Verificação de Cadastro de Administrador - Nolare",
+        {
+          nome: nomeLimpo,
+          codigo: codigo,
+        },
+      );
+
+      res.status(200).json({
+        success: true,
+        needsVerification: true,
+        message:
+          "Código de verificação enviado para o e-mail informado. Insira o código para confirmar o cadastro.",
+      });
+    } catch (err) {
+      const codigoErro = logErroSeguro(
+        "Erro ao iniciar cadastro de administrador",
+        err,
+      );
+      res.status(500).json({ error: "Erro no servidor", codigo: codigoErro });
+    }
+  },
+);
+
+// ROTA: Confirma cadastro de administrador após verificação do código de e-mail (APENAS ADMINS AUTENTICADOS)
+// ETAPA 2: O admin insere o código recebido → sistema cria o novo administrador
+app.post(
+  "/api/admin/confirmar-admin",
+  verificarTokenJWT,
+  verificarAdmin,
+  async (req, res) => {
+    const { email, codigo } = req.body;
+
+    // VALIDAÇÃO: Campos obrigatórios
+    if (!email || !codigo) {
+      return res.status(400).json({ error: "Email e código são obrigatórios" });
+    }
+
+    try {
+      const emailLimpo = sanitizarString(email.toLowerCase(), 255);
+
+      // DB QUERY: Busca pendência de cadastro de admin
+      const pendente = await pool.query(
+        "SELECT * FROM email_verificacao_pendente WHERE email = $1 AND verificado = FALSE AND tipo_usuario = $2",
+        [emailLimpo, "adm"],
+      );
+
+      if (pendente.rows.length === 0) {
+        return res
+          .status(400)
+          .json({ error: "Nenhum cadastro pendente para este email" });
+      }
+
+      const registro = pendente.rows[0];
+
+      // VALIDAÇÃO: Código expirado
+      if (!validarToken(registro.expiracao)) {
+        return res.status(400).json({
+          error: "Código expirado. Inicie o cadastro novamente.",
+          expired: true,
+        });
+      }
+
+      // VALIDAÇÃO: Código incorreto — usa sistema de tentativas
+      if (registro.codigo !== codigo) {
+        await registrarTentativaErradaEmail(emailLimpo, "cadastro_adm");
+
+        const verificacao = await verificarBloqueioTentativasEmail(
+          emailLimpo,
+          "cadastro_adm",
+        );
+
+        if (verificacao.bloqueado) {
+          return res.status(429).json({
+            error:
+              "Muitas tentativas erradas. Você foi bloqueado por 10 minutos.",
+            statusCode: "BLOQUEADO",
+            tempoRestante: verificacao.tempoRestante,
+          });
+        }
+
+        return res.status(400).json({
+          error: `Código inválido. Tentativas restantes: ${verificacao.tentativasRestantes}`,
+          tentativasRestantes: verificacao.tentativasRestantes,
+        });
+      }
+
+      // VERIFICAÇÃO: Email não pode ter sido cadastrado entre etapa 1 e etapa 2
+      const emailExiste = await pool.query(
+        "SELECT id FROM usuarios WHERE email = $1",
+        [emailLimpo],
+      );
+
+      if (emailExiste.rows.length > 0) {
+        await pool.query(
+          "UPDATE email_verificacao_pendente SET verificado = TRUE WHERE email = $1",
+          [emailLimpo],
+        );
+        return res.status(400).json({ error: "Este email já está cadastrado" });
+      }
+
+      // Insere administrador definitivamente com tipo_usuario = 'adm'
       const result = await pool.query(
-        "INSERT INTO usuarios (nome, email, senha, tipo_usuario) VALUES ($1, $2, $3, $4) RETURNING id, nome, email, tipo_usuario, data_criacao",
-        [nomeLimpo, emailLimpo, senhaHash, "adm"],
+        "INSERT INTO usuarios (nome, email, senha, tipo_usuario, aceita_emails_comerciais) VALUES ($1, $2, $3, $4, FALSE) RETURNING id, nome, email, tipo_usuario, data_criacao",
+        [registro.nome, emailLimpo, registro.senha, "adm"],
+      );
+
+      // Marca pendência como verificada
+      await pool.query(
+        "UPDATE email_verificacao_pendente SET verificado = TRUE WHERE email = $1",
+        [emailLimpo],
       );
 
       res.status(201).json({
@@ -3060,7 +3199,10 @@ app.post(
         message: "Administrador cadastrado com sucesso!",
       });
     } catch (err) {
-      const codigoErro = logErroSeguro("Erro ao cadastrar administrador", err);
+      const codigoErro = logErroSeguro(
+        "Erro ao confirmar cadastro de administrador",
+        err,
+      );
       res.status(500).json({ error: "Erro no servidor", codigo: codigoErro });
     }
   },
@@ -3074,7 +3216,9 @@ app.use((err, req, res, next) => {
     if (err.code === "LIMIT_FILE_SIZE") {
       return res
         .status(400)
-        .json({ error: "Arquivo muito grande. O tamanho máximo é 10MB." });
+        .json({
+          error: "Arquivo muito grande. O tamanho máximo é 5MB por imagem.",
+        });
     }
     return res.status(400).json({ error: `Erro no upload: ${err.message}` });
   }
