@@ -219,10 +219,12 @@ const AdicionarAdmin = ({ showPopup, setShowPopup }) => {
           >
             {/* Campo Nome */}
             <div className="adicionar-admin-form-group">
-              <label htmlFor="nome">Nome</label>
+              <label htmlFor="adm-nome">Nome</label>
               <input
                 type="text"
-                id="nome"
+                id="adm-nome"
+                name="adm-nome"
+                autoComplete="name"
                 className={`adicionar-admin-input ${fieldErrors.nome ? "input-error" : ""}`}
                 value={nome}
                 onChange={(e) => setNome(e.target.value)}
@@ -237,10 +239,12 @@ const AdicionarAdmin = ({ showPopup, setShowPopup }) => {
 
             {/* Campo Email */}
             <div className="adicionar-admin-form-group">
-              <label htmlFor="email">Email</label>
+              <label htmlFor="adm-email">Email</label>
               <input
                 type="email"
-                id="email"
+                id="adm-email"
+                name="adm-email"
+                autoComplete="email"
                 className={`adicionar-admin-input ${fieldErrors.email ? "input-error" : ""}`}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -255,11 +259,13 @@ const AdicionarAdmin = ({ showPopup, setShowPopup }) => {
 
             {/* Campo Senha */}
             <div className="adicionar-admin-form-group">
-              <label htmlFor="senha">Senha</label>
+              <label htmlFor="adm-senha">Senha</label>
               <div className="adicionar-admin-password-container">
                 <input
                   type={showSenha ? "text" : "password"}
-                  id="senha"
+                  id="adm-senha"
+                  name="adm-senha"
+                  autoComplete="new-password"
                   className={`adicionar-admin-input ${fieldErrors.senha ? "input-error" : ""}`}
                   value={senha}
                   onChange={(e) => setSenha(e.target.value)}
@@ -287,11 +293,13 @@ const AdicionarAdmin = ({ showPopup, setShowPopup }) => {
 
             {/* Campo Confirmar Senha */}
             <div className="adicionar-admin-form-group">
-              <label htmlFor="confirmarSenha">Confirmar Senha</label>
+              <label htmlFor="adm-confirmar-senha">Confirmar Senha</label>
               <div className="adicionar-admin-password-container">
                 <input
                   type={showConfirmarSenha ? "text" : "password"}
-                  id="confirmarSenha"
+                  id="adm-confirmar-senha"
+                  name="adm-confirmar-senha"
+                  autoComplete="new-password"
                   className={`adicionar-admin-input ${fieldErrors.confirmarSenha ? "input-error" : ""}`}
                   value={confirmarSenha}
                   onChange={(e) => setConfirmarSenha(e.target.value)}
@@ -341,10 +349,12 @@ const AdicionarAdmin = ({ showPopup, setShowPopup }) => {
 
             {/* Campo Código */}
             <div className="adicionar-admin-form-group">
-              <label htmlFor="codigo">Código de Verificação</label>
+              <label htmlFor="adm-codigo">Código de Verificação</label>
               <input
                 type="text"
-                id="codigo"
+                id="adm-codigo"
+                name="adm-codigo"
+                autoComplete="one-time-code"
                 className="adicionar-admin-input adicionar-admin-input-codigo"
                 value={codigo}
                 onChange={(e) =>

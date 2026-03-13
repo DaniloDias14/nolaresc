@@ -228,18 +228,10 @@ const AdicionarImovel = ({ showPopup, setShowPopup }) => {
   const handleFotoChange = (index, file) => {
     if (!file) return;
 
-    // Valida formato do arquivo
+    // Valida formato do arquivo (PNG, JPG, JPEG)
+    const FORMATOS_ACEITOS = ["image/png", "image/jpeg"];
     if (!FORMATOS_ACEITOS.includes(file.type)) {
       setErrorMsg("Formato inválido. Utilize apenas PNG, JPG ou JPEG.");
-      setTimeout(() => setErrorMsg(""), 4000);
-      return;
-    }
-
-    // Valida tamanho do arquivo
-    if (file.size > LIMITE_FOTO_BYTES) {
-      setErrorMsg(
-        `A imagem "${file.name}" excede o limite de ${LIMITE_FOTO_MB}MB por foto.`,
-      );
       setTimeout(() => setErrorMsg(""), 4000);
       return;
     }
@@ -554,8 +546,16 @@ const AdicionarImovel = ({ showPopup, setShowPopup }) => {
             },
           });
         } catch (uploadErr) {
+          // ROLLBACK: Remove o imóvel criado para não deixar registro sem fotos no banco
+          try {
+            await axios.delete(`/api/imoveis/${imovelId}`, {
+              headers: authHeader,
+            });
+          } catch (_deleteErr) {
+            // Ignora erro do delete — o erro principal já será exibido ao usuário
+          }
           throw new Error(
-            "Erro ao fazer upload das fotos do imóvel. Verifique o tamanho e formato das imagens.",
+            "Erro ao fazer upload das fotos. O imóvel foi removido automaticamente. Verifique o formato das imagens (PNG, JPG ou JPEG) e tente novamente.",
           );
         }
       }

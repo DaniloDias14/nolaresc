@@ -2856,17 +2856,12 @@ const uploadDir = path.join(process.cwd(), "public", "fotos_imoveis");
 // Usa memoryStorage para processar a imagem com sharp antes de salvar
 const storage = multer.memoryStorage();
 
-// LIMITE: 5MB por imagem, conforme requisito do sistema
-const LIMITE_TAMANHO_FOTO = 5 * 1024 * 1024; // 5MB
-
+// SEM LIMITE DE TAMANHO: administradores são responsáveis pelo tamanho das imagens
 // FORMATOS PERMITIDOS: apenas PNG, JPG e JPEG
 const FORMATOS_PERMITIDOS = ["image/png", "image/jpeg"];
 
 const upload = multer({
   storage,
-  limits: {
-    fileSize: LIMITE_TAMANHO_FOTO,
-  },
   fileFilter: (req, file, cb) => {
     if (FORMATOS_PERMITIDOS.includes(file.mimetype)) {
       cb(null, true);
@@ -3213,13 +3208,6 @@ app.post(
 // =========================
 app.use((err, req, res, next) => {
   if (err instanceof multer.MulterError) {
-    if (err.code === "LIMIT_FILE_SIZE") {
-      return res
-        .status(400)
-        .json({
-          error: "Arquivo muito grande. O tamanho máximo é 5MB por imagem.",
-        });
-    }
     return res.status(400).json({ error: `Erro no upload: ${err.message}` });
   }
 

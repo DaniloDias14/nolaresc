@@ -332,23 +332,10 @@ const EditarImovel = ({
   const handleFotoChange = (index, file) => {
     if (!file) return;
 
-    // LIMITE: 5MB por foto, Formatos: PNG, JPG, JPEG
-    const LIMITE_FOTO_MB = 5;
-    const LIMITE_FOTO_BYTES = LIMITE_FOTO_MB * 1024 * 1024;
+    // Valida formato do arquivo (PNG, JPG, JPEG)
     const FORMATOS_ACEITOS = ["image/png", "image/jpeg"];
-
-    // Valida formato do arquivo
     if (!FORMATOS_ACEITOS.includes(file.type)) {
       setErrorMsg("Formato inválido. Utilize apenas PNG, JPG ou JPEG.");
-      setTimeout(() => setErrorMsg(""), 4000);
-      return;
-    }
-
-    // Valida tamanho do arquivo
-    if (file.size > LIMITE_FOTO_BYTES) {
-      setErrorMsg(
-        `A imagem "${file.name}" excede o limite de ${LIMITE_FOTO_MB}MB por foto.`,
-      );
       setTimeout(() => setErrorMsg(""), 4000);
       return;
     }

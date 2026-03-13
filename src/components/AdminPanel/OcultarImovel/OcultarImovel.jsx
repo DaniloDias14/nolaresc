@@ -29,14 +29,25 @@ const OcultarImovel = ({ usuario }) => {
     return `${formattedInt},${decPart}`;
   };
 
-  // Busca imóveis ocultos
+  // Busca imóveis ocultos — envia token JWT para autenticação
   useEffect(() => {
     if (!usuario || usuario.tipo_usuario !== "adm") return;
 
-    fetch("/api/imoveis/ocultos")
-      .then((res) => res.json())
+    const token = localStorage.getItem("nolare_token");
+
+    fetch("/api/imoveis/ocultos", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then((res) => {
+        if (!res.ok) throw new Error(`Erro ${res.status}`);
+        return res.json();
+      })
       .then((data) => {
-        const imoveisCompletos = data.map((imovel) => ({
+        // A rota retorna array direto (sem paginação quando não passados parâmetros)
+        const lista = Array.isArray(data) ? data : (data.dados ?? []);
+        const imoveisCompletos = lista.map((imovel) => ({
           ...imovel,
           fotos: imovel.fotos || [],
         }));
@@ -57,20 +68,20 @@ const OcultarImovel = ({ usuario }) => {
 
     try {
       const novoImovel = await fetch(`/api/imoveis/${imovelId}`).then((res) =>
-        res.json()
+        res.json(),
       );
 
       setImoveis((prev) =>
         prev.map((i) =>
           i.imovel_id === imovelId && i.carregando
             ? { ...novoImovel, fotos: novoImovel.fotos || [] }
-            : i
-        )
+            : i,
+        ),
       );
     } catch (err) {
       console.error("Erro ao adicionar imóvel:", err);
       setImoveis((prev) =>
-        prev.filter((i) => i.imovel_id !== imovelId || !i.carregando)
+        prev.filter((i) => i.imovel_id !== imovelId || !i.carregando),
       );
     }
   };
@@ -78,17 +89,23 @@ const OcultarImovel = ({ usuario }) => {
   const toggleVisibilidade = async (imovelId) => {
     if (!usuario) return;
 
+    const token = localStorage.getItem("nolare_token");
+    const authHeaders = {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    };
+
     try {
-      // Busca o imóvel atual
-      const imovelRes = await fetch(`/api/imoveis/${imovelId}`);
+      // Busca o imóvel atual (com token, pois pode estar oculto)
+      const imovelRes = await fetch(`/api/imoveis/${imovelId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       const imovel = await imovelRes.json();
 
-      // Atualiza visibilidade
+      // Atualiza visibilidade enviando token de autenticação
       const res = await fetch(`/api/imoveis/${imovelId}`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: authHeaders,
         body: JSON.stringify({
           ...imovel,
           visivel: !imovel.visivel,
@@ -230,7 +247,7 @@ const OcultarImovel = ({ usuario }) => {
                     <div className="property-entrega">
                       📅 Entrega:{" "}
                       {new Date(
-                        imovel.caracteristicas.data_entrega
+                        imovel.caracteristicas.data_entrega,
                       ).toLocaleDateString("pt-BR", {
                         month: "long",
                         year: "numeric",
