@@ -389,10 +389,8 @@ const ImovelModal = ({
       return;
     }
 
-    if (usuario.tipo_usuario === "adm") {
-      showToast("Administradores não podem curtir imóveis.", "warning");
-      return;
-    }
+    // Permissão: administradores também podem curtir/descurtir imóveis.
+    // A API valida (via JWT) que a curtida é feita apenas para o próprio usuário logado.
 
     try {
       const estaCurtido = curtidas[imovel.id ?? imovel.imovel_id];

@@ -446,10 +446,8 @@ const Comprar = ({ usuario }) => {
       return;
     }
 
-    if (usuario.tipo_usuario === "adm") {
-      showToast("Administradores não podem curtir imóveis.", "warning");
-      return;
-    }
+    // Permissão: administradores também podem curtir/descurtir imóveis.
+    // A API já valida via JWT que a curtida só pode ser feita em nome do próprio usuário.
 
     try {
       const token = localStorage.getItem("nolare_token");
@@ -745,8 +743,13 @@ const Comprar = ({ usuario }) => {
 
   const handleMudarPagina = (novaPagina) => {
     setPaginaAtual(novaPagina);
-    // UX: ao mudar de pagina via paginacao, rola suavemente para o topo (mesmo comportamento do clique na logo do Header).
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    // UX: ao mudar de pagina via paginacao (Anterior/Proxima/numeros),
+    // rola suavemente para o topo (mesmo comportamento do clique na logo do Header).
+    // Observacao: usamos requestAnimationFrame para garantir que o scroll aconteca mesmo quando a troca de pagina
+    // dispara um re-render imediato (em alguns navegadores o scroll sincrono pode falhar ou ficar inconsistente).
+    requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
     if (buscaAvancadaAtiva) {
       setBuscaAvancadaAtiva(false);
     }

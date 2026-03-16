@@ -201,7 +201,8 @@ const Header = ({
               Sobre Nós
             </Link>
           </li>
-          {isLoggedIn && user?.tipo_usuario === "user" && (
+          {/* Curtidas: disponível para qualquer usuário logado (user ou admin) */}
+          {isLoggedIn && user && (
             <li className="mobile-only">
               <Link
                 to="/curtidas"
