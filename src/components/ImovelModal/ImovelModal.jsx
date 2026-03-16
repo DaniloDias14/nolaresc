@@ -100,8 +100,20 @@ const ImovelModal = ({
 
     const imovelId = imovel.id ?? imovel.imovel_id;
 
-    fetch(`/api/imoveis/${imovelId}`)
-      .then((res) => res.json())
+    // UX: usa o que já veio no objeto do imóvel e tenta sincronizar com a API em seguida.
+    setCaracteristicas(imovel.caracteristicas || {});
+
+    // Admin: imóveis ocultos exigem JWT nessa rota; então enviamos token quando existir.
+    const token = localStorage.getItem("nolare_token");
+    const fetchOptions = token
+      ? { headers: { Authorization: `Bearer ${token}` } }
+      : {};
+
+    fetch(`/api/imoveis/${imovelId}`, fetchOptions)
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
       .then((data) => {
         setCaracteristicas(data.caracteristicas || {});
       })

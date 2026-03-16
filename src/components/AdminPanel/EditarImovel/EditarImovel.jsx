@@ -151,7 +151,13 @@ const EditarImovel = ({
 
     const carregarImovel = async () => {
       try {
-        const res = await axios.get(`/api/imoveis/${imovelId}`);
+        // Admin: quando o imóvel está oculto, a rota /api/imoveis/:id exige JWT (403 sem token).
+        const token = localStorage.getItem("nolare_token");
+        const authHeader = token ? { Authorization: `Bearer ${token}` } : {};
+
+        const res = await axios.get(`/api/imoveis/${imovelId}`, {
+          headers: authHeader,
+        });
         const imovel = res.data;
         const caracteristicas = imovel.caracteristicas || {};
 

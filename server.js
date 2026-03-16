@@ -2711,6 +2711,11 @@ app.put(
       return res.status(400).json({ error: "imovel_id é obrigatório" });
     }
 
+    // VALIDAÇÃO: imovel_id deve ser numérico para evitar erro 500 por cast inválido
+    if (!validarIdNumerico(imovel_id)) {
+      return res.status(400).json({ error: "imovel_id inválido" });
+    }
+
     // VALIDAÇÃO: Verifica se imóvel existe
     try {
       const imovelExiste = await pool.query(
@@ -2766,22 +2771,10 @@ app.put(
       "lancamento",
     ];
 
+    // DB QUERY: Usa placeholders para todos os campos e manda NULL via parâmetros.
+    // Isso evita inconsistências de numeração/tipagem quando alguns campos ficam "NULL" no texto do SQL.
     const setClauses = campos
-      .map((campo, idx) => {
-        if (campo === "condominio" || campo === "iptu") {
-          const valor = req.body[campo];
-          if (
-            valor === undefined ||
-            valor === null ||
-            valor === 0 ||
-            valor === "0"
-          ) {
-            return `${campo} = NULL`;
-          }
-          return `${campo} = $${idx + 1}`;
-        }
-        return `${campo} = $${idx + 1}`;
-      })
+      .map((campo, idx) => `${campo} = $${idx + 1}`)
       .join(", ");
 
     const values = campos.map((c) => {
@@ -2826,7 +2819,19 @@ app.put(
        SET ${setClauses}
        WHERE imovel_id = $${campos.length + 1}`;
 
-      await pool.query(query, [...values, imovel_id]);
+      const updateResult = await pool.query(query, [...values, imovel_id]);
+
+      /* Compatibilidade: alguns imóveis antigos podem não ter linha em imoveis_caracteristicas.
+         Se não atualizou nenhuma linha, insere uma nova com os mesmos valores. */
+      if (updateResult.rowCount === 0) {
+        const insertCampos = ["imovel_id", ...campos];
+        const placeholders = insertCampos.map((_, idx) => `$${idx + 1}`).join(",");
+        await pool.query(
+          `INSERT INTO imoveis_caracteristicas (${insertCampos.join(",")})
+           VALUES (${placeholders})`,
+          [imovel_id, ...values],
+        );
+      }
 
       res
         .status(200)

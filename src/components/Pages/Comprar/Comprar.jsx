@@ -745,6 +745,7 @@ const Comprar = ({ usuario }) => {
 
   const handleMudarPagina = (novaPagina) => {
     setPaginaAtual(novaPagina);
+    // UX: ao mudar de pagina via paginacao, rola suavemente para o topo (mesmo comportamento do clique na logo do Header).
     window.scrollTo({ top: 0, behavior: "smooth" });
     if (buscaAvancadaAtiva) {
       setBuscaAvancadaAtiva(false);
@@ -984,6 +985,7 @@ const Comprar = ({ usuario }) => {
             <div className="pagination">
               <div className="pagination-controls">
                 <button
+                  type="button"
                   className="pagination-btn"
                   onClick={() =>
                     handleMudarPagina(Math.max(1, paginaAtual - 1))
@@ -998,6 +1000,7 @@ const Comprar = ({ usuario }) => {
                 </div>
 
                 <button
+                  type="button"
                   className="pagination-btn"
                   onClick={() =>
                     handleMudarPagina(Math.min(totalPaginas, paginaAtual + 1))
@@ -1011,6 +1014,7 @@ const Comprar = ({ usuario }) => {
               <div className="pagination-numbers">
                 {gerarNumerosPaginas().map((numeroPagina) => (
                   <button
+                    type="button"
                     key={numeroPagina}
                     className={`page-number-btn ${
                       paginaAtual === numeroPagina ? "active" : ""

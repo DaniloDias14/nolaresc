@@ -152,9 +152,11 @@ const OcultarImovel = ({ usuario }) => {
   const handleCloseModal = () => {
     setImovelSelecionado(null);
 
-    // Volta no histórico para restaurar URL original
-    if (window.location.pathname.startsWith("/imovel/")) {
-      window.history.back();
+    /* O history.back() já é disparado pelo ImovelModal (overlay/X/voltar).
+       Aqui só garantimos que a URL volte para a rota correta caso o popstate já tenha rodado. */
+    const currentPath = window.location.pathname;
+    if (currentPath.startsWith("/imovel/")) {
+      window.history.replaceState(null, "", "/imoveis-ocultos");
     }
   };
 
@@ -311,6 +313,7 @@ const OcultarImovel = ({ usuario }) => {
           setCurtidas={setCurtidas}
           onDescurtir={removerImovel}
           onCurtir={adicionarImovel}
+          parentPushedHistory={true}
         />
       )}
     </div>
