@@ -265,6 +265,7 @@ const ImovelModal = ({
     startY: 0,
     directionLocked: false /* true quando a direção do gesto já foi determinada */,
     isHorizontal: false /* true se o gesto foi identificado como swipe horizontal */,
+    active: false /* true enquanto um gesto iniciado no gallery estiver em andamento */,
   });
 
   /* Registra touchmove com passive:false na galeria para permitir preventDefault no iOS Safari */
@@ -272,12 +273,28 @@ const ImovelModal = ({
     const el = galleryRef.current;
     if (!el) return;
     const handler = (e) => {
-      if (
-        gestureRef.current.directionLocked &&
-        gestureRef.current.isHorizontal
-      ) {
-        e.preventDefault();
+      const gesture = gestureRef.current;
+      if (!gesture || !gesture.active) return;
+
+      // iOS Safari (e alguns Androids antigos): swipe diagonal pode aplicar scroll + swipe ao mesmo tempo.
+      // Travamos a direção cedo e bloqueamos o scroll assim que identificamos gesto horizontal.
+      const touch = e.touches && e.touches[0];
+      if (!touch) return;
+
+      const diffX = touch.clientX - gesture.startX;
+      const diffY = touch.clientY - gesture.startY;
+      const absDiffX = Math.abs(diffX);
+      const absDiffY = Math.abs(diffY);
+
+      const LOCK_THRESHOLD = 4; // px
+
+      if (!gesture.directionLocked) {
+        if (absDiffX < LOCK_THRESHOLD && absDiffY < LOCK_THRESHOLD) return;
+        gesture.directionLocked = true;
+        gesture.isHorizontal = absDiffX >= absDiffY;
       }
+
+      if (gesture.isHorizontal) e.preventDefault();
     };
     el.addEventListener("touchmove", handler, { passive: false });
     return () => {
@@ -294,6 +311,7 @@ const ImovelModal = ({
       startY: touch.clientY,
       directionLocked: false,
       isHorizontal: false,
+      active: true,
     };
     /* Marca como arrastando para preparar o acompanhamento do gesto */
     setIsDragging(true);
@@ -308,12 +326,12 @@ const ImovelModal = ({
     const diffX = touch.clientX - gestureRef.current.startX;
     const diffY = touch.clientY - gestureRef.current.startY;
 
-    /* Se a direção ainda não foi determinada, usar threshold de 8px para decidir */
+    /* Se a direção ainda não foi determinada, usar threshold menor para travar cedo (evita swipe diagonal + scroll) */
     if (!gestureRef.current.directionLocked) {
       const absDiffX = Math.abs(diffX);
       const absDiffY = Math.abs(diffY);
-      /* Aguarda até que o gesto tenha movido pelo menos 8px para determinar a direção */
-      if (absDiffX < 8 && absDiffY < 8) return;
+      /* Aguarda até que o gesto tenha movido pelo menos 4px para determinar a direção */
+      if (absDiffX < 4 && absDiffY < 4) return;
       if (absDiffX >= absDiffY) {
         /* Gesto predominantemente horizontal: ativar swipe de imagem */
         gestureRef.current.directionLocked = true;
@@ -322,6 +340,7 @@ const ImovelModal = ({
         /* Gesto predominantemente vertical: liberar para scroll da página */
         gestureRef.current.directionLocked = true;
         gestureRef.current.isHorizontal = false;
+        gestureRef.current.active = false;
         setIsDragging(false);
         return;
       }
@@ -355,6 +374,7 @@ const ImovelModal = ({
   const handleEnd = () => {
     if (!isMobile || !isDragging || !galleryRef.current) return;
     setIsDragging(false);
+    gestureRef.current.active = false;
 
     /* Se o gesto não foi identificado como horizontal, não processar troca de imagem */
     if (!gestureRef.current.isHorizontal) return;

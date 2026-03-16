@@ -177,9 +177,27 @@ const Curtidas = ({ usuario }) => {
       if (!el) return;
       const handler = (e) => {
         const gesture = gestureRefs.current[id];
-        if (gesture && gesture.directionLocked && gesture.isHorizontal) {
-          e.preventDefault();
+        if (!gesture) return;
+
+        // iOS Safari (e alguns Androids antigos): swipe diagonal pode aplicar scroll + swipe ao mesmo tempo.
+        // Travamos a direção cedo e bloqueamos o scroll assim que identificamos gesto horizontal.
+        const touch = e.touches && e.touches[0];
+        if (!touch) return;
+
+        const diffX = touch.clientX - gesture.startX;
+        const diffY = touch.clientY - gesture.startY;
+        const absDiffX = Math.abs(diffX);
+        const absDiffY = Math.abs(diffY);
+
+        const LOCK_THRESHOLD = 4; // px
+
+        if (!gesture.directionLocked) {
+          if (absDiffX < LOCK_THRESHOLD && absDiffY < LOCK_THRESHOLD) return;
+          gesture.directionLocked = true;
+          gesture.isHorizontal = absDiffX >= absDiffY;
         }
+
+        if (gesture.isHorizontal) e.preventDefault();
       };
       handlers[id] = handler;
       el.addEventListener("touchmove", handler, { passive: false });
@@ -240,11 +258,11 @@ const Curtidas = ({ usuario }) => {
     const diffX = touch.clientX - gesture.startX;
     const diffY = touch.clientY - gesture.startY;
 
-    /* Se a direção ainda não foi determinada, usar threshold de 8px */
+    /* Se a direção ainda não foi determinada, usar threshold menor para travar cedo (evita swipe diagonal + scroll) */
     if (!gesture.directionLocked) {
       const absDiffX = Math.abs(diffX);
       const absDiffY = Math.abs(diffY);
-      if (absDiffX < 8 && absDiffY < 8) return;
+      if (absDiffX < 4 && absDiffY < 4) return;
       if (absDiffX >= absDiffY) {
         /* Gesto predominantemente horizontal: ativar swipe de imagem */
         gesture.directionLocked = true;

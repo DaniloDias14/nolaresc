@@ -28,6 +28,8 @@ const Destaque = ({ usuario, curtidas, setCurtidas, onImovelClick }) => {
   const [imageSwipeStates, setImageSwipeStates] = useState({});
   /* Ref para armazenar estado do gesto por imóvel, sem causar re-renders - correção swipe vs scroll */
   const gestureRefs = useRef({});
+  /* Ref para anexar touchmove não-passivo no carousel interno de imagens (necessário no iOS Safari) */
+  const innerCarouselRefs = useRef({});
 
   // Detect mobile device
   useEffect(() => {
@@ -38,6 +40,52 @@ const Destaque = ({ usuario, curtidas, setCurtidas, onImovelClick }) => {
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
+
+  /* Registra touchmove com passive:false nos carousels internos (imagens) para permitir preventDefault no iOS Safari */
+  useEffect(() => {
+    const refs = innerCarouselRefs.current;
+    const handlers = {};
+
+    Object.keys(refs).forEach((id) => {
+      const el = refs[id];
+      if (!el) return;
+      const handler = (e) => {
+        const gesture = gestureRefs.current[id];
+        if (!gesture) return;
+
+        // iOS Safari (e alguns Androids antigos): swipe diagonal pode aplicar scroll + swipe ao mesmo tempo.
+        // Travamos a direção cedo e bloqueamos o scroll assim que identificamos gesto horizontal.
+        const touch = e.touches && e.touches[0];
+        if (!touch) return;
+
+        const diffX = touch.clientX - gesture.startX;
+        const diffY = touch.clientY - gesture.startY;
+        const absDiffX = Math.abs(diffX);
+        const absDiffY = Math.abs(diffY);
+
+        const LOCK_THRESHOLD = 4; // px
+
+        if (!gesture.directionLocked) {
+          if (absDiffX < LOCK_THRESHOLD && absDiffY < LOCK_THRESHOLD) return;
+          gesture.directionLocked = true;
+          gesture.isHorizontal = absDiffX >= absDiffY;
+        }
+
+        if (gesture.isHorizontal) e.preventDefault();
+      };
+      handlers[id] = handler;
+      el.addEventListener("touchmove", handler, { passive: false });
+    });
+
+    return () => {
+      Object.keys(handlers).forEach((id) => {
+        const el = refs[id];
+        if (el && handlers[id]) {
+          el.removeEventListener("touchmove", handlers[id]);
+        }
+      });
+    };
+  });
 
   // Fetch featured properties
   useEffect(() => {
@@ -221,11 +269,11 @@ const Destaque = ({ usuario, curtidas, setCurtidas, onImovelClick }) => {
     const diffX = touch.clientX - gesture.startX;
     const diffY = touch.clientY - gesture.startY;
 
-    /* Se a direção ainda não foi determinada, usar threshold de 8px */
+    /* Se a direção ainda não foi determinada, usar threshold menor para travar cedo (evita swipe diagonal + scroll) */
     if (!gesture.directionLocked) {
       const absDiffX = Math.abs(diffX);
       const absDiffY = Math.abs(diffY);
-      if (absDiffX < 8 && absDiffY < 8) return;
+      if (absDiffX < 4 && absDiffY < 4) return;
       if (absDiffX >= absDiffY) {
         /* Gesto predominantemente horizontal: ativar swipe de imagem */
         gesture.directionLocked = true;
@@ -270,7 +318,7 @@ const Destaque = ({ usuario, curtidas, setCurtidas, onImovelClick }) => {
       [id]: {
         ...prev[id],
         currentTranslate: newTranslate,
-        swiping: Math.abs(diffX) > 8,
+        swiping: Math.abs(diffX) > 4,
       },
     }));
   };
@@ -370,6 +418,10 @@ const Destaque = ({ usuario, curtidas, setCurtidas, onImovelClick }) => {
                 {imovel.fotos?.length > 0 ? (
                   <div
                     className="destaque-carousel-inner"
+                    ref={(el) => {
+                      const key = imovel.id ?? imovel.imovel_id;
+                      if (el) innerCarouselRefs.current[key] = el;
+                    }}
                     /* Handlers de swipe que bloqueiam propagação para o carousel da seção - tarefa 1 */
                     onTouchStart={(e) =>
                       handleImageTouchStart(
