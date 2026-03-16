@@ -1712,6 +1712,303 @@ app.get(
   },
 );
 
+// ROTA: Resumo completo do Dashboard (PROTEGIDA — apenas admins)
+// Importante: Não altera o banco. Apenas agrega métricas já existentes para a UI do dashboard.
+app.get(
+  "/api/dashboard/resumo",
+  verificarTokenJWT,
+  verificarAdmin,
+  async (req, res) => {
+    try {
+      // DB QUERY: Executa agregações em paralelo para reduzir latência no carregamento do dashboard.
+      const [
+        usuariosTotalResult,
+        usuariosTiposResult,
+        usuariosUltimoResult,
+        usuariosNovos7dResult,
+        usuariosNovos30dResult,
+        usuariosOptinResult,
+        usuarios14dResult,
+
+        sessoesAtivasResult,
+        sessoes14dResult,
+
+        imoveisVisiveisResult,
+        imoveisOcultosResult,
+        imoveisMediaPrecoResult,
+        imoveisUltimoResult,
+        imoveisDestaqueResult,
+        imoveis14dResult,
+        imoveisStatusResult,
+        imoveisFinalidadeResult,
+        imoveisTipoResult,
+        imoveisCidadeResult,
+        imoveisSemFotosResult,
+        imoveisSemCaracteristicasResult,
+        imoveisSemCoordenadasResult,
+
+        curtidasTotalResult,
+        curtidas14dResult,
+        curtidasTop5Result,
+
+        verificacaoPendenteAtivaResult,
+        verificacaoPendenteExpiradaResult,
+        tentativasBloqueadasResult,
+        emailsComerciaisTotalResult,
+        emailsComerciais30dResult,
+      ] = await Promise.all([
+        // ===== Usuarios =====
+        pool.query("SELECT COUNT(*) as total FROM usuarios"),
+        pool.query(
+          "SELECT tipo_usuario, COUNT(*) as count FROM usuarios GROUP BY tipo_usuario",
+        ),
+        pool.query(
+          "SELECT data_criacao FROM usuarios ORDER BY data_criacao DESC LIMIT 1",
+        ),
+        pool.query(
+          "SELECT COUNT(*) as total FROM usuarios WHERE data_criacao >= NOW() - INTERVAL '7 days'",
+        ),
+        pool.query(
+          "SELECT COUNT(*) as total FROM usuarios WHERE data_criacao >= NOW() - INTERVAL '30 days'",
+        ),
+        pool.query(
+          "SELECT COUNT(*) as total FROM usuarios WHERE aceita_emails_comerciais = TRUE",
+        ),
+        pool.query(
+          `SELECT DATE(data_criacao) as dia, COUNT(*) as count
+           FROM usuarios
+           WHERE data_criacao >= (CURRENT_DATE - INTERVAL '13 days')
+           GROUP BY dia
+           ORDER BY dia ASC`,
+        ),
+
+        // ===== Sessoes =====
+        pool.query(
+          "SELECT COUNT(DISTINCT usuario_id) as count FROM usuario_sessoes WHERE ativo = TRUE",
+        ),
+        pool.query(
+          `SELECT DATE(data_login) as dia, COUNT(DISTINCT usuario_id) as count
+           FROM usuario_sessoes
+           WHERE data_login >= (CURRENT_DATE - INTERVAL '13 days')
+           GROUP BY dia
+           ORDER BY dia ASC`,
+        ),
+
+        // ===== Imoveis =====
+        pool.query("SELECT COUNT(*) as total FROM imoveis WHERE visivel = TRUE"),
+        pool.query(
+          "SELECT COUNT(*) as total FROM imoveis WHERE visivel = FALSE",
+        ),
+        pool.query("SELECT AVG(preco) as media FROM imoveis WHERE visivel = TRUE"),
+        pool.query(
+          "SELECT data_criacao FROM imoveis ORDER BY data_criacao DESC LIMIT 1",
+        ),
+        pool.query(
+          "SELECT COUNT(*) as count FROM imoveis WHERE destaque = TRUE AND visivel = TRUE",
+        ),
+        pool.query(
+          `SELECT DATE(data_criacao) as dia, COUNT(*) as count
+           FROM imoveis
+           WHERE data_criacao >= (CURRENT_DATE - INTERVAL '13 days')
+           GROUP BY dia
+           ORDER BY dia ASC`,
+        ),
+        pool.query(
+          "SELECT status, COUNT(*) as count FROM imoveis WHERE visivel = TRUE GROUP BY status",
+        ),
+        pool.query(
+          "SELECT finalidade, COUNT(*) as count FROM imoveis WHERE visivel = TRUE GROUP BY finalidade",
+        ),
+        pool.query(
+          "SELECT tipo, COUNT(*) as count FROM imoveis WHERE visivel = TRUE GROUP BY tipo",
+        ),
+        pool.query(
+          `SELECT cidade, COUNT(*) as count
+           FROM imoveis
+           WHERE visivel = TRUE AND cidade IS NOT NULL AND cidade <> ''
+           GROUP BY cidade
+           ORDER BY count DESC
+           LIMIT 10`,
+        ),
+        pool.query(
+          `SELECT COUNT(*) as total
+           FROM imoveis i
+           WHERE i.visivel = TRUE
+             AND NOT EXISTS (SELECT 1 FROM fotos_imoveis f WHERE f.imovel_id = i.id)`,
+        ),
+        pool.query(
+          `SELECT COUNT(*) as total
+           FROM imoveis i
+           LEFT JOIN imoveis_caracteristicas ic ON ic.imovel_id = i.id
+           WHERE i.visivel = TRUE AND ic.id IS NULL`,
+        ),
+        pool.query(
+          `SELECT COUNT(*) as total
+           FROM imoveis i
+           WHERE i.visivel = TRUE AND (i.coordenadas IS NULL OR i.coordenadas = '')`,
+        ),
+
+        // ===== Curtidas =====
+        pool.query("SELECT COUNT(*) as total FROM curtidas"),
+        pool.query(
+          `SELECT DATE(data_curtida) as dia, COUNT(*) as count
+           FROM curtidas
+           WHERE data_curtida >= (CURRENT_DATE - INTERVAL '13 days')
+           GROUP BY dia
+           ORDER BY dia ASC`,
+        ),
+        pool.query(
+          `SELECT c.imovel_id, i.titulo, i.visivel, COUNT(c.id) as total_curtidas
+           FROM curtidas c
+           JOIN imoveis i ON i.id = c.imovel_id
+           GROUP BY c.imovel_id, i.titulo, i.visivel
+           ORDER BY total_curtidas DESC
+           LIMIT 5`,
+        ),
+
+        // ===== Verificacoes/E-mails =====
+        pool.query(
+          `SELECT COUNT(*) as total
+           FROM email_verificacao_pendente
+           WHERE verificado = FALSE AND expiracao >= NOW()`,
+        ),
+        pool.query(
+          `SELECT COUNT(*) as total
+           FROM email_verificacao_pendente
+           WHERE verificado = FALSE AND expiracao < NOW()`,
+        ),
+        pool.query(
+          `SELECT COUNT(*) as total
+           FROM tentativas_verificacao_email
+           WHERE bloqueado_ate IS NOT NULL AND bloqueado_ate > NOW()`,
+        ),
+        pool.query("SELECT COUNT(*) as total FROM email_comercial"),
+        pool.query(
+          "SELECT COUNT(*) as total FROM email_comercial WHERE enviado_em >= NOW() - INTERVAL '30 days'",
+        ),
+      ]);
+
+      const usuariosTipos = {};
+      usuariosTiposResult.rows.forEach((row) => {
+        usuariosTipos[row.tipo_usuario] = Number.parseInt(row.count, 10);
+      });
+
+      const imoveisStatus = {};
+      imoveisStatusResult.rows.forEach((row) => {
+        if (row.status) imoveisStatus[row.status] = Number.parseInt(row.count, 10);
+      });
+
+      const imoveisFinalidade = {};
+      imoveisFinalidadeResult.rows.forEach((row) => {
+        if (row.finalidade)
+          imoveisFinalidade[row.finalidade] = Number.parseInt(row.count, 10);
+      });
+
+      const imoveisTipo = {};
+      imoveisTipoResult.rows.forEach((row) => {
+        if (row.tipo) imoveisTipo[row.tipo] = Number.parseInt(row.count, 10);
+      });
+
+      // OBS: Timeseries vem como array de { dia: 'YYYY-MM-DD', count: 'N' } e a UI preenche lacunas com zero.
+      res.json({
+        usuarios: {
+          total: Number.parseInt(usuariosTotalResult.rows[0].total, 10),
+          tipos: usuariosTipos,
+          ultimo_cadastro: usuariosUltimoResult.rows[0]?.data_criacao || null,
+          novos_7d: Number.parseInt(usuariosNovos7dResult.rows[0].total, 10),
+          novos_30d: Number.parseInt(usuariosNovos30dResult.rows[0].total, 10),
+          optin_emails: {
+            total: Number.parseInt(usuariosOptinResult.rows[0].total, 10),
+          },
+          ultimos_14_dias: usuarios14dResult.rows.map((r) => ({
+            dia: r.dia,
+            count: Number.parseInt(r.count, 10),
+          })),
+        },
+        sessoes: {
+          ativos_agora: Number.parseInt(sessoesAtivasResult.rows[0].count, 10),
+          ultimos_14_dias: sessoes14dResult.rows.map((r) => ({
+            dia: r.dia,
+            count: Number.parseInt(r.count, 10),
+          })),
+        },
+        imoveis: {
+          visiveis: Number.parseInt(imoveisVisiveisResult.rows[0].total, 10),
+          ocultos: Number.parseInt(imoveisOcultosResult.rows[0].total, 10),
+          media_preco_visiveis:
+            Number.parseFloat(imoveisMediaPrecoResult.rows[0].media) || 0,
+          ultimo_cadastro: imoveisUltimoResult.rows[0]?.data_criacao || null,
+          destaque: Number.parseInt(imoveisDestaqueResult.rows[0].count, 10),
+          ultimos_14_dias: imoveis14dResult.rows.map((r) => ({
+            dia: r.dia,
+            count: Number.parseInt(r.count, 10),
+          })),
+          status: imoveisStatus,
+          finalidade: imoveisFinalidade,
+          tipo: imoveisTipo,
+          top_cidades: imoveisCidadeResult.rows.map((r) => ({
+            cidade: r.cidade,
+            count: Number.parseInt(r.count, 10),
+          })),
+          qualidade: {
+            sem_fotos: Number.parseInt(imoveisSemFotosResult.rows[0].total, 10),
+            sem_caracteristicas: Number.parseInt(
+              imoveisSemCaracteristicasResult.rows[0].total,
+              10,
+            ),
+            sem_coordenadas: Number.parseInt(
+              imoveisSemCoordenadasResult.rows[0].total,
+              10,
+            ),
+          },
+        },
+        curtidas: {
+          total: Number.parseInt(curtidasTotalResult.rows[0].total, 10),
+          ultimos_14_dias: curtidas14dResult.rows.map((r) => ({
+            dia: r.dia,
+            count: Number.parseInt(r.count, 10),
+          })),
+          top_5_imoveis: curtidasTop5Result.rows.map((r) => ({
+            imovel_id: r.imovel_id,
+            titulo: r.titulo,
+            visivel: r.visivel === true,
+            total_curtidas: Number.parseInt(r.total_curtidas, 10),
+          })),
+        },
+        verificacoes: {
+          pendentes_ativas: Number.parseInt(
+            verificacaoPendenteAtivaResult.rows[0].total,
+            10,
+          ),
+          pendentes_expiradas: Number.parseInt(
+            verificacaoPendenteExpiradaResult.rows[0].total,
+            10,
+          ),
+          tentativas_bloqueadas: Number.parseInt(
+            tentativasBloqueadasResult.rows[0].total,
+            10,
+          ),
+        },
+        emails: {
+          comerciais_total: Number.parseInt(
+            emailsComerciaisTotalResult.rows[0].total,
+            10,
+          ),
+          comerciais_30d: Number.parseInt(
+            emailsComerciais30dResult.rows[0].total,
+            10,
+          ),
+        },
+      });
+    } catch (err) {
+      const codigoErro = logErroSeguro("Erro ao buscar resumo do dashboard", err);
+      res
+        .status(500)
+        .json({ error: "Erro ao buscar resumo do dashboard", codigo: codigoErro });
+    }
+  },
+);
+
 // =========================
 // ROTAS DE CURTIDAS
 // =========================
