@@ -41,7 +41,13 @@ const Destaque = ({ usuario, curtidas, setCurtidas, onImovelClick }) => {
     scrollLeft: 0,
     directionLocked: false,
     isHorizontal: false,
+    // Para "arremesso" (inercia) no swipe dos cards: calcula velocidade do scroll durante o drag.
+    lastScrollLeft: 0,
+    lastSampleTime: 0,
+    velocityPxPerMs: 0,
   });
+  /* Controla animacao de inercia do carrossel de cards (sem depender do momentum nativo) */
+  const destaqueInertiaRafRef = useRef(null);
 
   // Detect mobile device
   useEffect(() => {
@@ -256,6 +262,12 @@ const Destaque = ({ usuario, curtidas, setCurtidas, onImovelClick }) => {
     const touch = e.touches && e.touches[0];
     if (!touch || !carouselRef.current) return;
 
+    // Se houver inercia em execucao, interrompe para o usuario retomar o controle.
+    if (destaqueInertiaRafRef.current) {
+      cancelAnimationFrame(destaqueInertiaRafRef.current);
+      destaqueInertiaRafRef.current = null;
+    }
+
     const startXLocal = touch.pageX - carouselRef.current.offsetLeft;
     const currentScrollLeft = carouselRef.current.scrollLeft;
 
@@ -270,6 +282,10 @@ const Destaque = ({ usuario, curtidas, setCurtidas, onImovelClick }) => {
     destaqueCarouselGestureRef.current.scrollLeft = currentScrollLeft;
     destaqueCarouselGestureRef.current.directionLocked = false;
     destaqueCarouselGestureRef.current.isHorizontal = false;
+    destaqueCarouselGestureRef.current.lastScrollLeft = currentScrollLeft;
+    destaqueCarouselGestureRef.current.lastSampleTime =
+      typeof performance !== "undefined" ? performance.now() : Date.now();
+    destaqueCarouselGestureRef.current.velocityPxPerMs = 0;
   };
 
   const handleTouchMove = (e) => {
@@ -304,10 +320,73 @@ const Destaque = ({ usuario, curtidas, setCurtidas, onImovelClick }) => {
 
     const xLocal = touch.pageX - carouselRef.current.offsetLeft;
     const walk = xLocal - gesture.startXLocal;
-    carouselRef.current.scrollLeft = gesture.scrollLeft - walk;
+    const nextScrollLeft = gesture.scrollLeft - walk;
+    carouselRef.current.scrollLeft = nextScrollLeft;
+
+    // Amostra velocidade de scroll para aplicar inercia ao soltar o dedo (efeito "arremesso").
+    // Usamos a variacao do scrollLeft (e nao do dedo) para manter o sentido correto.
+    const now =
+      typeof performance !== "undefined" ? performance.now() : Date.now();
+    const dt = now - gesture.lastSampleTime;
+    if (dt > 0) {
+      const deltaScroll = nextScrollLeft - gesture.lastScrollLeft;
+      const instantV = deltaScroll / dt; // px/ms
+      // Suaviza a leitura para evitar "pulos" (filtro passa-baixa simples)
+      gesture.velocityPxPerMs = gesture.velocityPxPerMs * 0.75 + instantV * 0.25;
+      gesture.lastSampleTime = now;
+      gesture.lastScrollLeft = nextScrollLeft;
+    }
   };
 
   const handleTouchEnd = () => {
+    const gesture = destaqueCarouselGestureRef.current;
+
+    // Aplica inercia apenas se o gesto foi horizontal (cards) e a velocidade for significativa.
+    if (isMobile && gesture.isHorizontal && carouselRef.current) {
+      const el = carouselRef.current;
+      const v0 = gesture.velocityPxPerMs; // px/ms
+      const MIN_VELOCITY = 0.25; // ~250px/s; abaixo disso, para imediatamente
+
+      if (Math.abs(v0) >= MIN_VELOCITY) {
+        let v = v0;
+        let lastT =
+          typeof performance !== "undefined" ? performance.now() : Date.now();
+
+        const step = () => {
+          // Se um novo toque comecar, o RAF pode ser cancelado no touchstart.
+          if (!el) return;
+
+          const now =
+            typeof performance !== "undefined" ? performance.now() : Date.now();
+          const dt = now - lastT;
+          lastT = now;
+
+          // Move o scroll de acordo com a velocidade atual.
+          el.scrollLeft += v * dt;
+
+          // Desaceleracao (friccao). Ajuste para ficar natural no iOS.
+          // Multiplicador por frame dependente de dt para manter consistente.
+          const friction = Math.pow(0.92, dt / 16);
+          v *= friction;
+
+          // Para quando estiver lento o suficiente ou atingir limites.
+          const atStart = el.scrollLeft <= 0;
+          const atEnd =
+            el.scrollLeft >= el.scrollWidth - el.clientWidth - 1;
+          const STOP_VELOCITY = 0.02; // ~20px/s
+
+          if (Math.abs(v) < STOP_VELOCITY || atStart || atEnd) {
+            destaqueInertiaRafRef.current = null;
+            return;
+          }
+
+          destaqueInertiaRafRef.current = requestAnimationFrame(step);
+        };
+
+        destaqueInertiaRafRef.current = requestAnimationFrame(step);
+      }
+    }
+
     destaqueCarouselGestureRef.current.active = false;
     destaqueCarouselGestureRef.current.directionLocked = false;
     destaqueCarouselGestureRef.current.isHorizontal = false;
