@@ -257,15 +257,20 @@ const Header = ({
           )}
         </ul>
 
-        {/* Desktop: removido nome do usuário, exibido apenas ícone de sair - correção solicitada */}
+        {/* Desktop: exibe nome do usuario ao lado esquerdo do botao de sair, sem deslocar o layout (nome em posicao absoluta) */}
         {isLoggedIn && user ? (
-          <button
-            className="logout-icon-button"
-            onClick={handleLogout}
-            title="Sair"
-          >
-            <LuLogOut size={24} />
-          </button>
+          <div className="logout-desktop-wrapper">
+            <span className="logout-desktop-user-name">
+              {getMenuUserName(user?.nome)}
+            </span>
+            <button
+              className="logout-icon-button"
+              onClick={handleLogout}
+              title="Sair"
+            >
+              <LuLogOut size={24} />
+            </button>
+          </div>
         ) : (
           <button className="perfil-icon" onClick={() => setModalOpen(true)}>
             <span className="connect-text">Conectar-se</span>

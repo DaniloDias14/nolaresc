@@ -30,6 +30,18 @@ const Destaque = ({ usuario, curtidas, setCurtidas, onImovelClick }) => {
   const gestureRefs = useRef({});
   /* Ref para anexar touchmove não-passivo no carousel interno de imagens (necessário no iOS Safari) */
   const innerCarouselRefs = useRef({});
+  /* Ref para o gesto do carousel de cards (Destaque) sem re-render.
+     iOS Safari e alguns Androids antigos podem aplicar swipe + scroll em gesto diagonal.
+     Travamos a direcao cedo e bloqueamos o scroll quando o gesto for horizontal. */
+  const destaqueCarouselGestureRef = useRef({
+    active: false,
+    startX: 0,
+    startY: 0,
+    startXLocal: 0,
+    scrollLeft: 0,
+    directionLocked: false,
+    isHorizontal: false,
+  });
 
   // Detect mobile device
   useEffect(() => {
@@ -40,6 +52,41 @@ const Destaque = ({ usuario, curtidas, setCurtidas, onImovelClick }) => {
     window.addEventListener("resize", checkMobile);
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
+
+  /* Registra touchmove com passive:false no carousel de cards (Destaque) para permitir preventDefault no iOS Safari */
+  useEffect(() => {
+    const el = carouselRef.current;
+    if (!isMobile || !el) return;
+
+    const handler = (e) => {
+      // Se o toque veio do carousel interno (imagens), nao interferimos.
+      if (e.target?.closest?.(".destaque-carousel-inner")) return;
+
+      const gesture = destaqueCarouselGestureRef.current;
+      if (!gesture.active) return;
+
+      const touch = e.touches && e.touches[0];
+      if (!touch) return;
+
+      const diffX = touch.clientX - gesture.startX;
+      const diffY = touch.clientY - gesture.startY;
+      const absDiffX = Math.abs(diffX);
+      const absDiffY = Math.abs(diffY);
+
+      const LOCK_THRESHOLD = 4; // px
+
+      if (!gesture.directionLocked) {
+        if (absDiffX < LOCK_THRESHOLD && absDiffY < LOCK_THRESHOLD) return;
+        gesture.directionLocked = true;
+        gesture.isHorizontal = absDiffX >= absDiffY;
+      }
+
+      if (gesture.isHorizontal) e.preventDefault();
+    };
+
+    el.addEventListener("touchmove", handler, { passive: false });
+    return () => el.removeEventListener("touchmove", handler);
+  }, [isMobile]);
 
   /* Registra touchmove com passive:false nos carousels internos (imagens) para permitir preventDefault no iOS Safari */
   useEffect(() => {
@@ -206,18 +253,64 @@ const Destaque = ({ usuario, curtidas, setCurtidas, onImovelClick }) => {
   const handleTouchStart = (e) => {
     if (!isMobile) return;
     setIsDragging(true);
-    setStartX(e.touches[0].pageX - carouselRef.current.offsetLeft);
-    setScrollLeft(carouselRef.current.scrollLeft);
+    const touch = e.touches && e.touches[0];
+    if (!touch || !carouselRef.current) return;
+
+    const startXLocal = touch.pageX - carouselRef.current.offsetLeft;
+    const currentScrollLeft = carouselRef.current.scrollLeft;
+
+    setStartX(startXLocal);
+    setScrollLeft(currentScrollLeft);
+
+    // Inicializa o estado do gesto do carousel de cards.
+    destaqueCarouselGestureRef.current.active = true;
+    destaqueCarouselGestureRef.current.startX = touch.clientX;
+    destaqueCarouselGestureRef.current.startY = touch.clientY;
+    destaqueCarouselGestureRef.current.startXLocal = startXLocal;
+    destaqueCarouselGestureRef.current.scrollLeft = currentScrollLeft;
+    destaqueCarouselGestureRef.current.directionLocked = false;
+    destaqueCarouselGestureRef.current.isHorizontal = false;
   };
 
   const handleTouchMove = (e) => {
     if (!isDragging || !isMobile) return;
-    const x = e.touches[0].pageX - carouselRef.current.offsetLeft;
-    const walk = x - startX;
-    carouselRef.current.scrollLeft = scrollLeft - walk;
+    const touch = e.touches && e.touches[0];
+    if (!touch || !carouselRef.current) return;
+
+    const gesture = destaqueCarouselGestureRef.current;
+    if (!gesture.active) return;
+
+    const diffX = touch.clientX - gesture.startX;
+    const diffY = touch.clientY - gesture.startY;
+    const absDiffX = Math.abs(diffX);
+    const absDiffY = Math.abs(diffY);
+
+    const LOCK_THRESHOLD = 4; // px
+
+    if (!gesture.directionLocked) {
+      if (absDiffX < LOCK_THRESHOLD && absDiffY < LOCK_THRESHOLD) return;
+      gesture.directionLocked = true;
+      gesture.isHorizontal = absDiffX >= absDiffY;
+
+      // Se o gesto for vertical, cancela o drag do carousel e deixa o scroll da pagina agir.
+      if (!gesture.isHorizontal) {
+        gesture.active = false;
+        setIsDragging(false);
+        return;
+      }
+    }
+
+    if (!gesture.isHorizontal) return;
+
+    const xLocal = touch.pageX - carouselRef.current.offsetLeft;
+    const walk = xLocal - gesture.startXLocal;
+    carouselRef.current.scrollLeft = gesture.scrollLeft - walk;
   };
 
   const handleTouchEnd = () => {
+    destaqueCarouselGestureRef.current.active = false;
+    destaqueCarouselGestureRef.current.directionLocked = false;
+    destaqueCarouselGestureRef.current.isHorizontal = false;
     setIsDragging(false);
   };
 

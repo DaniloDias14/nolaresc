@@ -375,7 +375,7 @@
   .menu {
     position: fixed;
     top: 0;
-    right: -100%;
+    right: 0;
     width: 280px;
     height: 100vh;
     background: var(--background-cream);
@@ -384,16 +384,22 @@
     padding: 0;
     gap: 0;
     box-shadow: -4px 0 20px rgba(25, 25, 112, 0.2);
-    transition: right 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    /* iOS: animar 'transform' e mais suave que animar 'right' (layout) */
+    transform: translate3d(100%, 0, 0);
+    transition: transform 0.38s cubic-bezier(0.25, 0.8, 0.25, 1);
+    will-change: transform;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
     border-left: 1px solid rgba(25, 25, 112, 0.1);
     left: auto;
     /* Aumentar z-index do menu para que fique sobre o menu-toggle quando expandido */
     z-index: 1000;
+    backface-visibility: hidden;
+    -webkit-font-smoothing: antialiased;
   }
 
   .menu.menu-open {
-    right: 0;
+    transform: translate3d(0, 0, 0);
   }
 
   /* Header do menu com botão de conectar à esquerda e hamburger à direita - correção solicitada */
@@ -499,6 +505,11 @@
     display: none !important;
   }
 
+  /* Esconder o wrapper do logout desktop no mobile (evita o nome aparecer sem o icone) */
+  .logout-desktop-wrapper {
+    display: none !important;
+  }
+
   /* Remover efeito azul de seleção em todos os elementos interativos no mobile - correção solicitada */
   .logo,
   .menu-toggle,
@@ -516,6 +527,29 @@
 }
 
 /* Botão de sair (apenas ícone) no desktop - correção solicitada */
+.logout-desktop-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logout-desktop-user-name {
+  position: absolute;
+  right: 100%;
+  margin-right: 0.6rem;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: "Sanchez", serif;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--primary-blue);
+  user-select: none;
+  pointer-events: none; /* nao atrapalhar cliques no header */
+}
+
 .logout-icon-button {
   background: none;
   border: none;

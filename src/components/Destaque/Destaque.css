@@ -27,6 +27,8 @@
   padding: 0.8rem 1.5rem 1.8rem 1.5rem;
   scrollbar-width: none;
   -ms-overflow-style: none;
+  /* Mobile: permite scroll vertical da pagina, e o swipe horizontal fica por conta do carousel */
+  touch-action: pan-y pinch-zoom;
 }
 
 @media (max-width: 768px) {
