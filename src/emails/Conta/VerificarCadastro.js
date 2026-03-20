@@ -7,9 +7,6 @@ export default function VerificarCadastro({ nome, codigo }) {
   const anoAtual = new Date().getFullYear();
   const nomeSeguro = nome || "tudo bem?";
 
-  // Preheader (snippet): muitos clientes exibem este texto ao lado do assunto.
-  const preheader = `Codigo de verificacao: ${codigo} (valido por 10 minutos).`;
-
   return `<!doctype html>
 <html lang="pt-BR">
   <head>
@@ -19,11 +16,6 @@ export default function VerificarCadastro({ nome, codigo }) {
     <title>Verificacao de cadastro</title>
   </head>
   <body style="margin:0;padding:0;background-color:#f0efe2;">
-    <!-- Preheader oculto (aparece como snippet em varios clientes) -->
-    <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px;line-height:1px;color:#f0efe2;opacity:0;">
-      ${preheader}
-    </div>
-
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#f0efe2;">
       <tr>
         <td align="center" style="padding:24px 16px;">
@@ -103,4 +95,3 @@ export default function VerificarCadastro({ nome, codigo }) {
   </body>
 </html>`;
 }
-
