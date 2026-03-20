@@ -1153,16 +1153,6 @@ app.post("/api/email/verificacao/confirmar-cadastro", async (req, res) => {
     );
 
     // Envia email de boas-vindas (categoria Conta — sempre enviado)
-    enviarEmail(
-      "verificarCadastro",
-      emailLimpo,
-      "Cadastro Confirmado - Nolare",
-      {
-        nome: registro.nome,
-        codigo: "",
-      },
-    ).catch((err) => logErroSeguro("Erro ao enviar email de boas-vindas", err));
-
     res.json({ success: true, message: "Cadastro confirmado com sucesso!" });
   } catch (err) {
     const codigoErro = logErroSeguro("Erro ao confirmar cadastro", err);
@@ -2769,7 +2759,7 @@ app.put(
           enviarEmail(
             "promocaoCurtidas",
             curtida.email,
-            `Oferta Especial: ${imovelAtualizado.titulo} - Nolare`,
+            `Atualização de valor: ${imovelAtualizado.titulo} - Nolare`,
             {
               nome: curtida.nome,
               imovel: imovelAtualizado,
@@ -2783,7 +2773,7 @@ app.put(
             })
             .catch((err) => {
               logErroSeguro(
-                `Erro ao enviar e-mail de promoção para ${curtida.email}`,
+                `Erro ao enviar e-mail de atualização de valor para ${curtida.email}`,
                 err,
               );
             });

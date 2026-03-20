@@ -28,23 +28,24 @@ export default function PromocaoCurtidas({ nome, imovel }) {
         style: "currency",
         currency: "BRL",
       })
-    : "Não informado";
+    : "N\u00e3o informado";
 
   const precoPromocional = imovel?.preco_destaque
     ? Number.parseFloat(imovel.preco_destaque).toLocaleString("pt-BR", {
         style: "currency",
         currency: "BRL",
       })
-    : "Não informado";
+    : "N\u00e3o informado";
 
-  const urlImovel = `${
-    process.env.FRONTEND_URL || "http://localhost:3000"
-  }/imovel/${imovel?.id}`;
+  // Canonico: os e-mails devem sempre apontar para o dominio publico.
+  const baseUrl = "https://nolaresc.com.br";
+  const urlImovel = `${baseUrl}/imovel/${imovel?.id}`;
 
   const nomeEsc = escapeHtml(nome || "");
-  const tituloEsc = escapeHtml(imovel?.titulo || "Imóvel em destaque");
+  const tituloEsc = escapeHtml(imovel?.titulo || "Im\u00f3vel em destaque");
   const descricaoEsc = escapeHtml(
-    imovel?.descricao || "Um imóvel que você curtiu recebeu uma atualização.",
+    imovel?.descricao ||
+      "Um im\u00f3vel que voc\u00ea curtiu recebeu uma atualiza\u00e7\u00e3o.",
   );
 
   return `<!doctype html>
@@ -53,7 +54,7 @@ export default function PromocaoCurtidas({ nome, imovel }) {
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="x-ua-compatible" content="ie=edge" />
-    <title>Pre&ccedil;o promocional</title>
+    <title>Atualiza&ccedil;&atilde;o de valor</title>
   </head>
   <body style="margin:0;padding:0;background-color:#f0efe2;">
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#f0efe2;">
@@ -71,7 +72,7 @@ export default function PromocaoCurtidas({ nome, imovel }) {
               <td style="padding:22px 22px 10px 22px;">
                 <div style="font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.6;color:#1a1a1a;">
                   <strong>Ol&aacute;${nomeEsc ? `, ${nomeEsc}.` : "!"}</strong><br />
-                  O im&oacute;vel que voc&ecirc; curtiu recebeu um pre&ccedil;o promocional. Veja os detalhes abaixo.
+                  O im&oacute;vel que voc&ecirc; curtiu teve o valor atualizado. Veja os detalhes abaixo.
                 </div>
               </td>
             </tr>
@@ -93,7 +94,7 @@ export default function PromocaoCurtidas({ nome, imovel }) {
                         <tr>
                           <td style="padding:12px 12px;">
                             <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#666666;">
-                              Pre&ccedil;o original
+                              Valor anterior
                             </div>
                             <div style="font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.4;color:#777777;text-decoration:line-through;margin-top:4px;">
                               ${precoOriginal}
@@ -103,7 +104,7 @@ export default function PromocaoCurtidas({ nome, imovel }) {
                         <tr>
                           <td style="padding:0 12px 12px 12px;">
                             <div style="font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#666666;">
-                              Pre&ccedil;o promocional
+                              Valor atualizado
                             </div>
                             <div style="font-family:Arial,Helvetica,sans-serif;font-size:22px;line-height:1.3;color:#191970;font-weight:900;margin-top:4px;">
                               ${precoPromocional}

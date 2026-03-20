@@ -64,6 +64,22 @@ export default function VerificarCadastro({ nome, codigo }) {
               </td>
             </tr>
 
+            <!-- Aviso de seguranca (mensagem vermelha) -->
+            <tr>
+              <td style="padding:0 22px 18px 22px;">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="width:100%;background-color:#fff3f3;border:1px solid rgba(220,53,69,0.25);border-radius:12px;">
+                  <tr>
+                    <td style="padding:14px 14px;">
+                      <div style="font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.6;color:#7a1c27;">
+                        <strong>Seguran&ccedil;a:</strong> se voc&ecirc; n&atilde;o solicitou este cadastro ou n&atilde;o reconhece esta atividade, entre em contato com o nosso
+                        <a href="https://www.youtube.com/" style="color:#191970;text-decoration:underline;font-weight:700;">suporte</a>.
+                      </div>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
             <!-- Codigo em destaque (parte de baixo) -->
             <tr>
               <td align="center" style="padding:0 22px 18px 22px;">

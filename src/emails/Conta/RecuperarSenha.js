@@ -63,6 +63,9 @@ export default function RecuperarSenha({ nome, codigo }) {
                     <td style="padding:14px 14px;">
                       <div style="font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.6;color:#7a1c27;">
                         <strong>Seguran&ccedil;a:</strong> se voc&ecirc; n&atilde;o solicitou a redefini&ccedil;&atilde;o de senha, ignore este e-mail. Se desconfiar de acesso indevido, altere sua senha assim que poss&iacute;vel.
+                        <br />
+                        Se voc&ecirc; n&atilde;o reconhece esta atividade, entre em contato com o nosso
+                        <a href="https://www.youtube.com/" style="color:#191970;text-decoration:underline;font-weight:700;">suporte</a>.
                       </div>
                     </td>
                   </tr>
