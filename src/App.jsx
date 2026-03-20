@@ -64,6 +64,11 @@ const App = () => {
   const location = useLocation();
 
   const isDashboardRoute = location.pathname === "/dashboard";
+  // Permite usar /sign-in e /sign-up como rotas de modal, mantendo a pagina de fundo via location.state.backgroundLocation
+  const backgroundLocation =
+    location.state && location.state.backgroundLocation
+      ? location.state.backgroundLocation
+      : null;
 
   // Recupera dados mínimos do usuário do localStorage ao carregar a aplicação (2.4)
   // SEGURANÇA: Apenas nome e tipo_usuario são necessários para a UI
@@ -148,13 +153,22 @@ const App = () => {
 
       {/* Rotas principais da aplicação */}
       <main>
-        <Routes>
+        <Routes location={backgroundLocation || location}>
           {/* Redireciona raiz para /comprar */}
           <Route path="/" element={<Navigate to="/comprar" replace />} />
 
           {/* Páginas públicas */}
           <Route
             path="/comprar"
+            element={<Comprar usuario={isLoggedIn ? user : null} />}
+          />
+          {/* Rotas de autenticacao (abre modal via Header) */}
+          <Route
+            path="/sign-in"
+            element={<Comprar usuario={isLoggedIn ? user : null} />}
+          />
+          <Route
+            path="/sign-up"
             element={<Comprar usuario={isLoggedIn ? user : null} />}
           />
           <Route
@@ -179,10 +193,10 @@ const App = () => {
             element={<ImovelPage usuario={isLoggedIn ? user : null} />}
           />
 
-          <Route path="/entrar" element={<Navigate to="/comprar" replace />} />
+          <Route path="/entrar" element={<Navigate to="/sign-in" replace />} />
           <Route
             path="/criar-conta"
-            element={<Navigate to="/comprar" replace />}
+            element={<Navigate to="/sign-up" replace />}
           />
 
           <Route

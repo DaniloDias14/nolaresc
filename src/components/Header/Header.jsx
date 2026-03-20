@@ -2,7 +2,7 @@
 
 // Header.jsx
 import { useState, useEffect, useRef } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { TiUserOutline } from "react-icons/ti";
 import { IoLogOutOutline } from "react-icons/io5";
 import { LuLogOut } from "react-icons/lu";
@@ -21,13 +21,45 @@ const Header = ({
   onAdicionarImovelClick,
 }) => {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [modalOpen, setModalOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   /* Estado para popup de confirmação de logout - correção solicitada */
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   const dropdownRef = useRef(null);
   const userButtonRef = useRef(null);
+
+  const isAuthRoute =
+    location.pathname === "/sign-in" || location.pathname === "/sign-up";
+
+  const openAuthModal = (targetPath = "/sign-in") => {
+    // Mantem a pagina atual como "fundo" do modal para nao impactar a experiencia.
+    const backgroundLocation = {
+      pathname: location.pathname,
+      search: location.search,
+      hash: location.hash,
+    };
+
+    navigate(targetPath, { state: { backgroundLocation } });
+    setMenuOpen(false);
+  };
+
+  const closeAuthModal = () => {
+    const bg =
+      location.state && location.state.backgroundLocation
+        ? location.state.backgroundLocation
+        : null;
+
+    // Se o usuario chegou direto em /sign-in ou /sign-up, voltamos para /comprar.
+    if (!bg || !bg.pathname) {
+      navigate("/comprar", { replace: true });
+      return;
+    }
+
+    navigate(`${bg.pathname}${bg.search || ""}${bg.hash || ""}`, {
+      replace: true,
+    });
+  };
 
   const handleLogoClick = (e) => {
     e.preventDefault();
@@ -54,7 +86,7 @@ const Header = ({
     onLogout();
     setShowLogoutConfirm(false);
     setMenuOpen(false);
-    setModalOpen(true);
+    openAuthModal("/sign-in");
   };
 
   /* Cancelar logout e fechar popup de confirmação */
@@ -126,6 +158,14 @@ const Header = ({
     };
   }, [userDropdownOpen, menuOpen]);
 
+  // Se o usuario ja estiver logado, nao faz sentido manter /sign-in ou /sign-up aberto.
+  useEffect(() => {
+    if (isLoggedIn && isAuthRoute) {
+      closeAuthModal();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isLoggedIn, isAuthRoute]);
+
   return (
     <header className="header">
       <nav className="nav">
@@ -152,8 +192,7 @@ const Header = ({
               <button
                 className="menu-connect-button"
                 onClick={() => {
-                  setModalOpen(true);
-                  setMenuOpen(false);
+                  openAuthModal("/sign-in");
                 }}
               >
                 <span>Conectar-se</span>
@@ -272,16 +311,16 @@ const Header = ({
             </button>
           </div>
         ) : (
-          <button className="perfil-icon" onClick={() => setModalOpen(true)}>
+          <button className="perfil-icon" onClick={() => openAuthModal("/sign-in")}>
             <span className="connect-text">Conectar-se</span>
             <TiUserOutline size={20} />
           </button>
         )}
       </nav>
 
-      {modalOpen && (
+      {isAuthRoute && !isLoggedIn && (
         <LoginModal
-          onClose={() => setModalOpen(false)}
+          onClose={closeAuthModal}
           setAdmLogged={setAdmLogged}
           setUser={setUser}
         />

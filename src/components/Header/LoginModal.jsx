@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import axios from "axios";
 import { IoClose, IoEyeOutline, IoEyeOffOutline } from "react-icons/io5";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useToast } from "../Toast/Toast";
 import logo_azul from "../../assets/img/logo/logo_azul.png";
 import "./LoginModal.css";
@@ -566,6 +567,52 @@ const PoliticaDePrivacidade = () => (
 
 const LoginModal = ({ onClose, setAdmLogged, setUser }) => {
   const { showToast } = useToast();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Mantem o progresso do usuario ao fechar o popup (ex.: etapa de verificacao por codigo).
+  // Armazenamento temporario (sessionStorage) para evitar perda acidental.
+  const AUTH_DRAFT_KEY = "nolare_auth_draft_v1";
+  const AUTH_DRAFT_TTL_MS = 45 * 60 * 1000; // 45 minutos
+
+  const carregarRascunhoAuth = () => {
+    try {
+      const raw = sessionStorage.getItem(AUTH_DRAFT_KEY);
+      if (!raw) return null;
+      const data = JSON.parse(raw);
+      if (!data || !data.ts || Date.now() - data.ts > AUTH_DRAFT_TTL_MS) {
+        sessionStorage.removeItem(AUTH_DRAFT_KEY);
+        return null;
+      }
+      return data;
+    } catch {
+      try {
+        sessionStorage.removeItem(AUTH_DRAFT_KEY);
+      } catch {
+        // ignore
+      }
+      return null;
+    }
+  };
+
+  const salvarRascunhoAuth = (draft) => {
+    try {
+      sessionStorage.setItem(
+        AUTH_DRAFT_KEY,
+        JSON.stringify({ ...draft, ts: Date.now() }),
+      );
+    } catch {
+      // Se falhar (quota/storage), apenas nao persistimos.
+    }
+  };
+
+  const limparRascunhoAuth = () => {
+    try {
+      sessionStorage.removeItem(AUTH_DRAFT_KEY);
+    } catch {
+      // ignore
+    }
+  };
   const [tab, setTab] = useState("login");
   const [loginEmail, setLoginEmail] = useState("");
   const [loginSenha, setLoginSenha] = useState("");
@@ -640,6 +687,142 @@ const LoginModal = ({ onClose, setAdmLogged, setUser }) => {
       }
     }
   }, []);
+
+  // Restaura o progresso do usuario (sessionStorage) ao reabrir o modal.
+  useEffect(() => {
+    const defaultTab = location.pathname === "/sign-up" ? "register" : "login";
+    const draft = carregarRascunhoAuth();
+
+    if (!draft) {
+      setTab(defaultTab);
+      return;
+    }
+
+    // Aba/fluxo
+    let nextTab = draft.tab || defaultTab;
+    if (draft.etapaCadastro && draft.etapaCadastro !== "form") nextTab = "register";
+    if (
+      draft.tab === "recuperacao" ||
+      (draft.etapaRecuperacao && draft.etapaRecuperacao !== "email")
+    ) {
+      nextTab = "recuperacao";
+    }
+    setTab(nextTab);
+
+    // Login (nao persistimos senha por seguranca)
+    if (typeof draft.loginEmail === "string") setLoginEmail(draft.loginEmail);
+    if (typeof draft.lembrarMe === "boolean") setLembrarMe(draft.lembrarMe);
+
+    // Cadastro (nao persistimos senhas por seguranca)
+    if (typeof draft.registerNome === "string") setRegisterNome(draft.registerNome);
+    if (typeof draft.registerEmail === "string")
+      setRegisterEmail(draft.registerEmail);
+    if (typeof draft.registerTipo === "string") setRegisterTipo(draft.registerTipo);
+    if (typeof draft.aceitouTermos === "boolean")
+      setAceitouTermos(draft.aceitouTermos);
+    if (typeof draft.aceitouPrivacidade === "boolean")
+      setAceitouPrivacidade(draft.aceitouPrivacidade);
+    if (typeof draft.aceitaEmailsComerciais === "boolean")
+      setAceitaEmailsComerciais(draft.aceitaEmailsComerciais);
+
+    if (typeof draft.etapaCadastro === "string") setEtapaCadastro(draft.etapaCadastro);
+    if (typeof draft.emailCadastroVerificacao === "string")
+      setEmailCadastroVerificacao(draft.emailCadastroVerificacao);
+    if (
+      Array.isArray(draft.codigoCadastroVerificacao) &&
+      draft.codigoCadastroVerificacao.length === 5
+    ) {
+      setCodigoCadastroVerificacao(draft.codigoCadastroVerificacao);
+    }
+    if (typeof draft.tentativasVerificacao === "number")
+      setTentativasVerificacao(draft.tentativasVerificacao);
+    if (typeof draft.tempoRestanteVerificacao === "number")
+      setTempoRestanteVerificacao(draft.tempoRestanteVerificacao);
+
+    // Mantem apenas dados nao sensiveis do cadastro (o backend ignora nome/senha no confirmar-cadastro).
+    if (draft.dadosCadastroTemp && typeof draft.dadosCadastroTemp === "object") {
+      setDadosCadastroTemp({
+        nome: draft.dadosCadastroTemp.nome || "",
+        email: draft.dadosCadastroTemp.email || "",
+        senha: "", // nao persistir
+        tipo_usuario: draft.dadosCadastroTemp.tipo_usuario || "user",
+      });
+    }
+
+    // Recuperacao (nao persistimos nova senha por seguranca)
+    if (typeof draft.etapaRecuperacao === "string")
+      setEtapaRecuperacao(draft.etapaRecuperacao);
+    if (typeof draft.recuperacaoEmail === "string")
+      setRecuperacaoEmail(draft.recuperacaoEmail);
+    if (Array.isArray(draft.codigoRecuperacao) && draft.codigoRecuperacao.length === 5) {
+      setCodigoRecuperacao(draft.codigoRecuperacao);
+    }
+    if (typeof draft.tokenRecuperacao === "string")
+      setTokenRecuperacao(draft.tokenRecuperacao);
+  }, []);
+
+  // Sincroniza URL com a aba atual: /sign-in (login/recuperacao) e /sign-up (cadastro).
+  useEffect(() => {
+    if (location.pathname !== "/sign-in" && location.pathname !== "/sign-up") return;
+
+    const desiredPath = tab === "register" ? "/sign-up" : "/sign-in";
+    if (location.pathname === desiredPath) return;
+
+    const bg = location.state && location.state.backgroundLocation ? location.state.backgroundLocation : null;
+    navigate(desiredPath, {
+      replace: true,
+      ...(bg ? { state: { backgroundLocation: bg } } : {}),
+    });
+  }, [tab, location.pathname]);
+
+  // Persiste o progresso de forma temporaria (sem salvar senhas).
+  useEffect(() => {
+    salvarRascunhoAuth({
+      tab,
+      loginEmail,
+      lembrarMe,
+      registerNome,
+      registerEmail,
+      registerTipo,
+      etapaCadastro,
+      emailCadastroVerificacao,
+      codigoCadastroVerificacao,
+      tentativasVerificacao,
+      tempoRestanteVerificacao,
+      aceitouTermos,
+      aceitouPrivacidade,
+      aceitaEmailsComerciais,
+      dadosCadastroTemp: {
+        nome: dadosCadastroTemp?.nome || "",
+        email: dadosCadastroTemp?.email || "",
+        tipo_usuario: dadosCadastroTemp?.tipo_usuario || "user",
+      },
+      etapaRecuperacao,
+      recuperacaoEmail,
+      codigoRecuperacao,
+      tokenRecuperacao,
+    });
+  }, [
+    tab,
+    loginEmail,
+    lembrarMe,
+    registerNome,
+    registerEmail,
+    registerTipo,
+    etapaCadastro,
+    emailCadastroVerificacao,
+    codigoCadastroVerificacao,
+    tentativasVerificacao,
+    tempoRestanteVerificacao,
+    aceitouTermos,
+    aceitouPrivacidade,
+    aceitaEmailsComerciais,
+    dadosCadastroTemp,
+    etapaRecuperacao,
+    recuperacaoEmail,
+    codigoRecuperacao,
+    tokenRecuperacao,
+  ]);
 
   // Validar nome completo (não vazio)
   const isValidFullName = (nome) => {
@@ -745,6 +928,8 @@ const LoginModal = ({ onClose, setAdmLogged, setUser }) => {
         // SEGURANÇA: Removidos console.log que expõem tipo de usuário no console (2.2)
 
         setError("");
+        // Limpa rascunho ao concluir o login com sucesso.
+        limparRascunhoAuth();
         onClose();
       } else {
         setAdmLogged(false);
@@ -915,6 +1100,8 @@ const LoginModal = ({ onClose, setAdmLogged, setUser }) => {
         tipo_usuario: dadosCadastroTemp.tipo_usuario,
       });
 
+      // Limpa rascunho ao concluir o cadastro com sucesso.
+      limparRascunhoAuth();
       setTab("login");
       setEtapaCadastro("form");
       setRegisterNome("");
@@ -1123,6 +1310,8 @@ const LoginModal = ({ onClose, setAdmLogged, setUser }) => {
         },
       );
 
+      // Limpa rascunho ao concluir a recuperacao com sucesso.
+      limparRascunhoAuth();
       setTab("login");
       setEtapaRecuperacao("email");
       setRecuperacaoEmail("");
