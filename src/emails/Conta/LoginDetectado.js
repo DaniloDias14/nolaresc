@@ -3,10 +3,28 @@
 
 export default function LoginDetectado({ nome, dataHora }) {
   const anoAtual = new Date().getFullYear();
-  const nomeSeguro = nome || "tudo bem?";
-  const dataHoraSeguro = dataHora || "Nao informado";
 
-  const preheader = "Alerta de seguranca: novo login detectado na sua conta.";
+  // SEGURANCA: evita injecao de HTML no conteudo do e-mail.
+  const escapeHtml = (value) =>
+    String(value || "").replace(/[&<>"']/g, (ch) => {
+      switch (ch) {
+        case "&":
+          return "&amp;";
+        case "<":
+          return "&lt;";
+        case ">":
+          return "&gt;";
+        case '"':
+          return "&quot;";
+        case "'":
+          return "&#39;";
+        default:
+          return ch;
+      }
+    });
+
+  const nomeEsc = escapeHtml(nome || "");
+  const dataHoraEsc = dataHora ? escapeHtml(dataHora) : "N&atilde;o informado";
 
   return `<!doctype html>
 <html lang="pt-BR">
@@ -17,23 +35,13 @@ export default function LoginDetectado({ nome, dataHora }) {
     <title>Novo login detectado</title>
   </head>
   <body style="margin:0;padding:0;background-color:#f0efe2;">
-    <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px;line-height:1px;color:#f0efe2;opacity:0;">
-      ${preheader}
-    </div>
-
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#f0efe2;">
       <tr>
         <td align="center" style="padding:24px 16px;">
           <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:600px;background-color:#ffffff;border:1px solid rgba(25,25,112,0.12);border-radius:16px;overflow:hidden;">
-            <!-- Header -->
             <tr>
-              <td style="background-color:#191970;padding:18px 22px;text-align:left;">
-                <div style="font-family:Georgia,Times,serif;font-size:22px;line-height:1.2;color:#ffffff;font-weight:700;">
-                  Nolare
-                </div>
-                <div style="font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.4;color:rgba(255,255,255,0.9);margin-top:4px;">
-                  Transformando lugares em lares
-                </div>
+              <td style="background-color:#191970;height:6px;line-height:6px;font-size:0;">
+                &nbsp;
               </td>
             </tr>
 
@@ -41,8 +49,8 @@ export default function LoginDetectado({ nome, dataHora }) {
             <tr>
               <td style="padding:22px 22px 10px 22px;">
                 <div style="font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.6;color:#1a1a1a;">
-                  <strong>Ola, ${nomeSeguro}.</strong><br />
-                  Identificamos um novo acesso a sua conta. Este e um aviso automatico para ajudar na sua seguranca.
+                  <strong>Ol&aacute;${nomeEsc ? `, ${nomeEsc}.` : "!"}</strong><br />
+                  Identificamos um novo acesso &agrave; sua conta. Este &eacute; um aviso autom&aacute;tico para ajudar na sua seguran&ccedil;a.
                 </div>
               </td>
             </tr>
@@ -57,7 +65,7 @@ export default function LoginDetectado({ nome, dataHora }) {
                         Data e hora do acesso
                       </div>
                       <div style="font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.4;color:#191970;font-weight:700;margin-top:6px;">
-                        ${dataHoraSeguro}
+                        ${dataHoraEsc}
                       </div>
                     </td>
                   </tr>
@@ -69,8 +77,8 @@ export default function LoginDetectado({ nome, dataHora }) {
             <tr>
               <td style="padding:0 22px 18px 22px;">
                 <div style="font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.6;color:#666666;">
-                  Se foi voce quem realizou este acesso, nao e necessario fazer nada.<br />
-                  Se nao reconhece esta atividade, recomendamos alterar sua senha imediatamente.
+                  Se foi voc&ecirc; quem realizou este acesso, n&atilde;o &eacute; necess&aacute;rio fazer nada.<br />
+                  Se n&atilde;o reconhece esta atividade, recomendamos alterar sua senha imediatamente.
                 </div>
               </td>
             </tr>
@@ -79,11 +87,11 @@ export default function LoginDetectado({ nome, dataHora }) {
             <tr>
               <td style="background-color:#faf9f3;border-top:1px solid rgba(25,25,112,0.10);padding:16px 22px;">
                 <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.6;color:#666666;">
-                  Este e um e-mail automatico. Por favor, nao responda.<br />
+                  Este &eacute; um e-mail autom&aacute;tico. Por favor, n&atilde;o responda.<br />
                   <span style="color:#191970;font-weight:700;">Nolare</span> | nolaresc.com.br
                 </div>
                 <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.6;color:#666666;margin-top:6px;">
-                  &copy; ${anoAtual} Nolare Imobiliaria. Todos os direitos reservados.
+                  &copy; ${anoAtual} Nolare. Todos os direitos reservados.
                 </div>
               </td>
             </tr>
@@ -94,4 +102,3 @@ export default function LoginDetectado({ nome, dataHora }) {
   </body>
 </html>`;
 }
-

@@ -639,6 +639,16 @@ app.post("/api/register", async (req, res) => {
     );
     const emailJaExiste = emailExiste.rows.length > 0;
 
+    // CORRECAO (UX): se o e-mail ja possui conta ativa, nao iniciamos fluxo de verificacao.
+    // Antes, o front avancava para a etapa de codigo, mas o backend nao enviava e-mail (por design),
+    // causando o sintoma de "codigo nao chega" e impedindo o cadastro.
+    if (emailJaExiste) {
+      return res.status(409).json({
+        error:
+          "Este e-mail ja possui uma conta. Faca login ou use a opcao de recuperacao de senha.",
+      });
+    }
+
     const codigo = gerarCodigoVerificacao();
     const expiracao = new Date(Date.now() + 10 * 60 * 1000); // 10 minutos
 
@@ -676,18 +686,16 @@ app.post("/api/register", async (req, res) => {
       ],
     );
 
-    if (!emailJaExiste) {
-      // Email novo - enviar código real
-      await enviarEmail(
-        "verificarCadastro",
-        emailLimpo,
-        "Verificação de Cadastro - Nolare",
-        {
-          nome: nomeLimpo,
-          codigo: codigo,
-        },
-      );
-    }
+    // Email novo (ou pendente): enviar codigo real para concluir o cadastro.
+    await enviarEmail(
+      "verificarCadastro",
+      emailLimpo,
+      "Verificação de Cadastro - Nolare",
+      {
+        nome: nomeLimpo,
+        codigo: codigo,
+      },
+    );
 
     // SEGURANÇA: Resposta uniforme para prevenir enumeração de usuários
     res.status(201).json({
