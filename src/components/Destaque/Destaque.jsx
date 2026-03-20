@@ -320,7 +320,10 @@ const Destaque = ({ usuario, curtidas, setCurtidas, onImovelClick }) => {
 
     const xLocal = touch.pageX - carouselRef.current.offsetLeft;
     const walk = xLocal - gesture.startXLocal;
-    const nextScrollLeft = gesture.scrollLeft - walk;
+    // Sensibilidade do drag (mais suave/leve): >1 faz o carousel "andar" um pouco mais
+    // para o mesmo movimento do dedo, reduzindo a sensacao de movimento "duro".
+    const DRAG_MULTIPLIER = 1.15;
+    const nextScrollLeft = gesture.scrollLeft - walk * DRAG_MULTIPLIER;
     carouselRef.current.scrollLeft = nextScrollLeft;
 
     // Amostra velocidade de scroll para aplicar inercia ao soltar o dedo (efeito "arremesso").
@@ -366,7 +369,8 @@ const Destaque = ({ usuario, curtidas, setCurtidas, onImovelClick }) => {
 
           // Desaceleracao (friccao). Ajuste para ficar natural no iOS.
           // Multiplicador por frame dependente de dt para manter consistente.
-          const friction = Math.pow(0.92, dt / 16);
+          // Valor mais alto = desacelera mais devagar (arremesso mais suave e longo).
+          const friction = Math.pow(0.94, dt / 16);
           v *= friction;
 
           // Para quando estiver lento o suficiente ou atingir limites.

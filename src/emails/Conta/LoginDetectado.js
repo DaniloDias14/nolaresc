@@ -1,170 +1,97 @@
-// TEMPLATE DE E-MAIL: Login Detectado
+// TEMPLATE DE E-MAIL: Alerta de login detectado (padrao visual alinhado ao site)
+// Layout compativel (Gmail/Outlook): tabelas + estilos inline
 
 export default function LoginDetectado({ nome, dataHora }) {
   const anoAtual = new Date().getFullYear();
+  const nomeSeguro = nome || "tudo bem?";
+  const dataHoraSeguro = dataHora || "Nao informado";
 
-  return `<!DOCTYPE html>
+  const preheader = "Alerta de seguranca: novo login detectado na sua conta.";
+
+  return `<!doctype html>
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-      body {
-        margin: 0;
-        padding: 0;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        padding: 40px 20px;
-      }
-      .email-wrapper {
-        max-width: 600px;
-        margin: 0 auto;
-      }
-      .email-container {
-        background-color: #ffffff;
-        border-radius: 16px;
-        overflow: hidden;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-      }
-      .email-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        padding: 40px 30px;
-        text-align: center;
-      }
-      .logo {
-        font-size: 32px;
-        font-weight: bold;
-        color: #ffffff;
-        margin-bottom: 10px;
-        letter-spacing: 2px;
-      }
-      .header-subtitle {
-        color: rgba(255, 255, 255, 0.9);
-        font-size: 14px;
-      }
-      .email-content {
-        padding: 40px 30px;
-      }
-      .greeting {
-        font-size: 24px;
-        color: #1a202c;
-        margin-bottom: 20px;
-        font-weight: 600;
-      }
-      .message {
-        color: #4a5568;
-        font-size: 16px;
-        line-height: 1.6;
-        margin-bottom: 30px;
-      }
-      .info-box {
-        background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-        border-left: 4px solid #10b981;
-        padding: 20px;
-        margin: 25px 0;
-        border-radius: 4px;
-      }
-      .info-label {
-        color: #065f46;
-        font-weight: 600;
-        font-size: 13px;
-        margin-bottom: 8px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-      }
-      .info-value {
-        color: #064e3b;
-        font-size: 18px;
-        font-weight: 600;
-      }
-      .warning-box {
-        background-color: #fee;
-        border-left: 4px solid #ef4444;
-        padding: 16px 20px;
-        margin: 25px 0;
-        border-radius: 4px;
-      }
-      .warning-box-title {
-        color: #991b1b;
-        font-weight: 600;
-        margin-bottom: 8px;
-        font-size: 14px;
-      }
-      .warning-box-text {
-        color: #7f1d1d;
-        font-size: 14px;
-        line-height: 1.5;
-      }
-      .email-footer {
-        background-color: #f7fafc;
-        padding: 30px;
-        text-align: center;
-        border-top: 1px solid #e2e8f0;
-      }
-      .footer-text {
-        color: #718096;
-        font-size: 13px;
-        line-height: 1.6;
-      }
-      .footer-brand {
-        color: #667eea;
-        font-weight: 600;
-        margin-top: 10px;
-        font-size: 14px;
-      }
-    </style>
+    <meta http-equiv="x-ua-compatible" content="ie=edge" />
+    <title>Novo login detectado</title>
   </head>
-  <body>
-    <div class="email-wrapper">
-      <div class="email-container">
-        <div class="email-header">
-          <div class="logo">NOLARE</div>
-          <div class="header-subtitle">Transformando lugares em lares</div>
-        </div>
-        
-        <div class="email-content">
-          <div class="greeting">Olá, ${nome}!</div>
-          
-          <div class="message">
-            Detectamos um novo acesso à sua conta na Nolare. 
-            Este é um alerta de segurança para manter você informado sobre as atividades da sua conta.
-          </div>
-
-          <div class="info-box">
-            <div class="info-label">📅 Data e Hora do Acesso</div>
-            <div class="info-value">${dataHora}</div>
-          </div>
-
-          <div class="message">
-            Se foi você quem realizou este login, pode ignorar este e-mail. 
-            Sua conta está segura e funcionando normalmente.
-          </div>
-
-          <div class="warning-box">
-            <div class="warning-box-title">🔒 Não Reconhece Esta Atividade?</div>
-            <div class="warning-box-text">
-              Se você <strong>não reconhece</strong> este acesso, 
-              recomendamos alterar sua senha imediatamente e entrar em contato conosco 
-              para garantir a segurança da sua conta.
-            </div>
-          </div>
-        </div>
-
-        <div class="email-footer">
-          <div class="footer-text">
-            Este é um e-mail automático. Por favor, não responda.
-          </div>
-          <div class="footer-brand">
-            © ${anoAtual} Nolare Imobiliária. Todos os direitos reservados.
-          </div>
-        </div>
-      </div>
+  <body style="margin:0;padding:0;background-color:#f0efe2;">
+    <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px;line-height:1px;color:#f0efe2;opacity:0;">
+      ${preheader}
     </div>
+
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#f0efe2;">
+      <tr>
+        <td align="center" style="padding:24px 16px;">
+          <table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:600px;background-color:#ffffff;border:1px solid rgba(25,25,112,0.12);border-radius:16px;overflow:hidden;">
+            <!-- Header -->
+            <tr>
+              <td style="background-color:#191970;padding:18px 22px;text-align:left;">
+                <div style="font-family:Georgia,Times,serif;font-size:22px;line-height:1.2;color:#ffffff;font-weight:700;">
+                  Nolare
+                </div>
+                <div style="font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.4;color:rgba(255,255,255,0.9);margin-top:4px;">
+                  Transformando lugares em lares
+                </div>
+              </td>
+            </tr>
+
+            <!-- Conteudo -->
+            <tr>
+              <td style="padding:22px 22px 10px 22px;">
+                <div style="font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.6;color:#1a1a1a;">
+                  <strong>Ola, ${nomeSeguro}.</strong><br />
+                  Identificamos um novo acesso a sua conta. Este e um aviso automatico para ajudar na sua seguranca.
+                </div>
+              </td>
+            </tr>
+
+            <!-- Detalhes -->
+            <tr>
+              <td style="padding:0 22px 14px 22px;">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="width:100%;background-color:#f7f7fb;border:1px solid rgba(25,25,112,0.16);border-radius:12px;">
+                  <tr>
+                    <td style="padding:14px 14px;">
+                      <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#666666;">
+                        Data e hora do acesso
+                      </div>
+                      <div style="font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:1.4;color:#191970;font-weight:700;margin-top:6px;">
+                        ${dataHoraSeguro}
+                      </div>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- Orientacao -->
+            <tr>
+              <td style="padding:0 22px 18px 22px;">
+                <div style="font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.6;color:#666666;">
+                  Se foi voce quem realizou este acesso, nao e necessario fazer nada.<br />
+                  Se nao reconhece esta atividade, recomendamos alterar sua senha imediatamente.
+                </div>
+              </td>
+            </tr>
+
+            <!-- Rodape -->
+            <tr>
+              <td style="background-color:#faf9f3;border-top:1px solid rgba(25,25,112,0.10);padding:16px 22px;">
+                <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.6;color:#666666;">
+                  Este e um e-mail automatico. Por favor, nao responda.<br />
+                  <span style="color:#191970;font-weight:700;">Nolare</span> | nolaresc.com.br
+                </div>
+                <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.6;color:#666666;margin-top:6px;">
+                  &copy; ${anoAtual} Nolare Imobiliaria. Todos os direitos reservados.
+                </div>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
   </body>
 </html>`;
 }
+
