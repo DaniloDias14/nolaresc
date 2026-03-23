@@ -48,6 +48,8 @@ const Destaque = ({ usuario, curtidas, setCurtidas, onImovelClick }) => {
   });
   /* Controla animacao de inercia do carrossel de cards (sem depender do momentum nativo) */
   const destaqueInertiaRafRef = useRef(null);
+  const lastFetchIdRef = useRef(0);
+  const isAdmin = usuario?.tipo_usuario === "adm";
 
   // Detect mobile device
   useEffect(() => {
@@ -141,17 +143,49 @@ const Destaque = ({ usuario, curtidas, setCurtidas, onImovelClick }) => {
   });
 
   // Fetch featured properties
+  const fetchDestaques = async () => {
+    const token = localStorage.getItem("nolare_token");
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const endpoint = isAdmin
+      ? "/api/imoveis?incluirOcultos=true"
+      : "/api/imoveis";
+
+    const response = await fetch(endpoint, {
+      headers,
+      credentials: "same-origin",
+    });
+    const data = await response.json();
+    return data.filter((imovel) => imovel.destaque === true);
+  };
+
   useEffect(() => {
-    fetch("/api/imoveis")
-      .then((res) => res.json())
-      .then((data) => {
-        const destaques = data.filter((imovel) => imovel.destaque === true);
+    const fetchId = ++lastFetchIdRef.current;
+    fetchDestaques()
+      .then((destaques) => {
+        if (fetchId !== lastFetchIdRef.current) return;
         setImoveisDestaque(destaques);
       })
       .catch((err) =>
-        console.error("Erro ao buscar imóveis em destaque:", err),
+        console.error("Erro ao buscar imoveis em destaque:", err),
       );
-  }, []);
+  }, [isAdmin]);
+
+  useEffect(() => {
+    const handleImovelUpdated = () => {
+      const fetchId = ++lastFetchIdRef.current;
+      fetchDestaques()
+        .then((destaques) => {
+          if (fetchId !== lastFetchIdRef.current) return;
+          setImoveisDestaque(destaques);
+        })
+        .catch((err) => console.error("Erro ao atualizar destaques:", err));
+    };
+
+    window.addEventListener("imovelUpdated", handleImovelUpdated);
+    return () => {
+      window.removeEventListener("imovelUpdated", handleImovelUpdated);
+    };
+  }, [isAdmin]);
 
   // Toggle like/unlike
   const toggleCurtida = async (e, imovel) => {
