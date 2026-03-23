@@ -37,6 +37,7 @@ const Comprar = ({ usuario }) => {
   const gestureRefs = useRef({});
   /* Refs para os containers de carousel de cada card - correção swipe iOS Safari */
   const carouselRefs = useRef({});
+  const lastFetchIdRef = useRef(0);
 
   const { id } = useParams();
   const navigate = useNavigate();
@@ -60,13 +61,18 @@ const Comprar = ({ usuario }) => {
       ? "/api/imoveis?incluirOcultos=true"
       : "/api/imoveis";
 
-    const response = await fetch(endpoint, { headers });
+    const response = await fetch(endpoint, {
+      headers,
+      credentials: "same-origin",
+    });
     return response.json();
   };
 
   useEffect(() => {
+    const fetchId = ++lastFetchIdRef.current;
     fetchImoveis()
       .then((data) => {
+        if (fetchId !== lastFetchIdRef.current) return;
         setImoveis(data);
         setImoveisFiltrados(data);
       })
@@ -75,8 +81,10 @@ const Comprar = ({ usuario }) => {
 
   useEffect(() => {
     const handleImovelUpdated = () => {
+      const fetchId = ++lastFetchIdRef.current;
       fetchImoveis()
         .then((data) => {
+          if (fetchId !== lastFetchIdRef.current) return;
           setImoveis(data);
           setImoveisFiltrados(data);
         })

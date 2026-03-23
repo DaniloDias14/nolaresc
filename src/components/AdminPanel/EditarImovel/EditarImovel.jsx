@@ -61,6 +61,19 @@ const construtoras = [
   "Criciúma Construções",
 ];
 
+const normalizeStatusValue = (status) => {
+  if (!status) return "";
+  const normalizado = String(status)
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+
+  if (normalizado === "disponivel") return "disponivel";
+  if (normalizado === "vendido") return "vendido";
+  return "";
+};
+
 const EditarImovel = ({
   showPopup,
   setShowPopup,
@@ -179,7 +192,7 @@ const EditarImovel = ({
             ? formatCurrency(imovel.preco_destaque.toString())
             : "",
           tipo: imovel.tipo || "",
-          status: imovel.status?.toLowerCase() || "",
+          status: normalizeStatusValue(imovel.status),
           finalidade: imovel.finalidade?.toLowerCase() || "",
           destaque: imovel.destaque || false,
           visivel: imovel.visivel ?? true,
@@ -542,10 +555,11 @@ const EditarImovel = ({
       };
 
       const formatStatus = (status) => {
-        if (!status) return null;
-        if (status.toLowerCase() === "disponivel") return "Disponível";
-        if (status.toLowerCase() === "vendido") return "Vendido";
-        return capitalizeFirst(status);
+        const statusNormalizado = normalizeStatusValue(status);
+        if (!statusNormalizado) return null;
+        if (statusNormalizado === "disponivel") return "Disponível";
+        if (statusNormalizado === "vendido") return "Vendido";
+        return capitalizeFirst(statusNormalizado);
       };
 
       const formatDataEntrega = (dataEntrega) => {

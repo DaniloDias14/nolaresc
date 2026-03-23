@@ -31,14 +31,16 @@ import AdminFloatingButton from "./components/AdminPanel/FloatingButtonAdmin/Flo
 import UserFloatingButton from "./components/UserPanel/FloatingButtonUser/FloatingButtonUser";
 import Curtidas from "./components/UserPanel/Curtidas/Curtidas.jsx";
 
-const ProtectedAdminRoute = ({ children, user, isLoggedIn }) => {
+const ProtectedAdminRoute = ({ children, user, isLoggedIn, authReady }) => {
+  if (!authReady) return null;
   if (!isLoggedIn || !user || user.tipo_usuario !== "adm") {
     return <Navigate to="/comprar" replace />;
   }
   return children;
 };
 
-const ProtectedUserRoute = ({ children, user, isLoggedIn }) => {
+const ProtectedUserRoute = ({ children, user, isLoggedIn, authReady }) => {
+  if (!authReady) return null;
   // Permite acesso para qualquer usuário logado (user ou admin)
   if (!isLoggedIn || !user) {
     return <Navigate to="/comprar" replace />;
@@ -51,6 +53,7 @@ const App = () => {
   const [admLogged, setAdmLogged] = useState(false); // Controla se o usuário é administrador
   const [user, setUser] = useState(null); // Armazena dados do usuário logado
   const [isLoggedIn, setIsLoggedIn] = useState(false); // Controla se há usuário logado
+  const [authReady, setAuthReady] = useState(false);
 
   // Estados de controle de interface
   const [showConfigOptions, setShowConfigOptions] = useState(false); // Controla menu de opções do admin
@@ -91,6 +94,7 @@ const App = () => {
         localStorage.removeItem("nolare_user");
       }
     }
+    setAuthReady(true);
   }, []);
 
   // Abre popup de adicionar imóvel (apenas para admin)
@@ -202,7 +206,11 @@ const App = () => {
           <Route
             path="/dashboard"
             element={
-              <ProtectedAdminRoute user={user} isLoggedIn={isLoggedIn}>
+              <ProtectedAdminRoute
+                user={user}
+                isLoggedIn={isLoggedIn}
+                authReady={authReady}
+              >
                 <Dashboard />
               </ProtectedAdminRoute>
             }
@@ -211,7 +219,11 @@ const App = () => {
           <Route
             path="/adicionar-imovel"
             element={
-              <ProtectedAdminRoute user={user} isLoggedIn={isLoggedIn}>
+              <ProtectedAdminRoute
+                user={user}
+                isLoggedIn={isLoggedIn}
+                authReady={authReady}
+              >
                 <Navigate to="/comprar" replace />
               </ProtectedAdminRoute>
             }
@@ -220,7 +232,11 @@ const App = () => {
           <Route
             path="/curtidas"
             element={
-              <ProtectedUserRoute user={user} isLoggedIn={isLoggedIn}>
+              <ProtectedUserRoute
+                user={user}
+                isLoggedIn={isLoggedIn}
+                authReady={authReady}
+              >
                 <Curtidas usuario={user} />
               </ProtectedUserRoute>
             }
@@ -229,7 +245,11 @@ const App = () => {
           <Route
             path="/imoveis-ocultos"
             element={
-              <ProtectedAdminRoute user={user} isLoggedIn={isLoggedIn}>
+              <ProtectedAdminRoute
+                user={user}
+                isLoggedIn={isLoggedIn}
+                authReady={authReady}
+              >
                 <OcultarImovel usuario={user} />
               </ProtectedAdminRoute>
             }
