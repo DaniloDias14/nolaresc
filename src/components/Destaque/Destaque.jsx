@@ -625,7 +625,7 @@ const Destaque = ({ usuario, curtidas, setCurtidas, onImovelClick }) => {
                   .replace(/[\u0300-\u036f]/g, "") === "vendido"
                   ? "destaque-card-vendido"
                   : ""
-              }`}
+              } ${imovel.visivel === false ? "destaque-card-oculto" : ""}`}
               key={imovel.id ?? imovel.imovel_id}
               onClick={() => onImovelClick(imovel)}
             >

@@ -98,6 +98,11 @@
     0 12px 32px rgba(25, 25, 112, 0.38);
 }
 
+.destaque-card.destaque-card-oculto .destaque-image-container,
+.destaque-card.destaque-card-oculto .destaque-content {
+  filter: grayscale(35%) saturate(70%) contrast(90%) opacity(0.72);
+}
+
 .destaque-image-container {
   position: relative;
   height: 240px;
