@@ -54,10 +54,9 @@ const ImovelPage = ({ usuario }) => {
   useEffect(() => {
     if (usuario && usuario.id) {
       const token = localStorage.getItem("nolare_token");
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
       fetch(`/api/curtidas/${usuario.id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers,
       })
         .then((res) => res.json())
         .then((data) => {

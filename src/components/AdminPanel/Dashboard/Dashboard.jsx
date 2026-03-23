@@ -171,18 +171,14 @@ const Dashboard = () => {
   const getAuthConfig = () => {
     // Segurança: as rotas do dashboard são protegidas por JWT (Bearer).
     const token = localStorage.getItem("nolare_token");
-    if (!token) return null;
     return {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
     };
   };
 
   const buscarPico = async (data) => {
     try {
       const auth = getAuthConfig();
-      if (!auth) return;
       const picoRes = await axios.get(`/api/sessoes/pico/${data}`, auth);
       setPicoUsuarios(Number(picoRes.data?.pico) || 0);
     } catch (err) {
@@ -197,12 +193,6 @@ const Dashboard = () => {
 
     try {
       const auth = getAuthConfig();
-      if (!auth) {
-        setErro(
-          "Token de autenticação não encontrado. Faça login novamente como administrador.",
-        );
-        return;
-      }
 
       const [resumoRes, picoRes] = await Promise.all([
         axios.get("/api/dashboard/resumo", auth),
@@ -630,4 +620,3 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
-

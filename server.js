@@ -45,6 +45,7 @@ app.set("trust proxy", 1);
 const PORT = process.env.BACKEND_PORT || 5000;
 const JWT_SECRET = process.env.JWT_SECRET;
 const FRONTEND_URL = process.env.FRONTEND_URL || "https://nolaresc.com.br";
+const TOKEN_COOKIE_NAME = "nolare_auth";
 
 // =========================
 // HEADERS DE SEGURANÇA
@@ -66,17 +67,25 @@ app.use((req, res, next) => {
   res.setHeader(
     "Content-Security-Policy",
     "default-src 'self'; " +
-      "script-src 'self' 'unsafe-inline'; " +
+      "script-src 'self'; " +
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
       "font-src 'self' https://fonts.gstatic.com; " +
       "img-src 'self' data: blob: https:; " +
       "connect-src 'self'; " +
       "frame-src https://maps.google.com https://www.google.com; " +
-      "frame-ancestors 'none';",
+      "frame-ancestors 'none'; " +
+      "base-uri 'self'; " +
+      "form-action 'self'; " +
+      "object-src 'none';",
   );
 
-  // SEGURANÇA: HSTS — força HTTPS em produção (1.11)
-  if (process.env.NODE_ENV === "production") {
+  // SEGURANÇA: HSTS — habilita sempre que a requisição chega por HTTPS (direto ou via proxy)
+  const forwardedProto = req.headers["x-forwarded-proto"];
+  const isHttps =
+    req.secure ||
+    (typeof forwardedProto === "string" &&
+      forwardedProto.toLowerCase().includes("https"));
+  if (isHttps) {
     res.setHeader(
       "Strict-Transport-Security",
       "max-age=31536000; includeSubDomains; preload",
@@ -112,8 +121,66 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.use(express.json({ limit: "50mb" }));
-app.use(express.urlencoded({ limit: "50mb", extended: true }));
+
+// =========================
+// RATE LIMITING GLOBAL DA API (SEM BIBLIOTECA EXTERNA)
+// =========================
+const limiteRequisicoesApi = new Map();
+const JANELA_API_MS = 60 * 1000; // 1 minuto
+const LIMITE_API_POR_JANELA = 180; // margem segura para uso real
+
+const verificarRateLimitApi = (identificador) => {
+  const agora = Date.now();
+  const dados = limiteRequisicoesApi.get(identificador);
+
+  if (!dados || agora > dados.expiraEm) {
+    limiteRequisicoesApi.set(identificador, {
+      contagem: 1,
+      expiraEm: agora + JANELA_API_MS,
+    });
+    return { bloqueado: false };
+  }
+
+  dados.contagem += 1;
+
+  if (dados.contagem > LIMITE_API_POR_JANELA) {
+    return {
+      bloqueado: true,
+      tempoRestante: Math.ceil((dados.expiraEm - agora) / 1000),
+    };
+  }
+
+  return { bloqueado: false };
+};
+
+setInterval(() => {
+  const agora = Date.now();
+  for (const [key, value] of limiteRequisicoesApi.entries()) {
+    if (agora > value.expiraEm) {
+      limiteRequisicoesApi.delete(key);
+    }
+  }
+}, 5 * 60 * 1000);
+
+app.use("/api", (req, res, next) => {
+  if (req.method === "OPTIONS") return next();
+
+  const identificador = req.ip || req.connection?.remoteAddress || "unknown";
+  const rate = verificarRateLimitApi(identificador);
+
+  if (rate.bloqueado) {
+    return res.status(429).json({
+      error: "Muitas requisições. Tente novamente em instantes.",
+      tempoRestante: rate.tempoRestante,
+    });
+  }
+
+  return next();
+});
+
+// Limites reduzidos para mitigar DoS por payload grande sem impactar formulários do sistema
+app.use(express.json({ limit: "5mb" }));
+app.use(express.urlencoded({ limit: "5mb", extended: true, parameterLimit: 500 }));
 
 // Serve arquivos estáticos do build do Vite
 app.use(express.static(path.join(__dirname, "dist")));
@@ -221,32 +288,137 @@ const logErroSeguro = (contexto, erro) => {
   return codigoErro;
 };
 
+// FUNÇÃO: Lê cookie específico sem dependências externas
+const obterCookie = (req, nome) => {
+  const cookieHeader = req.headers.cookie;
+  if (!cookieHeader || typeof cookieHeader !== "string") return null;
+
+  const cookies = cookieHeader.split(";");
+  for (const cookie of cookies) {
+    const [rawNome, ...rest] = cookie.trim().split("=");
+    if (rawNome === nome) {
+      const valor = rest.join("=");
+      try {
+        return decodeURIComponent(valor);
+      } catch {
+        return valor;
+      }
+    }
+  }
+  return null;
+};
+
+// FUNÇÃO: Extrai token do Authorization (Bearer) ou cookie HttpOnly
+const extrairTokenRequisicao = (req) => {
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    const tokenHeader = authHeader.split(" ")[1]?.trim();
+    if (tokenHeader && tokenHeader !== "null" && tokenHeader !== "undefined") {
+      return tokenHeader;
+    }
+  }
+
+  return obterCookie(req, TOKEN_COOKIE_NAME);
+};
+
+// FUNÇÃO: Valida se a sessão associada ao token segue ativa
+const validarSessaoAtiva = async (userId, sessionId) => {
+  if (!validarIdNumerico(userId) || !validarIdNumerico(sessionId)) {
+    return false;
+  }
+
+  const sessaoResult = await pool.query(
+    `SELECT id
+     FROM usuario_sessoes
+     WHERE id = $1 AND usuario_id = $2 AND ativo = TRUE
+     LIMIT 1`,
+    [sessionId, userId],
+  );
+
+  return sessaoResult.rows.length > 0;
+};
+
+// FUNÇÃO: Opções seguras para cookie de autenticação
+const obterOpcoesCookieAuth = (req) => {
+  const forwardedProto = req.headers["x-forwarded-proto"];
+  const isHttps =
+    req.secure ||
+    (typeof forwardedProto === "string" &&
+      forwardedProto.toLowerCase().includes("https"));
+  const emProducao = process.env.NODE_ENV === "production";
+
+  const options = {
+    httpOnly: true,
+    secure: emProducao ? true : isHttps,
+    sameSite: "strict",
+    path: "/",
+    maxAge: 24 * 60 * 60 * 1000, // 24h
+  };
+
+  if (emProducao) {
+    options.domain = ".nolaresc.com.br";
+  }
+
+  return options;
+};
+
+const definirCookieAutenticacao = (req, res, token) => {
+  res.cookie(TOKEN_COOKIE_NAME, token, obterOpcoesCookieAuth(req));
+};
+
+const limparCookieAutenticacao = (req, res) => {
+  res.clearCookie(TOKEN_COOKIE_NAME, {
+    ...obterOpcoesCookieAuth(req),
+    maxAge: undefined,
+  });
+};
+
 // =========================
 // MIDDLEWARE DE AUTENTICAÇÃO JWT
 // =========================
 
 // MIDDLEWARE: Verifica token JWT
-const verificarTokenJWT = (req, res, next) => {
-  const authHeader = req.headers.authorization;
+const verificarTokenJWT = async (req, res, next) => {
+  const token = extrairTokenRequisicao(req);
 
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  if (!token) {
     return res
       .status(401)
       .json({ error: "Token de autenticação não fornecido" });
   }
 
-  const token = authHeader.split(" ")[1];
-
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
-    req.user = decoded;
-    next();
+    const userId = decoded?.userId;
+    const tipoUsuario = decoded?.tipoUsuario;
+    const sessionId = decoded?.sessionId;
+
+    const sessaoAtiva = await validarSessaoAtiva(userId, sessionId);
+    if (!sessaoAtiva) {
+      return res.status(401).json({ error: "Sessão inválida ou expirada" });
+    }
+
+    req.user = { userId, tipoUsuario, sessionId };
+    return next();
   } catch (error) {
     if (error.name === "TokenExpiredError") {
       return res.status(401).json({ error: "Token expirado" });
     }
     return res.status(401).json({ error: "Token inválido" });
   }
+};
+
+// FUNÇÃO: Valida token JWT assinado para fluxo de recuperação de senha
+const validarTokenRecuperacaoJWT = (token) => {
+  const decoded = jwt.verify(token, JWT_SECRET);
+  if (
+    decoded?.type !== "password_reset" ||
+    !validarIdNumerico(decoded?.userId) ||
+    !validarIdNumerico(decoded?.tokenId)
+  ) {
+    throw new Error("Token de recuperação inválido");
+  }
+  return decoded;
 };
 
 // MIDDLEWARE: Verifica se usuário é administrador
@@ -283,9 +455,9 @@ const verificarAdmin = async (req, res, next) => {
 };
 
 // FUNÇÃO: Gera token JWT para usuário
-const gerarTokenJWT = (userId, tipoUsuario) => {
+const gerarTokenJWT = (userId, tipoUsuario, sessionId) => {
   return jwt.sign(
-    { userId, tipoUsuario },
+    { userId, tipoUsuario, sessionId },
     JWT_SECRET,
     { expiresIn: "24h" }, // Token expira em 24 horas
   );
@@ -530,11 +702,12 @@ app.post("/api/login", async (req, res) => {
     // SUCESSO: Limpa tentativas de login
     limparTentativasLogin(identificador);
 
-    // DB QUERY: Registra sessão de login
-    await pool.query(
-      "INSERT INTO usuario_sessoes (usuario_id, data_login, ativo) VALUES ($1, CURRENT_TIMESTAMP, TRUE)",
+    // DB QUERY: Registra sessão de login e retorna o ID para vincular ao JWT
+    const sessaoResult = await pool.query(
+      "INSERT INTO usuario_sessoes (usuario_id, data_login, ativo) VALUES ($1, CURRENT_TIMESTAMP, TRUE) RETURNING id",
       [user.id],
     );
+    const sessionId = sessaoResult.rows[0].id;
 
     const dataHora = new Date().toLocaleString("pt-BR", {
       dateStyle: "long",
@@ -554,7 +727,8 @@ app.post("/api/login", async (req, res) => {
     const { senha: _, ...userSemSenha } = user;
 
     // SEGURANÇA: Gera token JWT para autenticação
-    const token = gerarTokenJWT(user.id, user.tipo_usuario);
+    const token = gerarTokenJWT(user.id, user.tipo_usuario, sessionId);
+    definirCookieAutenticacao(req, res, token);
 
     res.json({
       user: userSemSenha,
@@ -581,6 +755,7 @@ app.post("/api/logout", verificarTokenJWT, async (req, res) => {
       [usuario_id],
     );
 
+    limparCookieAutenticacao(req, res);
     res.json({ message: "Logout realizado com sucesso" });
   } catch (err) {
     const codigoErro = logErroSeguro("Erro ao fazer logout", err);
@@ -705,17 +880,6 @@ app.post("/api/register", async (req, res) => {
         "Se este email não estiver cadastrado, você receberá um código de verificação em breve.",
     });
   } catch (err) {
-    // DEBUG: Log completo do erro para identificar o problema
-    console.error("=== ERRO DETALHADO NO REGISTRO ===");
-    console.error("Erro:", err);
-    console.error("Mensagem:", err.message);
-    console.error("Código PostgreSQL:", err.code);
-    console.error("Detalhes:", err.detail);
-    console.error("Tabela:", err.table);
-    console.error("Coluna:", err.column);
-    console.error("Stack:", err.stack);
-    console.error("=== FIM DO ERRO ===");
-
     const codigoErro = logErroSeguro("Erro ao registrar usuário", err);
     res.status(500).json({ error: "Erro no servidor", codigo: codigoErro });
   }
@@ -1090,6 +1254,18 @@ app.post("/api/email/verificacao/confirmar-cadastro", async (req, res) => {
 
   try {
     const emailLimpo = sanitizarString(email.toLowerCase(), 255);
+    const verificacaoCadastro = await verificarBloqueioTentativasEmail(
+      emailLimpo,
+      "cadastro",
+    );
+
+    if (verificacaoCadastro.bloqueado) {
+      return res.status(429).json({
+        error: verificacaoCadastro.mensagem,
+        statusCode: "BLOQUEADO",
+        tempoRestante: verificacaoCadastro.tempoRestante,
+      });
+    }
 
     const pendente = await pool.query(
       "SELECT * FROM email_verificacao_pendente WHERE email = $1 AND verificado = FALSE",
@@ -1112,7 +1288,25 @@ app.post("/api/email/verificacao/confirmar-cadastro", async (req, res) => {
     }
 
     if (registro.codigo !== codigo) {
-      return res.status(400).json({ error: "Código inválido" });
+      await registrarTentativaErradaEmail(emailLimpo, "cadastro");
+      const verificacaoAtualizada = await verificarBloqueioTentativasEmail(
+        emailLimpo,
+        "cadastro",
+      );
+
+      if (verificacaoAtualizada.bloqueado) {
+        return res.status(429).json({
+          error:
+            "Muitas tentativas erradas. Você foi bloqueado por 10 minutos.",
+          statusCode: "BLOQUEADO",
+          tempoRestante: verificacaoAtualizada.tempoRestante,
+        });
+      }
+
+      return res.status(400).json({
+        error: `Código inválido. Tentativas restantes: ${verificacaoAtualizada.tentativasRestantes}`,
+        tentativasRestantes: verificacaoAtualizada.tentativasRestantes,
+      });
     }
 
     // Verifica se email já existe
@@ -1125,6 +1319,10 @@ app.post("/api/email/verificacao/confirmar-cadastro", async (req, res) => {
       await pool.query(
         "UPDATE email_verificacao_pendente SET verificado = TRUE WHERE email = $1",
         [emailLimpo],
+      );
+      await pool.query(
+        "DELETE FROM tentativas_verificacao_email WHERE email = $1 AND tipo = $2",
+        [emailLimpo, "cadastro"],
       );
       return res.json({
         success: true,
@@ -1150,6 +1348,10 @@ app.post("/api/email/verificacao/confirmar-cadastro", async (req, res) => {
     await pool.query(
       "UPDATE email_verificacao_pendente SET verificado = TRUE WHERE email = $1",
       [emailLimpo],
+    );
+    await pool.query(
+      "DELETE FROM tentativas_verificacao_email WHERE email = $1 AND tipo = $2",
+      [emailLimpo, "cadastro"],
     );
 
     // Envia email de boas-vindas (categoria Conta — sempre enviado)
@@ -1257,16 +1459,18 @@ app.post("/api/email/recuperacao/validar", async (req, res) => {
   }
 
   try {
+    const emailLimpo = sanitizarString(email.toLowerCase(), 255);
+
     // DB QUERY: Busca usuário
     const userResult = await pool.query(
       "SELECT id FROM usuarios WHERE email = $1",
-      [email],
+      [emailLimpo],
     );
 
     if (userResult.rows.length === 0) {
       // Email não existe - aplicar sistema de tentativas para emails inexistentes
       const verificacao = await verificarBloqueioTentativasEmail(
-        email,
+        emailLimpo,
         "recuperacao",
       );
       if (verificacao.bloqueado) {
@@ -1278,10 +1482,10 @@ app.post("/api/email/recuperacao/validar", async (req, res) => {
       }
 
       // Registrar tentativa errada
-      await registrarTentativaErradaEmail(email, "recuperacao");
+      await registrarTentativaErradaEmail(emailLimpo, "recuperacao");
 
       const verificacaoAtualizada = await verificarBloqueioTentativasEmail(
-        email,
+        emailLimpo,
         "recuperacao",
       );
 
@@ -1361,21 +1565,32 @@ app.post("/api/email/recuperacao/validar", async (req, res) => {
       });
     }
 
-    // Apenas retorna o token para o frontend continuar
+    // Segurança: retorna JWT assinado para recuperação, sem expor ID sequencial do banco
+    const tokenRecuperacao = jwt.sign(
+      {
+        type: "password_reset",
+        userId: user.id,
+        tokenId: tokenData.id,
+      },
+      JWT_SECRET,
+      { expiresIn: "10m" },
+    );
+
     res.json({
       success: true,
-      token: tokenData.id,
+      token: tokenRecuperacao,
+      expiresIn: 600,
       message: "Código válido!",
     });
   } catch (err) {
-    console.error("Erro ao validar código:", err);
-    res.status(500).json({ error: "Erro no servidor" });
+    const codigoErro = logErroSeguro("Erro ao validar código de recuperação", err);
+    res.status(500).json({ error: "Erro no servidor", codigo: codigoErro });
   }
 });
 
 app.post("/api/email/recuperacao/redefinir", async (req, res) => {
   const { email, novaSenha } = req.body;
-  const token = req.headers.authorization?.split(" ")[1]; // Pega o token do header Authorization
+  const token = extrairTokenRequisicao(req);
 
   if (!email || !token || !novaSenha) {
     return res.status(400).json({
@@ -1396,6 +1611,40 @@ app.post("/api/email/recuperacao/redefinir", async (req, res) => {
 
   try {
     const emailLimpo = sanitizarString(email.toLowerCase(), 255);
+    const controleRedefinicao = await verificarBloqueioTentativasEmail(
+      emailLimpo,
+      "recuperacao_redefinir",
+    );
+
+    if (controleRedefinicao.bloqueado) {
+      return res.status(429).json({
+        error: controleRedefinicao.mensagem,
+        statusCode: "BLOQUEADO",
+        tempoRestante: controleRedefinicao.tempoRestante,
+      });
+    }
+
+    let payloadRecuperacao;
+    try {
+      payloadRecuperacao = validarTokenRecuperacaoJWT(token);
+    } catch {
+      await registrarTentativaErradaEmail(emailLimpo, "recuperacao_redefinir");
+      const estadoAtual = await verificarBloqueioTentativasEmail(
+        emailLimpo,
+        "recuperacao_redefinir",
+      );
+
+      if (estadoAtual.bloqueado) {
+        return res.status(429).json({
+          error:
+            "Muitas tentativas inválidas. Você foi bloqueado por 10 minutos.",
+          statusCode: "BLOQUEADO",
+          tempoRestante: estadoAtual.tempoRestante,
+        });
+      }
+
+      return res.status(400).json({ error: "Token inválido ou expirado" });
+    }
 
     // DB QUERY: Busca usuário
     const userResult = await pool.query(
@@ -1405,17 +1654,23 @@ app.post("/api/email/recuperacao/redefinir", async (req, res) => {
 
     if (userResult.rows.length === 0) {
       // SEGURANÇA: Resposta genérica para não revelar se email existe
+      await registrarTentativaErradaEmail(emailLimpo, "recuperacao_redefinir");
       return res.status(400).json({ error: "Token inválido ou expirado" });
     }
 
     const user = userResult.rows[0];
+    if (Number(payloadRecuperacao.userId) !== Number(user.id)) {
+      await registrarTentativaErradaEmail(emailLimpo, "recuperacao_redefinir");
+      return res.status(400).json({ error: "Token inválido ou expirado" });
+    }
 
     const tokenResult = await pool.query(
       "SELECT * FROM email_conta WHERE id = $1 AND usuario_id = $2 AND tipo = $3 AND usado = FALSE",
-      [token, user.id, "recuperacao"],
+      [payloadRecuperacao.tokenId, user.id, "recuperacao"],
     );
 
     if (tokenResult.rows.length === 0) {
+      await registrarTentativaErradaEmail(emailLimpo, "recuperacao_redefinir");
       return res.status(400).json({ error: "Token inválido ou expirado" });
     }
 
@@ -1423,7 +1678,8 @@ app.post("/api/email/recuperacao/redefinir", async (req, res) => {
 
     // Valida expiração
     if (!validarToken(tokenData.expiracao)) {
-      return res.status(400).json({ error: "Token expirado" });
+      await registrarTentativaErradaEmail(emailLimpo, "recuperacao_redefinir");
+      return res.status(400).json({ error: "Token inválido ou expirado" });
     }
 
     // Hash da nova senha com 12 rounds
@@ -1444,6 +1700,12 @@ app.post("/api/email/recuperacao/redefinir", async (req, res) => {
     await pool.query(
       "UPDATE usuario_sessoes SET ativo = FALSE WHERE usuario_id = $1",
       [user.id],
+    );
+
+    // Limpa tentativas de redefinição após sucesso
+    await pool.query(
+      "DELETE FROM tentativas_verificacao_email WHERE email = $1 AND tipo = $2",
+      [emailLimpo, "recuperacao_redefinir"],
     );
 
     res.json({
@@ -2500,7 +2762,7 @@ app.get("/api/imoveis/:id", async (req, res) => {
 
     if (!imovel.visivel) {
       // Check if user is authenticated and is admin
-      const token = req.headers.authorization?.split(" ")[1];
+      const token = extrairTokenRequisicao(req);
 
       if (!token) {
         return res.status(403).json({ error: "Imóvel não disponível" });
@@ -2508,6 +2770,14 @@ app.get("/api/imoveis/:id", async (req, res) => {
 
       try {
         const decoded = jwt.verify(token, JWT_SECRET);
+        const sessaoAtiva = await validarSessaoAtiva(
+          decoded?.userId,
+          decoded?.sessionId,
+        );
+        if (!sessaoAtiva) {
+          return res.status(403).json({ error: "Imóvel não disponível" });
+        }
+
         const userResult = await pool.query(
           "SELECT tipo_usuario FROM usuarios WHERE id = $1", // Assuming 'tipo_usuario' is 'adm' for admins
           [decoded.userId],
@@ -3550,11 +3820,19 @@ app.use((err, req, res, next) => {
           error: "Arquivo muito grande. O limite por arquivo é de 200MB.",
         });
     }
-    return res.status(400).json({ error: `Erro no upload: ${err.message}` });
+    const codigoErro = logErroSeguro("Erro de validação no upload", err);
+    return res.status(400).json({
+      error: "Erro no upload. Verifique o tipo e o tamanho do arquivo.",
+      codigo: codigoErro,
+    });
   }
 
   if (err) {
-    return res.status(400).json({ error: err.message });
+    const codigoErro = logErroSeguro("Erro inesperado no middleware global", err);
+    return res.status(400).json({
+      error: "Erro ao processar a requisição",
+      codigo: codigoErro,
+    });
   }
 
   next();

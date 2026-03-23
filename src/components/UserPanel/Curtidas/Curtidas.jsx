@@ -61,11 +61,10 @@ const Curtidas = ({ usuario }) => {
     if (!usuario || !usuario.id) return;
 
     const token = localStorage.getItem("nolare_token");
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
     fetch(`/api/curtidas/${usuario.id}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers,
     })
       .then((res) => res.json())
       .then(async (data) => {
@@ -132,13 +131,12 @@ const Curtidas = ({ usuario }) => {
     if (!usuario) return;
 
     const token = localStorage.getItem("nolare_token");
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
     try {
       const res = await fetch(`/api/curtidas/${usuario.id}/${imovelId}`, {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers,
       });
 
       if (!res.ok) throw new Error("Erro ao alternar curtida");

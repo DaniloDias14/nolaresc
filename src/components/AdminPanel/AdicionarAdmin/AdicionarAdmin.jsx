@@ -100,10 +100,11 @@ const AdicionarAdmin = ({ showPopup, setShowPopup }) => {
     try {
       // Envia dados — o servidor gera o código e o envia ao e-mail informado
       const token = localStorage.getItem("nolare_token");
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
       await axios.post(
         "/api/admin/adicionar-admin",
         { nome, email, senha },
-        { headers: { Authorization: `Bearer ${token}` } },
+        { headers },
       );
 
       // Avança para a etapa de verificação do código
@@ -133,10 +134,11 @@ const AdicionarAdmin = ({ showPopup, setShowPopup }) => {
 
     try {
       const token = localStorage.getItem("nolare_token");
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
       await axios.post(
         "/api/admin/confirmar-admin",
         { email, codigo: codigo.trim() },
-        { headers: { Authorization: `Bearer ${token}` } },
+        { headers },
       );
 
       setSucesso(true);

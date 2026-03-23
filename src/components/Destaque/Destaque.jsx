@@ -172,11 +172,10 @@ const Destaque = ({ usuario, curtidas, setCurtidas, onImovelClick }) => {
 
     try {
       const token = localStorage.getItem("nolare_token");
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
       const res = await fetch(`/api/curtidas/${usuario.id}/${imovelId}`, {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers,
       });
       if (!res.ok) throw new Error("Erro ao alternar curtida");
 

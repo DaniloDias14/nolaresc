@@ -912,10 +912,9 @@ const LoginModal = ({ onClose, setAdmLogged, setUser }) => {
         setUser(user);
         localStorage.setItem("nolare_user", JSON.stringify(userParaArmazenar));
 
-        // SEGURANÇA: Salva o token JWT separadamente para uso nas chamadas de API autenticadas
-        if (response.data.token) {
-          localStorage.setItem("nolare_token", response.data.token);
-        }
+        // SEGURANÇA: token de sessão é mantido em cookie HttpOnly pelo backend
+        // Remove legado para evitar persistência em storage acessível via JS.
+        localStorage.removeItem("nolare_token");
 
         // SEGURANÇA: Removido salvamento de senha em texto puro no localStorage (1.3)
         // A funcionalidade "Lembrar-me" não deve jamais salvar credenciais em texto claro

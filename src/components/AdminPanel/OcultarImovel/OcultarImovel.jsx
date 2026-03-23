@@ -34,11 +34,10 @@ const OcultarImovel = ({ usuario }) => {
     if (!usuario || usuario.tipo_usuario !== "adm") return;
 
     const token = localStorage.getItem("nolare_token");
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
     fetch("/api/imoveis/ocultos", {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers,
     })
       .then((res) => {
         if (!res.ok) throw new Error(`Erro ${res.status}`);
@@ -90,15 +89,22 @@ const OcultarImovel = ({ usuario }) => {
     if (!usuario) return;
 
     const token = localStorage.getItem("nolare_token");
-    const authHeaders = {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    };
+    const authHeaders = token
+      ? {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        }
+      : {
+          "Content-Type": "application/json",
+        };
+    const headersBuscaImovel = token
+      ? { Authorization: `Bearer ${token}` }
+      : {};
 
     try {
       // Busca o imóvel atual (com token, pois pode estar oculto)
       const imovelRes = await fetch(`/api/imoveis/${imovelId}`, {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: headersBuscaImovel,
       });
       const imovel = await imovelRes.json();
 

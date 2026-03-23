@@ -93,10 +93,9 @@ const Comprar = ({ usuario }) => {
   useEffect(() => {
     if (usuario && usuario.id) {
       const token = localStorage.getItem("nolare_token");
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
       fetch(`/api/curtidas/${usuario.id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers,
       })
         .then((res) => res.json())
         .then((data) => {
@@ -451,11 +450,10 @@ const Comprar = ({ usuario }) => {
 
     try {
       const token = localStorage.getItem("nolare_token");
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
       const res = await fetch(`/api/curtidas/${usuario.id}/${imovelId}`, {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers,
       });
       if (!res.ok) throw new Error("Erro ao alternar curtida");
 
