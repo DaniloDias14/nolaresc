@@ -1088,7 +1088,7 @@ const LoginModal = ({ onClose, setAdmLogged, setUser }) => {
     try {
       const codigoCompleto = codigoCadastroVerificacao.join("");
 
-      await axios.post("/api/email/verificacao/confirmar-cadastro", {
+      const response = await axios.post("/api/email/verificacao/confirmar-cadastro", {
         email: emailCadastroVerificacao,
         codigo: codigoCompleto,
         aceitouTermos,
@@ -1101,7 +1101,6 @@ const LoginModal = ({ onClose, setAdmLogged, setUser }) => {
 
       // Limpa rascunho ao concluir o cadastro com sucesso.
       limparRascunhoAuth();
-      setTab("login");
       setEtapaCadastro("form");
       setRegisterNome("");
       setRegisterEmail("");
@@ -1119,6 +1118,26 @@ const LoginModal = ({ onClose, setAdmLogged, setUser }) => {
       });
       setError("");
       setFieldErrors({});
+
+      if (response.data?.autoLogin && response.data?.user) {
+        const user = response.data.user;
+        const userParaArmazenar = {
+          id: user.id,
+          nome: user.nome,
+          tipo_usuario: user.tipo_usuario,
+        };
+
+        setUser(user);
+        localStorage.setItem("nolare_user", JSON.stringify(userParaArmazenar));
+        localStorage.removeItem("nolare_token");
+        setAdmLogged(user.tipo_usuario === "adm");
+
+        showToast("Cadastro realizado e login efetuado com sucesso!", "success", 4000);
+        onClose();
+        return;
+      }
+
+      setTab("login");
       showToast(
         "Cadastro realizado com sucesso! Faça o login com suas credenciais.",
         "success",

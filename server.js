@@ -984,16 +984,62 @@ app.post("/api/email/verificacao/solicitar", async (req, res) => {
     return res.status(400).json({ error: "Email é obrigatório" });
   }
 
+  // VALIDAÇÃO: Formato de email
+  if (!validarEmail(email)) {
+    return res.status(400).json({ error: "Formato de email inválido" });
+  }
+
   try {
+    const emailLimpo = sanitizarString(email.toLowerCase(), 255);
+
+    // PRIORIDADE: reenvio para cadastro pendente de usuário comum
+    const pendenteCadastro = await pool.query(
+      `SELECT nome, tipo_usuario
+       FROM email_verificacao_pendente
+       WHERE email = $1 AND verificado = FALSE
+       LIMIT 1`,
+      [emailLimpo],
+    );
+
+    if (
+      pendenteCadastro.rows.length > 0 &&
+      pendenteCadastro.rows[0].tipo_usuario === "user"
+    ) {
+      const codigo = gerarCodigoVerificacao();
+      const expiracao = new Date(Date.now() + 10 * 60 * 1000);
+
+      await pool.query(
+        `UPDATE email_verificacao_pendente
+         SET codigo = $1, expiracao = $2, atualizado_em = NOW()
+         WHERE email = $3 AND verificado = FALSE`,
+        [codigo, expiracao, emailLimpo],
+      );
+
+      await enviarEmail(
+        "verificarCadastro",
+        emailLimpo,
+        "Verificação de Cadastro - Nolare",
+        {
+          nome: pendenteCadastro.rows[0].nome || "Usuário",
+          codigo,
+        },
+      );
+
+      return res.status(200).json({
+        success: true,
+        message: "Código de verificação enviado para o e-mail",
+      });
+    }
+
     // DB QUERY: Busca usuário
     const userResult = await pool.query(
       "SELECT id, nome, email FROM usuarios WHERE email = $1",
-      [email],
+      [emailLimpo],
     );
 
     if (userResult.rows.length === 0) {
       // Se o email não existe, cria um registro falso para controle de tentativas
-      await criarRegistroFalsoVerificacao(email);
+      await criarRegistroFalsoVerificacao(emailLimpo);
       return res.status(200).json({
         success: true,
         message: "Código de verificação enviado para o e-mail",
@@ -1015,7 +1061,6 @@ app.post("/api/email/verificacao/solicitar", async (req, res) => {
     }
 
     // Apenas retornamos sucesso sem enviar
-    const codigo = gerarCodigoVerificacao();
     const token = gerarToken();
     const expiracao = new Date(Date.now() + 10 * 60 * 1000);
 
@@ -1333,8 +1378,8 @@ app.post("/api/email/verificacao/confirmar-cadastro", async (req, res) => {
     const aceitaEmailsComerciais = aceita_emails_comerciais === true;
 
     // Insere usuário definitivamente
-    await pool.query(
-      "INSERT INTO usuarios (nome, email, senha, tipo_usuario, aceita_emails_comerciais) VALUES ($1, $2, $3, $4, $5)",
+    const usuarioCriadoResult = await pool.query(
+      "INSERT INTO usuarios (nome, email, senha, tipo_usuario, aceita_emails_comerciais) VALUES ($1, $2, $3, $4, $5) RETURNING id, nome, email, tipo_usuario, data_criacao",
       [
         registro.nome,
         emailLimpo,
@@ -1343,6 +1388,7 @@ app.post("/api/email/verificacao/confirmar-cadastro", async (req, res) => {
         aceitaEmailsComerciais,
       ],
     );
+    const usuarioCriado = usuarioCriadoResult.rows[0];
 
     // Marca pendente como verificado
     await pool.query(
@@ -1354,8 +1400,28 @@ app.post("/api/email/verificacao/confirmar-cadastro", async (req, res) => {
       [emailLimpo, "cadastro"],
     );
 
-    // Envia email de boas-vindas (categoria Conta — sempre enviado)
-    res.json({ success: true, message: "Cadastro confirmado com sucesso!" });
+    // Auto-login após cadastro confirmado (apenas usuário comum)
+    // Não envia e-mail de "login detectado" neste primeiro acesso.
+    const sessaoResult = await pool.query(
+      "INSERT INTO usuario_sessoes (usuario_id, data_login, ativo) VALUES ($1, CURRENT_TIMESTAMP, TRUE) RETURNING id",
+      [usuarioCriado.id],
+    );
+    const sessionId = sessaoResult.rows[0].id;
+    const token = gerarTokenJWT(
+      usuarioCriado.id,
+      usuarioCriado.tipo_usuario,
+      sessionId,
+    );
+    definirCookieAutenticacao(req, res, token);
+
+    res.json({
+      success: true,
+      autoLogin: true,
+      message: "Cadastro confirmado com sucesso!",
+      user: usuarioCriado,
+      token,
+      expiresIn: 86400,
+    });
   } catch (err) {
     const codigoErro = logErroSeguro("Erro ao confirmar cadastro", err);
     res.status(500).json({ error: "Erro no servidor", codigo: codigoErro });
