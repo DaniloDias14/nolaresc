@@ -606,10 +606,20 @@ const ImovelModal = ({
 
   const imovelId = imovel.id ?? imovel.imovel_id;
   const mapEmbedUrl = getMapEmbedUrl();
+  const statusNormalizado = String(imovel.status || "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+  const isVendido = statusNormalizado === "vendido";
+  const isOculto = imovel.visivel === false;
 
   return (
     <div className="imovel-modal-overlay" onClick={handleOverlayClick}>
-      <div className="imovel-modal-container">
+      <div
+        className={`imovel-modal-container ${
+          isVendido ? "imovel-modal-vendido" : ""
+        } ${isOculto ? "imovel-modal-oculto" : ""}`}
+      >
         {/* Header with close and share buttons */}
         <div className="imovel-modal-header">
           {usuario && usuario.tipo_usuario === "adm" && (

@@ -986,3 +986,37 @@ input[type="number"] {
     grid-template-columns: 1fr;
   }
 }
+
+/* Codigo de verificacao no estilo LoginModal */
+.adicionar-admin-codigo-inputs-container {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+  justify-content: center;
+}
+
+.adicionar-admin-codigo-input {
+  width: 50px;
+  height: 50px;
+  border: 2px solid #191970;
+  border-radius: 8px;
+  text-align: center;
+  font-weight: 700;
+  color: #191970;
+  font-size: 1.5rem;
+  background: #f8f9fa;
+  font-family: "Sanchez", serif;
+  transition: all 0.3s ease;
+}
+
+.adicionar-admin-codigo-input:focus {
+  outline: none;
+  border-color: #191970;
+  box-shadow: 0 0 0 3px rgba(25, 25, 112, 0.15);
+  background: #ffffff;
+}
+
+.adicionar-admin-codigo-input.input-error {
+  border-color: #e74c3c;
+  background-color: #fff5f5;
+}

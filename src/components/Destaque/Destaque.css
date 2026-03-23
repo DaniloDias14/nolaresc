@@ -85,6 +85,19 @@
   box-shadow: 0 12px 32px rgba(25, 25, 112, 0.38);
 }
 
+.destaque-card.destaque-card-vendido {
+  border: 2px solid #d92525;
+  box-shadow:
+    0 0 0 2px rgba(217, 37, 37, 0.22),
+    0 8px 24px rgba(25, 25, 112, 0.28);
+}
+
+.destaque-card.destaque-card-vendido:hover {
+  box-shadow:
+    0 0 0 2px rgba(217, 37, 37, 0.22),
+    0 12px 32px rgba(25, 25, 112, 0.38);
+}
+
 .destaque-image-container {
   position: relative;
   height: 240px;

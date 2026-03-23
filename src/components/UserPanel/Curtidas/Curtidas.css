@@ -66,6 +66,24 @@
   box-shadow: 0 14px 36px rgba(25, 25, 112, 0.4);
 }
 
+.property-card.property-card-vendido {
+  border: 2px solid #d92525;
+  box-shadow:
+    0 0 0 2px rgba(217, 37, 37, 0.22),
+    0 10px 28px rgba(25, 25, 112, 0.3);
+}
+
+.property-card.property-card-vendido:hover {
+  box-shadow:
+    0 0 0 2px rgba(217, 37, 37, 0.22),
+    0 14px 36px rgba(25, 25, 112, 0.4);
+}
+
+.property-card.property-card-oculto .image-container,
+.property-card.property-card-oculto .property-content {
+  filter: grayscale(35%) saturate(70%) contrast(90%) opacity(0.72);
+}
+
 .image-container {
   position: relative;
   height: 260px;

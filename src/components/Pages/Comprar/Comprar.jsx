@@ -40,6 +40,7 @@ const Comprar = ({ usuario }) => {
 
   const { id } = useParams();
   const navigate = useNavigate();
+  const isAdmin = usuario?.tipo_usuario === "adm";
 
   const imoveisPorPagina = 15;
 
@@ -52,32 +53,41 @@ const Comprar = ({ usuario }) => {
   }, []);
 
   // Fetch all properties
+  const fetchImoveis = async () => {
+    const token = localStorage.getItem("nolare_token");
+    const headers = token ? { Authorization: `Bearer ${token}` } : {};
+    const endpoint = isAdmin
+      ? "/api/imoveis?incluirOcultos=true"
+      : "/api/imoveis";
+
+    const response = await fetch(endpoint, { headers });
+    return response.json();
+  };
+
   useEffect(() => {
-    fetch("/api/imoveis")
-      .then((res) => res.json())
+    fetchImoveis()
       .then((data) => {
         setImoveis(data);
         setImoveisFiltrados(data);
       })
-      .catch((err) => console.error("Erro ao buscar imóveis:", err));
-  }, []);
+      .catch((err) => console.error("Erro ao buscar imoveis:", err));
+  }, [isAdmin]);
 
   useEffect(() => {
     const handleImovelUpdated = () => {
-      fetch("/api/imoveis")
-        .then((res) => res.json())
+      fetchImoveis()
         .then((data) => {
           setImoveis(data);
           setImoveisFiltrados(data);
         })
-        .catch((err) => console.error("Erro ao buscar imóveis:", err));
+        .catch((err) => console.error("Erro ao buscar imoveis:", err));
     };
 
     window.addEventListener("imovelUpdated", handleImovelUpdated);
     return () => {
       window.removeEventListener("imovelUpdated", handleImovelUpdated);
     };
-  }, []);
+  }, [isAdmin]);
 
   useEffect(() => {
     if (id && imoveis.length > 0) {
@@ -820,7 +830,11 @@ const Comprar = ({ usuario }) => {
           >
             {imoveisExibidos.map((imovel) => (
               <div
-                className="property-card"
+                className={`property-card ${
+                  normalizeStr(imovel.status) === "vendido"
+                    ? "property-card-vendido"
+                    : ""
+                } ${imovel.visivel === false ? "property-card-oculto" : ""}`}
                 key={imovel.id ?? imovel.imovel_id}
                 onClick={() => handleOpenModal(imovel)}
               >

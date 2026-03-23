@@ -584,7 +584,14 @@ const Destaque = ({ usuario, curtidas, setCurtidas, onImovelClick }) => {
         >
           {imoveisDestaque.map((imovel) => (
             <div
-              className="destaque-card"
+              className={`destaque-card ${
+                String(imovel.status || "")
+                  .toLowerCase()
+                  .normalize("NFD")
+                  .replace(/[\u0300-\u036f]/g, "") === "vendido"
+                  ? "destaque-card-vendido"
+                  : ""
+              }`}
               key={imovel.id ?? imovel.imovel_id}
               onClick={() => onImovelClick(imovel)}
             >

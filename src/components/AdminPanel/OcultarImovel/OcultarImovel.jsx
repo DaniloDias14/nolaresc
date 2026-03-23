@@ -185,7 +185,14 @@ const OcultarImovel = ({ usuario }) => {
         <div className="ocultar-imovel-grid">
           {imoveis.map((imovel) => (
             <div
-              className="property-card"
+              className={`property-card ${
+                String(imovel.status || "")
+                  .toLowerCase()
+                  .normalize("NFD")
+                  .replace(/[\u0300-\u036f]/g, "") === "vendido"
+                  ? "property-card-vendido"
+                  : ""
+              } ${imovel.visivel === false ? "property-card-oculto" : ""}`}
               key={imovel.imovel_id}
               onClick={() => handleOpenModal(imovel)}
             >

@@ -29,6 +29,17 @@
   flex-direction: column;
 }
 
+.imovel-modal-container.imovel-modal-vendido {
+  border: 2px solid #d92525;
+  box-shadow:
+    0 0 0 2px rgba(217, 37, 37, 0.22),
+    0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.imovel-modal-container.imovel-modal-oculto .imovel-modal-content {
+  filter: grayscale(35%) saturate(70%) contrast(90%) opacity(0.72);
+}
+
 /* Header */
 .imovel-modal-header {
   position: absolute;

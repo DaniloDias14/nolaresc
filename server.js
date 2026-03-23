@@ -2608,8 +2608,6 @@ app.get(
 // ROTA: Busca todos os imóveis visíveis (com paginação opcional)
 app.get("/api/imoveis", async (req, res) => {
   try {
-    // PAGINAÇÃO: Parâmetros opcionais via query string (?page=1&limit=50)
-    // Se não fornecidos, retorna todos os imóveis (comportamento padrão mantido)
     const pagina = req.query.page
       ? Math.max(1, Number.parseInt(req.query.page, 10))
       : null;
@@ -2617,16 +2615,45 @@ app.get("/api/imoveis", async (req, res) => {
       ? Math.min(200, Math.max(1, Number.parseInt(req.query.limit, 10)))
       : null;
 
-    // DB QUERY: Conta total de imóveis visíveis (para metadados de paginação)
+    // Regras de visibilidade:
+    // - padrao: apenas visiveis
+    // - incluirOcultos=true: somente admins autenticados podem incluir ocultos
+    const incluirOcultosSolicitado =
+      String(req.query.incluirOcultos || "").toLowerCase() === "true";
+    let incluirOcultosParaAdmin = false;
+
+    if (incluirOcultosSolicitado) {
+      const token = extrairTokenRequisicao(req);
+      if (token) {
+        try {
+          const decoded = jwt.verify(token, JWT_SECRET);
+          const userId = decoded?.userId;
+          const tipoUsuario = decoded?.tipoUsuario;
+          const sessionId = decoded?.sessionId;
+
+          const sessaoAtiva = await validarSessaoAtiva(userId, sessionId);
+          if (sessaoAtiva && tipoUsuario === "adm") {
+            const adminCheck = await pool.query(
+              "SELECT 1 FROM usuarios WHERE id = $1 AND tipo_usuario = 'adm' LIMIT 1",
+              [userId],
+            );
+            incluirOcultosParaAdmin = adminCheck.rows.length > 0;
+          }
+        } catch {
+          incluirOcultosParaAdmin = false;
+        }
+      }
+    }
+
     const totalResult = await pool.query(
-      "SELECT COUNT(*) as total FROM imoveis WHERE visivel = true",
+      incluirOcultosParaAdmin
+        ? "SELECT COUNT(*) as total FROM imoveis"
+        : "SELECT COUNT(*) as total FROM imoveis WHERE visivel = true",
     );
     const total = Number.parseInt(totalResult.rows[0].total, 10);
 
-    // SEGURANÇA: Prepara parâmetros posicionais para paginação (1.12)
     const queryParams = pagina && limite ? [limite, (pagina - 1) * limite] : [];
 
-    // DB QUERY: Busca imóveis com características e fotos
     const result = await pool.query(
       `SELECT
         i.id AS imovel_id,
@@ -2696,21 +2723,20 @@ app.get("/api/imoveis", async (req, res) => {
         ) AS caracteristicas,
 
         COALESCE(
-          (SELECT json_agg(f ORDER BY f.id) 
-           FROM fotos_imoveis f 
-           WHERE f.imovel_id = i.id), 
+          (SELECT json_agg(f ORDER BY f.id)
+           FROM fotos_imoveis f
+           WHERE f.imovel_id = i.id),
           '[]'
         ) AS fotos
       FROM imoveis i
       LEFT JOIN imoveis_caracteristicas ic ON ic.imovel_id = i.id
-      WHERE i.visivel = true
+      WHERE ${incluirOcultosParaAdmin ? "TRUE" : "i.visivel = true"}
       GROUP BY i.id, ic.id
       ORDER BY i.data_criacao DESC
       ${queryParams.length ? "LIMIT $1 OFFSET $2" : ""}`,
       queryParams,
     );
 
-    // Retorna dados com metadados de paginação quando paginação é usada
     if (pagina && limite) {
       res.json({
         dados: result.rows,
@@ -2722,18 +2748,17 @@ app.get("/api/imoveis", async (req, res) => {
         },
       });
     } else {
-      // Mantém compatibilidade: retorna array simples quando sem paginação
       res.json(result.rows);
     }
   } catch (err) {
-    const codigoErro = logErroSeguro("Erro ao buscar imóveis", err);
+    const codigoErro = logErroSeguro("Erro ao buscar imoveis", err);
     res
       .status(500)
-      .json({ error: "Erro ao buscar imóveis", codigo: codigoErro });
+      .json({ error: "Erro ao buscar imoveis", codigo: codigoErro });
   }
 });
 
-// ROTA: Busca um imóvel específico por ID
+// ROTA: Busca um imovel especifico por ID
 app.get("/api/imoveis/:id", async (req, res) => {
   const { id } = req.params;
 
