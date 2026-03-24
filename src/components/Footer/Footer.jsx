@@ -2,12 +2,17 @@
 
 import "./Footer.css";
 import { FaFacebook, FaInstagram, FaLinkedin } from "react-icons/fa";
-import { MdEmail, MdPhone } from "react-icons/md";
+import { MdPhone } from "react-icons/md";
 import { Link } from "react-router-dom";
 import logo_branco from "../../assets/img/logo/logo_branco.png";
+import {
+  buildCommercialWhatsAppUrl,
+  buildSupportWhatsAppUrl,
+} from "../../utils/whatsapp.js";
 
 const Footer = () => {
-  const testLink = "https://www.youtube.com";
+  const whatsappComercialUrl = buildCommercialWhatsAppUrl();
+  const whatsappSuporteUrl = buildSupportWhatsAppUrl();
 
   const handleSobreNosClick = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -46,22 +51,24 @@ const Footer = () => {
           <h4>Contato</h4>
           <div className="footer-contact">
             <a
-              href={testLink}
+              href={whatsappComercialUrl}
               className="contact-item"
               target="_blank"
               rel="noopener noreferrer"
+              aria-label="WhatsApp Comercial"
             >
               <MdPhone size={18} />
-              <span>(48) 9 1234-5678</span>
+              <span>WhatsApp Comercial: (48) 99157-6559</span>
             </a>
             <a
-              href={testLink}
+              href={whatsappSuporteUrl}
               className="contact-item"
               target="_blank"
               rel="noopener noreferrer"
+              aria-label="WhatsApp Suporte"
             >
-              <MdEmail size={18} />
-              <span>nolare@gmail.com</span>
+              <MdPhone size={18} />
+              <span>WhatsApp Suporte: (48) 99172-0855</span>
             </a>
           </div>
         </div>
@@ -70,7 +77,7 @@ const Footer = () => {
           <h4>Redes Sociais</h4>
           <div className="footer-social">
             <a
-              href={testLink}
+              href="https://facebook.com/nolare"
               aria-label="Facebook"
               target="_blank"
               rel="noopener noreferrer"
@@ -78,7 +85,7 @@ const Footer = () => {
               <FaFacebook size={24} />
             </a>
             <a
-              href={testLink}
+              href="https://instagram.com/nolare"
               aria-label="Instagram"
               target="_blank"
               rel="noopener noreferrer"
@@ -86,7 +93,7 @@ const Footer = () => {
               <FaInstagram size={24} />
             </a>
             <a
-              href={testLink}
+              href="https://linkedin.com/company/nolare"
               aria-label="LinkedIn"
               target="_blank"
               rel="noopener noreferrer"
