@@ -3113,6 +3113,8 @@ app.put(
           descricao,
           preco,
           preco_destaque,
+          tipo,
+          cidade,
         };
 
         // Envia e-mails de forma assíncrona

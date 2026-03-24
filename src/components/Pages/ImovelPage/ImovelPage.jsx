@@ -3,10 +3,14 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import ImovelModal from "../../ImovelModal/ImovelModal";
+import {
+  buildImovelPath,
+  extractImovelIdFromSlug,
+} from "../../../utils/imovelUrl.js";
 
-// Component to handle direct access to /imovel/:id
+// Component to handle direct access to /imovel/:slug (or legacy /imovel/:id)
 const ImovelPage = ({ usuario }) => {
-  const { id } = useParams();
+  const { slug } = useParams();
   const navigate = useNavigate();
   const [imovel, setImovel] = useState(null);
   const [curtidas, setCurtidas] = useState({});
@@ -21,7 +25,12 @@ const ImovelPage = ({ usuario }) => {
 
   // Fetch property by ID
   useEffect(() => {
-    if (!id) return;
+    if (!slug) return;
+    const imovelId = extractImovelIdFromSlug(slug);
+    if (!imovelId) {
+      navigate("/comprar", { replace: true });
+      return;
+    }
 
     // CORREÇÃO: usa o token correto (nolare_token) para que admins possam acessar imóveis ocultos
     const headers = {};
@@ -30,7 +39,7 @@ const ImovelPage = ({ usuario }) => {
       headers.Authorization = `Bearer ${token}`;
     }
 
-    fetch(`/api/imoveis/${id}`, { headers })
+    fetch(`/api/imoveis/${imovelId}`, { headers })
       .then((res) => {
         if (res.status === 403) {
           // Imóvel oculto e usuário não é administrador — redireciona para a página anterior
@@ -41,6 +50,10 @@ const ImovelPage = ({ usuario }) => {
       })
       .then((data) => {
         setImovel(data);
+        const canonicalPath = buildImovelPath(data);
+        if (window.location.pathname !== canonicalPath) {
+          window.history.replaceState(null, "", canonicalPath);
+        }
         setLoading(false);
       })
       .catch((err) => {
@@ -48,7 +61,7 @@ const ImovelPage = ({ usuario }) => {
         setLoading(false);
         navigate(-1);
       });
-  }, [id, navigate]);
+  }, [slug, navigate]);
 
   // Fetch user likes if logged in - só busca se usuario.id existir
   useEffect(() => {

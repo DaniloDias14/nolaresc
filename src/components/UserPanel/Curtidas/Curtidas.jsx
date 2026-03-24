@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
 import "./Curtidas.css";
 import ImovelModal from "../../ImovelModal/ImovelModal";
 import { AiFillHeart, AiOutlineHeart } from "react-icons/ai";
+import { buildImovelPath } from "../../../utils/imovelUrl.js";
 
 // SEGURANÇA (2.6): Sanitiza URL de foto para prevenir injeção de protocolo (javascript:, data:, etc.)
 const sanitizarUrlFoto = (url) => {
@@ -29,8 +29,6 @@ const Curtidas = ({ usuario }) => {
   const gestureRefs = useRef({});
   /* Refs para os containers de carousel de cada card - correção swipe iOS Safari */
   const carouselRefs = useRef({});
-
-  const navigate = useNavigate();
 
   const formatPrice = (value) => {
     if (!value || value === 0) return "0,00";
@@ -349,11 +347,10 @@ const Curtidas = ({ usuario }) => {
   };
 
   const handleOpenModal = (imovel) => {
-    const imovelId = imovel.imovel_id;
     setImovelSelecionado(imovel);
 
     // Update URL without navigation to preserve scroll position
-    window.history.pushState(null, "", `/imovel/${imovelId}`);
+    window.history.pushState(null, "", buildImovelPath(imovel));
   };
 
   const handleCloseModal = () => {

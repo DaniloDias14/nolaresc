@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { IoClose } from "react-icons/io5";
 import "./AdicionarImovel.css";
+import { buildImovelPath } from "../../../utils/imovelUrl.js";
 
 const booleanFields = [
   "acessibilidade_pcd",
@@ -603,7 +604,13 @@ const AdicionarImovel = ({ showPopup, setShowPopup }) => {
   const handleGoToImovel = () => {
     setShowSuccessPopup(false);
     handleClosePopup();
-    navigate(`/imovel/${newImovelId}`);
+    navigate(
+      buildImovelPath({
+        id: newImovelId,
+        tipo: formData.tipo,
+        cidade: formData.cidade,
+      }),
+    );
   };
 
   const handleCloseSuccess = () => {

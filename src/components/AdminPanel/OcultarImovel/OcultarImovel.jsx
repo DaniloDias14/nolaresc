@@ -1,18 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import "./OcultarImovel.css";
 import ImovelModal from "../../ImovelModal/ImovelModal";
 import { AiFillHeart, AiOutlineHeart } from "react-icons/ai";
+import { buildImovelPath } from "../../../utils/imovelUrl.js";
 
 const OcultarImovel = ({ usuario }) => {
   const [imoveis, setImoveis] = useState([]);
   const [imovelSelecionado, setImovelSelecionado] = useState(null);
   const [imagemAtual, setImagemAtual] = useState({});
   const [curtidas, setCurtidas] = useState({});
-
-  const navigate = useNavigate();
 
   const formatPrice = (value) => {
     if (!value || value === 0) return "0,00";
@@ -148,11 +146,10 @@ const OcultarImovel = ({ usuario }) => {
   };
 
   const handleOpenModal = (imovel) => {
-    const imovelId = imovel.imovel_id;
     setImovelSelecionado(imovel);
 
     // Atualiza URL sem navegação para preservar posição do scroll
-    window.history.pushState(null, "", `/imovel/${imovelId}`);
+    window.history.pushState(null, "", buildImovelPath(imovel));
   };
 
   const handleCloseModal = () => {

@@ -1,13 +1,17 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import "./Comprar.css";
 import ImovelModal from "../../ImovelModal/ImovelModal";
 import Destaque from "../../Destaque/Destaque";
 import Filtro from "../../Filtro/Filtro";
 import { useToast } from "../../Toast/Toast";
 import { AiFillHeart, AiOutlineHeart } from "react-icons/ai";
+import {
+  buildImovelPath,
+  extractImovelIdFromSlug,
+} from "../../../utils/imovelUrl.js";
 
 // SEGURANÇA (2.6): Sanitiza URL de foto para prevenir injeção de protocolo (javascript:, data:, etc.)
 const sanitizarUrlFoto = (url) => {
@@ -39,8 +43,7 @@ const Comprar = ({ usuario }) => {
   const carouselRefs = useRef({});
   const lastFetchIdRef = useRef(0);
 
-  const { id } = useParams();
-  const navigate = useNavigate();
+  const { slug } = useParams();
   const isAdmin = usuario?.tipo_usuario === "adm";
 
   const imoveisPorPagina = 15;
@@ -98,14 +101,15 @@ const Comprar = ({ usuario }) => {
   }, [isAdmin]);
 
   useEffect(() => {
-    if (id && imoveis.length > 0) {
-      const imovelId = Number.parseInt(id);
+    if (slug && imoveis.length > 0) {
+      const imovelId = extractImovelIdFromSlug(slug);
+      if (!imovelId) return;
       const imovel = imoveis.find((i) => (i.id ?? i.imovel_id) === imovelId);
       if (imovel) {
         setImovelSelecionado(imovel);
       }
     }
-  }, [id, imoveis]);
+  }, [slug, imoveis]);
 
   // Fetch user likes - só busca se usuario.id existir
   useEffect(() => {
@@ -129,11 +133,10 @@ const Comprar = ({ usuario }) => {
   }, [usuario]);
 
   const handleOpenModal = (imovel) => {
-    const imovelId = imovel.id ?? imovel.imovel_id;
     setImovelSelecionado(imovel);
 
     // Update URL without navigation to preserve scroll position
-    window.history.pushState(null, "", `/imovel/${imovelId}`);
+    window.history.pushState(null, "", buildImovelPath(imovel));
   };
 
   const handleCloseModal = () => {
@@ -820,6 +823,14 @@ const Comprar = ({ usuario }) => {
         buscaAvancadaAtiva={buscaAvancadaAtiva}
         setBuscaAvancadaAtiva={setBuscaAvancadaAtiva}
       />
+
+      <div className="comprar-seo-text-wrapper">
+        <p className="comprar-seo-text">
+          Encontre imóveis à venda, aluguel e lançamentos em Criciúma, Nova
+          Veneza, Urussanga e região, com filtros por tipo, preço, localização
+          e características para facilitar sua busca.
+        </p>
+      </div>
 
       <main className="properties-section">
         <div className="container">

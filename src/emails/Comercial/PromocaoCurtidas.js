@@ -1,5 +1,6 @@
 // TEMPLATE DE E-MAIL: Promocao de imovel curtido (padrao visual alinhado ao site)
 // Layout compativel (Gmail/Outlook): tabelas + estilos inline
+import { buildImovelSlug } from "../../utils/imovelUrl.js";
 
 export default function PromocaoCurtidas({ nome, imovel }) {
   const anoAtual = new Date().getFullYear();
@@ -39,7 +40,10 @@ export default function PromocaoCurtidas({ nome, imovel }) {
 
   // Canonico: os e-mails devem sempre apontar para o dominio publico.
   const baseUrl = "https://nolaresc.com.br";
-  const urlImovel = `${baseUrl}/imovel/${imovel?.id}`;
+  const slug = buildImovelSlug(imovel);
+  const urlImovel = slug
+    ? `${baseUrl}/imovel/${slug}`
+    : `${baseUrl}/imovel/${imovel?.id}`;
 
   const nomeEsc = escapeHtml(nome || "");
   const tituloEsc = escapeHtml(imovel?.titulo || "Im\u00f3vel em destaque");

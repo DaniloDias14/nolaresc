@@ -191,9 +191,9 @@ const App = () => {
           />
           <Route path="/termos-de-uso" element={<TermosDeUso />} />
 
-          {/* Rota para visualização de imóvel individual (compartilhamento) */}
+          {/* Rota para visualização de imóvel individual (slug amigável ou ID legado) */}
           <Route
-            path="/imovel/:id"
+            path="/imovel/:slug"
             element={<ImovelPage usuario={isLoggedIn ? user : null} />}
           />
 

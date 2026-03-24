@@ -15,6 +15,22 @@
   margin: 0 auto;
 }
 
+.comprar-seo-text-wrapper {
+  max-width: 1600px;
+  margin: 0.9rem auto 2rem;
+  padding: 0 2rem;
+}
+
+.comprar-seo-text {
+  max-width: 980px;
+  margin: 0 auto;
+  text-align: center;
+  color: var(--text-gray);
+  font-family: "Sanchez", serif;
+  font-size: 0.98rem;
+  line-height: 1.7;
+}
+
 .grid-imoveis {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
@@ -456,6 +472,10 @@
     grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
     gap: 2rem;
   }
+
+  .comprar-seo-text-wrapper {
+    padding: 0 1.5rem;
+  }
 }
 
 @media (max-width: 768px) {
@@ -465,6 +485,16 @@
 
   .properties-section {
     padding: 0 1.5rem;
+  }
+
+  .comprar-seo-text-wrapper {
+    margin: 0.8rem auto 1.5rem;
+    padding: 0 1.2rem;
+  }
+
+  .comprar-seo-text {
+    font-size: 0.9rem;
+    line-height: 1.55;
   }
 
   .grid-imoveis {

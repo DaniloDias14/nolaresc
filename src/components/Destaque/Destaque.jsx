@@ -592,6 +592,11 @@ const Destaque = ({ usuario, curtidas, setCurtidas, onImovelClick }) => {
   return (
     <div className="destaque-section">
       <h2 className="destaque-title">Imóveis em Destaque</h2>
+      <p className="destaque-seo-text">
+        Seleção de imóveis em destaque da Nolare, com oportunidades em
+        diferentes tipos de propriedades e cidades da região sul de Santa
+        Catarina.
+      </p>
 
       <div className="destaque-carousel-wrapper">
         <div
