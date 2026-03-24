@@ -826,9 +826,9 @@ const Comprar = ({ usuario }) => {
 
       <div className="comprar-seo-text-wrapper">
         <p className="comprar-seo-text">
-          Encontre imóveis à venda, aluguel e lançamentos em Criciúma, Nova
-          Veneza, Urussanga e região, com filtros por tipo, preço, localização
-          e características para facilitar sua busca.
+          Explore uma ampla variedade de imóveis disponíveis e encontre opções
+          que se encaixam no que você procura. Compare alternativas, visualize
+          detalhes e encontre a opção que realmente faz sentido para você.
         </p>
       </div>
 

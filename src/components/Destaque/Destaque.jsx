@@ -593,9 +593,9 @@ const Destaque = ({ usuario, curtidas, setCurtidas, onImovelClick }) => {
     <div className="destaque-section">
       <h2 className="destaque-title">Imóveis em Destaque</h2>
       <p className="destaque-seo-text">
-        Seleção de imóveis em destaque da Nolare, com oportunidades em
-        diferentes tipos de propriedades e cidades da região sul de Santa
-        Catarina.
+        Descubra imóveis que estão se destacando no momento, seja por
+        relevância, condições especiais ou potencial. Uma seleção pensada para
+        destacar o que realmente merece a atenção.
       </p>
 
       <div className="destaque-carousel-wrapper">
