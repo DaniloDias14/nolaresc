@@ -55,20 +55,20 @@ const Footer = () => {
               className="contact-item"
               target="_blank"
               rel="noopener noreferrer"
-              aria-label="WhatsApp Comercial"
+              aria-label="Comercial"
             >
               <MdPhone size={18} />
-              <span>WhatsApp Comercial: (48) 99157-6559</span>
+              <span>Comercial: (48) 99157-6559</span>
             </a>
             <a
               href={whatsappSuporteUrl}
               className="contact-item"
               target="_blank"
               rel="noopener noreferrer"
-              aria-label="WhatsApp Suporte"
+              aria-label="Suporte"
             >
               <MdPhone size={18} />
-              <span>WhatsApp Suporte: (48) 99172-0855</span>
+              <span>Suporte: (48) 99172-0855</span>
             </a>
           </div>
         </div>
