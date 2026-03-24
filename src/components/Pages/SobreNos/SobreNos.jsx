@@ -10,6 +10,10 @@ import {
   FaEnvelope,
   FaWhatsapp,
 } from "react-icons/fa";
+import {
+  buildCommercialWhatsAppUrl,
+  buildSupportWhatsAppUrl,
+} from "../../../utils/whatsapp.js";
 
 const SobreNos = ({ usuario }) => {
   const equipaRedesSociais = [
@@ -52,16 +56,16 @@ const SobreNos = ({ usuario }) => {
       id: 2,
       icon: <FaWhatsapp />,
       titulo: "WhatsApp - Comercial",
-      valor: "(85) 99999-1111",
-      link: "https://youtube.com",
+      valor: "(48) 99157-6559",
+      link: buildCommercialWhatsAppUrl(),
       tipo: "whatsapp",
     },
     {
       id: 3,
       icon: <FaWhatsapp />,
       titulo: "WhatsApp - Suporte",
-      valor: "(85) 99999-2222",
-      link: "https://youtube.com",
+      valor: "(48) 99172-0855",
+      link: buildSupportWhatsAppUrl(),
       tipo: "whatsapp",
     },
   ];

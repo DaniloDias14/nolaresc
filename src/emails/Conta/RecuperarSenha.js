@@ -1,9 +1,11 @@
 // TEMPLATE DE E-MAIL: Recuperacao de senha (padrao visual alinhado ao site)
 // Requisitos:
 // - Layout compativel (Gmail/Outlook): tabelas + estilos inline
+import { buildSupportWhatsAppUrl } from "../../utils/whatsapp.js";
 
 export default function RecuperarSenha({ nome, codigo }) {
   const anoAtual = new Date().getFullYear();
+  const suporteUrl = buildSupportWhatsAppUrl();
 
   // SEGURANCA: evita injecao de HTML no conteudo do e-mail.
   const escapeHtml = (value) =>
@@ -65,7 +67,7 @@ export default function RecuperarSenha({ nome, codigo }) {
                         <strong>Seguran&ccedil;a:</strong> se voc&ecirc; n&atilde;o solicitou a redefini&ccedil;&atilde;o de senha, ignore este e-mail. Se desconfiar de acesso indevido, altere sua senha assim que poss&iacute;vel.
                         <br />
                         Se voc&ecirc; n&atilde;o reconhece esta atividade, entre em contato com o nosso
-                        <a href="https://www.youtube.com/" style="color:#191970;text-decoration:underline;font-weight:700;">suporte</a>.
+                        <a href="${suporteUrl}" style="color:#191970;text-decoration:underline;font-weight:700;">suporte</a>.
                       </div>
                     </td>
                   </tr>

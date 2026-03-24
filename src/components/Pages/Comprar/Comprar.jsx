@@ -12,6 +12,7 @@ import {
   buildImovelPath,
   extractImovelIdFromSlug,
 } from "../../../utils/imovelUrl.js";
+import { buildCommercialImovelWhatsAppUrl } from "../../../utils/whatsapp.js";
 
 // SEGURANÇA (2.6): Sanitiza URL de foto para prevenir injeção de protocolo (javascript:, data:, etc.)
 const sanitizarUrlFoto = (url) => {
@@ -1009,7 +1010,10 @@ const Comprar = ({ usuario }) => {
                       className="contact-button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        window.open("https://www.youtube.com", "_blank");
+                        window.open(
+                          buildCommercialImovelWhatsAppUrl(imovel),
+                          "_blank",
+                        );
                       }}
                     >
                       Entrar em Contato

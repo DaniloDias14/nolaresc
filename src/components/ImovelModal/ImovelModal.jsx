@@ -12,6 +12,7 @@ import {
 } from "react-icons/io5";
 import { useToast } from "../Toast/Toast";
 import EditarImovel from "../AdminPanel/EditarImovel/EditarImovel";
+import { buildCommercialImovelWhatsAppUrl } from "../../utils/whatsapp.js";
 
 // SEGURANÇA (2.6): Sanitiza URL de foto para prevenir injeção de protocolo (javascript:, data:, etc.)
 // React já escapa strings em JSX, mas validamos o protocolo da URL de imagens explicitamente
@@ -987,7 +988,9 @@ const ImovelModal = ({
             <div className="imovel-actions">
               <button
                 className="imovel-contact-btn"
-                onClick={() => window.open("https://www.youtube.com", "_blank")}
+                onClick={() =>
+                  window.open(buildCommercialImovelWhatsAppUrl(imovel), "_blank")
+                }
               >
                 Entrar em Contato
               </button>

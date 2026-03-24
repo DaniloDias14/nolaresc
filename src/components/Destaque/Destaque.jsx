@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import "./Destaque.css";
 import { useToast } from "../Toast/Toast";
 import { AiFillHeart, AiOutlineHeart } from "react-icons/ai";
+import { buildCommercialImovelWhatsAppUrl } from "../../utils/whatsapp.js";
 
 // SEGURANÇA (2.6): Sanitiza URL de foto para prevenir injeção de protocolo (javascript:, data:, etc.)
 const sanitizarUrlFoto = (url) => {
@@ -785,7 +786,10 @@ const Destaque = ({ usuario, curtidas, setCurtidas, onImovelClick }) => {
                     className="destaque-contact-button"
                     onClick={(e) => {
                       e.stopPropagation();
-                      window.open("https://www.youtube.com", "_blank");
+                      window.open(
+                        buildCommercialImovelWhatsAppUrl(imovel),
+                        "_blank",
+                      );
                     }}
                   >
                     Entrar em Contato

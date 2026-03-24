@@ -1,9 +1,11 @@
 // TEMPLATE DE E-MAIL: Verificacao de cadastro (padrao visual alinhado ao site)
 // Requisitos:
 // - Layout compativel (Gmail/Outlook): tabelas + estilos inline
+import { buildSupportWhatsAppUrl } from "../../utils/whatsapp.js";
 
 export default function VerificarCadastro({ nome, codigo }) {
   const anoAtual = new Date().getFullYear();
+  const suporteUrl = buildSupportWhatsAppUrl();
 
   // SEGURANCA: evita injecao de HTML no conteudo do e-mail.
   const escapeHtml = (value) =>
@@ -72,7 +74,7 @@ export default function VerificarCadastro({ nome, codigo }) {
                     <td style="padding:14px 14px;">
                       <div style="font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.6;color:#7a1c27;">
                         <strong>Seguran&ccedil;a:</strong> se voc&ecirc; n&atilde;o solicitou este cadastro ou n&atilde;o reconhece esta atividade, entre em contato com o nosso
-                        <a href="https://www.youtube.com/" style="color:#191970;text-decoration:underline;font-weight:700;">suporte</a>.
+                        <a href="${suporteUrl}" style="color:#191970;text-decoration:underline;font-weight:700;">suporte</a>.
                       </div>
                     </td>
                   </tr>

@@ -2,6 +2,7 @@
 
 import { FaWhatsapp, FaFileAlt, FaSearchPlus, FaRocket } from "react-icons/fa";
 import "./Anunciar.css";
+import { buildCommercialWhatsAppUrl } from "../../../utils/whatsapp.js";
 
 const Anunciar = ({ usuario }) => {
   return (
@@ -79,7 +80,7 @@ const Anunciar = ({ usuario }) => {
             <button
               className="anunciar-btn-whatsapp"
               onClick={() => {
-                window.open("https://www.youtube.com", "_blank");
+                window.open(buildCommercialWhatsAppUrl(), "_blank");
               }}
             >
               <FaWhatsapp className="anunciar-whatsapp-icon" />
